@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyAffirms.com - Personal Affirmations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDvZ62BbURaJVZ_8Isbe7TP4gm9wEaFl-I",
+            authDomain: "my-affirms.firebaseapp.com",
+            projectId: "my-affirms",
+            storageBucket: "my-affirms.firebasestorage.app",
+            messagingSenderId: "412277074951",
+            appId: "1:412277074951:web:ab420afef6df959698cea2",
+            measurementId: "G-V2YKSNSRS2"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Make Firebase services available globally
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
+        window.firebaseReady = true;
+    </script>
+</head>
+<body>
+    <div id="app" class="min-h-screen bg-gray-50 py-8">
+        <div class="max-w-2xl mx-auto px-4">
+            
+            <div class="flex justify-between items-center mb-6">
+                <div></div>
+                <div v-if="!user" class="flex flex-col sm:flex-row items-center gap-4">
+                    <span class="text-sm text-gray-600">Sign in to save your affirmations in the cloud</span>
+                    <div class="flex gap-2">
+                        <button
+                            @click="signInWithGoogle"
+                            class="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
+                        >
+                            <svg class="w-4 h-4" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                            Google
+                        </button>
+                        <button
+                            @click="toggleEmailAuth"
+                            class="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                        >
+                            📧 Email
+                        </button>
+                    </div>
+                </div>
+                <div v-if="user" class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <img :src="user.photoURL || '/api/placeholder/32/32'" :alt="user.displayName" class="w-8 h-8 rounded-full bg-gray-200">
+                        <span class="text-sm text-gray-700">{{ user.displayName || user.email }}</span>
+                    </div>
+                    <button 
+                        @click="signOutUser"
+                        class="text-sm text-gray-600 hover:text-gray-800 underline"
+                    >
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+
+            <div v-if="showEmailAuth" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-gray-900">
+                            {{ isSignUp ? 'Create Account' : 'Sign In' }}
+                        </h2>
+                        <button @click="closeEmailAuth" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <form @submit.prevent="handleEmailAuth" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                            <input
+                                v-model="authEmail"
+                                type="email"
+                                required
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="your@email.com"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                            <input
+                                v-model="authPassword"
+                                type="password"
+                                required
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Password"
+                            />
+                        </div>
+                        
+                        <div v-if="authError" class="text-red-600 text-sm">
+                            {{ authError }}
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button
+                                type="submit"
+                                :disabled="authLoading"
+                                class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-medium py-2 px-4 rounded-md transition-colors"
+                            >
+                                {{ authLoading ? 'Loading...' : (isSignUp ? 'Create Account' : 'Sign In') }}
+                            </button>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button
+                                type="button"
+                                @click="isSignUp = !isSignUp"
+                                class="text-sm text-blue-600 hover:text-blue-800 underline"
+                            >
+                                {{ isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">MyAffirms.com</h1>
+                <p class="text-gray-600">Create and play your personal affirmations</p>
+                <p v-if="user" class="text-sm text-green-600 mt-2">✓ Signed in - your data is automatically saved</p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <div class="text-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                        {{ isPlaying ? 'Now Playing' : 'Ready to Start' }}
+                    </h2>
+                    
+                    <div v-if="currentAffirmation" class="bg-blue-50 rounded-lg p-4 mb-4">
+                        <p class="text-lg text-gray-900">{{ currentAffirmation.text }}</p>
+                        <p class="text-sm text-gray-500 mt-2">
+                            Affirmation {{ currentIndex + 1 }} / {{ activeAffirmations.length }} 
+                            ({{ currentRepeat + 1 }}/{{ currentAffirmation.repeats }})
+                        </p>
+                    </div>
+                    
+                    <div class="flex justify-center gap-4">
+                        <button
+                            v-if="!isPlaying"
+                            @click="startSession"
+                            :disabled="activeAffirmations.length === 0"
+                            class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                        >
+                            ▶ Start Session ({{ activeAffirmations.length }} affirmations)
+                        </button>
+                        
+                        <template v-if="isPlaying">
+                            <button
+                                @click="stopSession"
+                                class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium"
+                            >
+                                ⏹ Stop
+                            </button>
+                            
+                            <button
+                                @click="nextAffirmation"
+                                class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium"
+                            >
+                                ⏭ Next
+                            </button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Add New Affirmation</h3>
+                <div class="flex gap-2">
+                    <input
+                        v-model="newAffirmationText"
+                        type="text"
+                        placeholder="Enter your affirmation..."
+                        class="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        @keyup.enter="addAffirmation"
+                    />
+                    <button
+                        @click="addAffirmation"
+                        :disabled="!newAffirmationText.trim()"
+                        class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-4 py-2 rounded-md font-medium transition-colors"
+                    >
+                        Add
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    Your Affirmations ({{ affirmations.length }})
+                </h3>
+                
+                <div class="space-y-3">
+                    <div
+                        v-for="(affirmation, index) in affirmations"
+                        :key="affirmation.id"
+                        class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                    >
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <input
+                                        type="checkbox"
+                                        v-model="affirmation.isActive"
+                                        @change="() => saveUserData()"
+                                        class="h-4 w-4 text-blue-600 rounded border-gray-300"
+                                    />
+                                    <span class="text-xs text-gray-500 font-medium">
+                                        {{ formatSettings(affirmation) }}
+                                    </span>
+                                </div>
+                                <p class="text-gray-900 mb-1">{{ affirmation.text }}</p>
+                                <p class="text-xs text-gray-500">Added {{ formatDate(affirmation.id) }}</p>
+                            </div>
+                            <div class="flex items-center gap-2 ml-4">
+                                <button
+                                    @click="playAffirmation(affirmation)"
+                                    class="text-blue-600 hover:text-blue-800 px-2 py-1 rounded hover:bg-blue-50 transition-colors"
+                                    title="Test this affirmation"
+                                >
+                                    🔊
+                                </button>
+                                <button
+                                    @click="editAffirmation(affirmation)"
+                                    class="text-gray-600 hover:text-gray-800 px-2 py-1 rounded hover:bg-gray-50 transition-colors"
+                                    title="Edit settings"
+                                >
+                                    ⚙️
+                                </button>
+                                <button
+                                    @click="deleteAffirmation(affirmation.id)"
+                                    class="text-red-600 hover:text-red-800 px-2 py-1 rounded hover:bg-red-50 transition-colors"
+                                    title="Delete affirmation"
+                                >
+                                    🗑
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div v-if="affirmations.length === 0" class="text-center py-8">
+                        <div class="text-gray-400 mb-4">
+                            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                        <p class="text-gray-500 mb-4">No affirmations yet. Add your first one above!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center text-sm text-gray-500">
+                <p>💡 Tip: Use headphones for the best experience</p>
+                <p class="mt-2">🌟 <strong>MyAffirms.com</strong> - Transform your mindset with personalized affirmations</p>
+            </div>
+        </div>
+
+        <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-gray-900">Edit Affirmation Settings</h2>
+                        <button @click="closeModal" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div v-if="editingAffirmation" class="space-y-6">
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Text</label>
+                            <textarea
+                                v-model="editingAffirmation.text"
+                                rows="3"
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            ></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Repeats: {{ editingAffirmation.repeats }}
+                            </label>
+                            <input
+                                v-model="editingAffirmation.repeats"
+                                type="range"
+                                min="1"
+                                max="5"
+                                class="w-full"
+                            />
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Pause Between Repeats: {{ editingAffirmation.pauseBetweenRepeats }}s
+                            </label>
+                            <input
+                                v-model="editingAffirmation.pauseBetweenRepeats"
+                                type="range"
+                                min="0"
+                                max="10"
+                                class="w-full"
+                            />
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>0s</span><span>5s</span><span>10s</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Pause After: {{ editingAffirmation.pauseAfter }}s
+                            </label>
+                            <input
+                                v-model="editingAffirmation.pauseAfter"
+                                type="range"
+                                min="5"
+                                max="30"
+                                class="w-full"
+                            />
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>5s</span><span>15s</span><span>30s</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Speed: {{ editingAffirmation.speed }}x
+                            </label>
+                            <input
+                                v-model="editingAffirmation.speed"
+                                type="range"
+                                min="0.5"
+                                max="2"
+                                step="0.1"
+                                class="w-full"
+                            />
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>0.5x</span><span>1x</span><span>1.5x</span><span>2x</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Voice</label>
+                            <select v-model="editingAffirmation.voice" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="default">Default</option>
+                                <option v-for="voice in availableVoices" :key="voice.name" :value="voice.name">
+                                    {{ voice.name }} ({{ voice.lang }})
+                                </option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <button
+                                @click="playAffirmation(editingAffirmation)"
+                                class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-md"
+                            >
+                                🔊 Preview
+                            </button>
+                        </div>
+
+                        <div class="flex gap-3 pt-4 border-t">
+                            <button
+                                @click="closeModal"
+                                class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-md"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                @click="saveAffirmation"
+                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md"
+                            >
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const affirmations = ref([
+                    { 
+                        id: '1', 
+                        text: 'Jestem spokojny i pewny siebie', 
+                        isActive: true,
+                        repeats: 2,
+                        pauseBetweenRepeats: 3,
+                        pauseAfter: 12,
+                        speed: 1.0,
+                        voice: 'default'
+                    },
+                    { 
+                        id: '2', 
+                        text: 'Mam w sobie siłę do działania', 
+                        isActive: true,
+                        repeats: 1,
+                        pauseBetweenRepeats: 0,
+                        pauseAfter: 15,
+                        speed: 0.9,
+                        voice: 'default'
+                    },
+                    { 
+                        id: '3', 
+                        text: 'Jestem wdzięczny za wszystko co mam', 
+                        isActive: true,
+                        repeats: 3,
+                        pauseBetweenRepeats: 2,
+                        pauseAfter: 10,
+                        speed: 1.1,
+                        voice: 'default'
+                    }
+                ]);
+
+                const newAffirmationText = ref('');
+                const isPlaying = ref(false);
+                const currentIndex = ref(0);
+                const currentRepeat = ref(0);
+                const synth = ref(null);
+                const availableVoices = ref([]);
+                const showModal = ref(false);
+                const editingAffirmation = ref(null);
+                const user = ref(null);
+                const isLoading = ref(false);
+                const showEmailAuth = ref(false);
+                const isSignUp = ref(false);
+                const authEmail = ref('');
+                const authPassword = ref('');
+                const authError = ref('');
+                const authLoading = ref(false);
+
+                const activeAffirmations = computed(() => 
+                    affirmations.value.filter(a => a.isActive)
+                );
+
+                const currentAffirmation = computed(() => 
+                    activeAffirmations.value[currentIndex.value]
+                );
+
+                onMounted(() => {
+                    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                        synth.value = window.speechSynthesis;
+                        loadVoices();
+                        if (speechSynthesis.onvoiceschanged !== undefined) {
+                            speechSynthesis.onvoiceschanged = loadVoices;
+                        }
+                    }
+                    
+                    // Wait for Firebase to be ready and set up auth listener
+                    setTimeout(() => {
+                        if (window.firebaseAuth) {
+                            window.firebaseAuth.onAuthStateChanged(async (firebaseUser) => {
+                                if (firebaseUser) {
+                                    user.value = firebaseUser;
+                                    await loadUserData();
+                                } else {
+                                    user.value = null;
+                                    loadDefaultData();
+                                }
+                            });
+                        } else {
+                            loadDefaultData();
+                        }
+                    }, 100);
+                });
+
+                const loadVoices = () => {
+                    if (synth.value) {
+                        const voices = synth.value.getVoices();
+                        availableVoices.value = voices.filter(voice => 
+                            voice.lang.startsWith('pl') || voice.lang.startsWith('en')
+                        );
+                    }
+                };
+
+                const addAffirmation = async () => {
+                    if (newAffirmationText.value.trim()) {
+                        affirmations.value.push({
+                            id: Date.now().toString(),
+                            text: newAffirmationText.value.trim(),
+                            isActive: true,
+                            repeats: 1,
+                            pauseBetweenRepeats: 3,
+                            pauseAfter: 12,
+                            speed: 1.0,
+                            voice: 'default'
+                        });
+                        newAffirmationText.value = '';
+                        await saveUserData();
+                    }
+                };
+
+                const deleteAffirmation = async (id) => {
+                    const index = affirmations.value.findIndex(a => a.id === id);
+                    if (index > -1) {
+                        affirmations.value.splice(index, 1);
+                        await saveUserData();
+                    }
+                };
+
+                const speak = (text, options = {}) => {
+                    return new Promise((resolve) => {
+                        if (!synth.value) {
+                            alert('Speech synthesis not supported in your browser');
+                            resolve();
+                            return;
+                        }
+
+                        const utterance = new SpeechSynthesisUtterance(text);
+                        utterance.rate = options.speed || 0.9;
+                        utterance.pitch = 1;
+                        utterance.volume = 1;
+                        
+                        if (options.voice && options.voice !== 'default') {
+                            const voice = availableVoices.value.find(v => v.name === options.voice);
+                            if (voice) {
+                                utterance.voice = voice;
+                            }
+                        }
+                        
+                        utterance.onend = () => resolve();
+                        utterance.onerror = () => resolve();
+                        
+                        synth.value.speak(utterance);
+                    });
+                };
+
+                const playAffirmation = async (affirmation) => {
+                    await speak(affirmation.text, {
+                        speed: affirmation.speed,
+                        voice: affirmation.voice
+                    });
+                };
+
+                const startSession = async () => {
+                    if (activeAffirmations.value.length === 0) return;
+                    
+                    isPlaying.value = true;
+                    currentIndex.value = 0;
+                    currentRepeat.value = 0;
+                    
+                    await playCurrentAffirmation();
+                };
+
+                const playCurrentAffirmation = async () => {
+                    if (!isPlaying.value || !currentAffirmation.value) return;
+                    
+                    const affirmation = currentAffirmation.value;
+                    
+                    // Speak the affirmation
+                    await speak(affirmation.text, {
+                        speed: affirmation.speed,
+                        voice: affirmation.voice
+                    });
+                    
+                    if (!isPlaying.value) return;
+                    
+                    currentRepeat.value++;
+                    
+                    // Check if we need more repeats
+                    if (currentRepeat.value < affirmation.repeats) {
+                        if (affirmation.pauseBetweenRepeats > 0) {
+                            await new Promise(resolve => setTimeout(resolve, affirmation.pauseBetweenRepeats * 1000));
+                        }
+                        if (isPlaying.value) {
+                            await playCurrentAffirmation();
+                        }
+                    } else {
+                        // All repeats done, pause after affirmation
+                        if (affirmation.pauseAfter > 0) {
+                            await new Promise(resolve => setTimeout(resolve, affirmation.pauseAfter * 1000));
+                        }
+                        if (isPlaying.value) {
+                            nextAffirmation();
+                        }
+                    }
+                };
+
+                const nextAffirmation = async () => {
+                    if (!isPlaying.value) return;
+                    
+                    currentIndex.value++;
+                    currentRepeat.value = 0;
+                    
+                    if (currentIndex.value >= activeAffirmations.value.length) {
+                        currentIndex.value = 0; // Loop back to start
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                    
+                    if (isPlaying.value) {
+                        await playCurrentAffirmation();
+                    }
+                };
+
+                const stopSession = () => {
+                    isPlaying.value = false;
+                    currentIndex.value = 0;
+                    
+                    if (synth.value && synth.value.speaking) {
+                        synth.value.cancel();
+                    }
+                };
+
+                const formatDate = (timestamp) => {
+                    const date = new Date(parseInt(timestamp));
+                    return date.toLocaleTimeString();
+                };
+
+                const editAffirmation = (affirmation) => {
+                    editingAffirmation.value = { ...affirmation };
+                    showModal.value = true;
+                };
+
+                const saveAffirmation = async () => {
+                    const index = affirmations.value.findIndex(a => a.id === editingAffirmation.value.id);
+                    if (index > -1) {
+                        affirmations.value[index] = { ...editingAffirmation.value };
+                        await saveUserData();
+                    }
+                    closeModal();
+                };
+
+                const closeModal = () => {
+                    showModal.value = false;
+                    editingAffirmation.value = null;
+                };
+
+                const formatSettings = (affirmation) => {
+                    const parts = [];
+                    if (affirmation.repeats > 1) parts.push(`${affirmation.repeats}x`);
+                    if (affirmation.repeats > 1 && affirmation.pauseBetweenRepeats > 0) parts.push(`${affirmation.pauseBetweenRepeats}s`);
+                    parts.push(`${affirmation.pauseAfter}s`);
+                    return parts.join(' | ');
+                };
+
+                // Firebase Auth functions
+                const signInWithGoogle = async () => {
+                    try {
+                        const provider = new firebase.auth.GoogleAuthProvider();
+                        const result = await window.firebaseAuth.signInWithPopup(provider);
+                        user.value = result.user;
+                        await loadUserData();
+                    } catch (error) {
+                        console.error('Google sign in error:', error);
+                        authError.value = 'Failed to sign in with Google';
+                    }
+                };
+
+                const toggleEmailAuth = () => {
+                    showEmailAuth.value = true;
+                    authError.value = '';
+                    authEmail.value = '';
+                    authPassword.value = '';
+                    isSignUp.value = false;
+                };
+
+                const closeEmailAuth = () => {
+                    showEmailAuth.value = false;
+                    authError.value = '';
+                };
+
+                const handleEmailAuth = async () => {
+                    if (!authEmail.value || !authPassword.value) return;
+                    
+                    authLoading.value = true;
+                    authError.value = '';
+                    
+                    try {
+                        let result;
+                        if (isSignUp.value) {
+                            result = await window.firebaseAuth.createUserWithEmailAndPassword(
+                                authEmail.value, 
+                                authPassword.value
+                            );
+                        } else {
+                            result = await window.firebaseAuth.signInWithEmailAndPassword(
+                                authEmail.value, 
+                                authPassword.value
+                            );
+                        }
+                        
+                        user.value = result.user;
+                        await loadUserData();
+                        closeEmailAuth();
+                    } catch (error) {
+                        console.error('Email auth error:', error);
+                        authError.value = getAuthErrorMessage(error.code);
+                    } finally {
+                        authLoading.value = false;
+                    }
+                };
+
+                const getAuthErrorMessage = (errorCode) => {
+                    switch (errorCode) {
+                        case 'auth/email-already-in-use':
+                            return 'Email already in use';
+                        case 'auth/weak-password':
+                            return 'Password should be at least 6 characters';
+                        case 'auth/user-not-found':
+                            return 'No account found with this email';
+                        case 'auth/wrong-password':
+                            return 'Incorrect password';
+                        case 'auth/invalid-email':
+                            return 'Invalid email address';
+                        default:
+                            return 'Authentication failed';
+                    }
+                };
+
+                const signOutUser = async () => {
+                    try {
+                        await window.firebaseAuth.signOut();
+                        user.value = null;
+                        loadDefaultData();
+                    } catch (error) {
+                        console.error('Sign out error:', error);
+                    }
+                };
+
+                const loadUserData = async () => {
+                    if (user.value) {
+                        try {
+                            const userDocRef = window.firebaseDb.collection('users').doc(user.value.uid);
+                            const userDoc = await userDocRef.get();
+                            
+                            if (userDoc.exists) {
+                                const userData = userDoc.data();
+                                if (userData.affirmations) {
+                                    affirmations.value = userData.affirmations;
+                                } else {
+                                    loadDefaultData();
+                                    await saveUserData(); // Save default data to Firestore
+                                }
+                            } else {
+                                loadDefaultData();
+                                await saveUserData(); // Create user document with default data
+                            }
+                        } catch (error) {
+                            console.error('Error loading user data:', error);
+                            loadDefaultData();
+                        }
+                    }
+                };
+
+                const saveUserData = async () => {
+                    if (user.value) {
+                        try {
+                            const userDocRef = window.firebaseDb.collection('users').doc(user.value.uid);
+                            await userDocRef.set({
+                                affirmations: affirmations.value,
+                                lastUpdated: new Date()
+                            }, { merge: true });
+                        } catch (error) {
+                            console.error('Error saving user data:', error);
+                        }
+                    }
+                };
+
+                const loadDefaultData = () => {
+                    affirmations.value = [
+                        { 
+                            id: '1', 
+                            text: 'Jestem spokojny i pewny siebie', 
+                            isActive: true,
+                            repeats: 2,
+                            pauseBetweenRepeats: 3,
+                            pauseAfter: 12,
+                            speed: 1.0,
+                            voice: 'default'
+                        },
+                        { 
+                            id: '2', 
+                            text: 'Mam w sobie siłę do działania', 
+                            isActive: true,
+                            repeats: 1,
+                            pauseBetweenRepeats: 0,
+                            pauseAfter: 15,
+                            speed: 0.9,
+                            voice: 'default'
+                        },
+                        { 
+                            id: '3', 
+                            text: 'Jestem wdzięczny za wszystko co mam', 
+                            isActive: true,
+                            repeats: 3,
+                            pauseBetweenRepeats: 2,
+                            pauseAfter: 10,
+                            speed: 1.1,
+                            voice: 'default'
+                        }
+                    ];
+                };
+
+                return {
+                    affirmations,
+                    newAffirmationText,
+                    isPlaying,
+                    currentIndex,
+                    currentRepeat,
+                    activeAffirmations,
+                    currentAffirmation,
+                    availableVoices,
+                    showModal,
+                    editingAffirmation,
+                    user,
+                    isLoading,
+                    showEmailAuth,
+                    isSignUp,
+                    authEmail,
+                    authPassword,
+                    authError,
+                    authLoading,
+                    addAffirmation,
+                    deleteAffirmation,
+                    playAffirmation,
+                    startSession,
+                    nextAffirmation,
+                    stopSession,
+                    editAffirmation,
+                    saveAffirmation,
+                    closeModal,
+                    signInWithGoogle,
+                    toggleEmailAuth,
+                    closeEmailAuth,
+                    handleEmailAuth,
+                    signOutUser,
+                    saveUserData,
+                    formatDate,
+                    formatSettings
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "affirmations-app",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview"
+  },
+  "devDependencies": {
+    "nuxt": "^3.13.0"
+  },
+  "dependencies": {
+    "@nuxtjs/tailwindcss": "^6.0.0",
+    "@pinia/nuxt": "^0.5.0"
+  }
+}
