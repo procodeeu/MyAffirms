@@ -5,13 +5,20 @@
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
-    "preview": "nuxt preview"
+    "preview": "nuxt preview",
+    "emulators": "firebase emulators:start",
+    "dev:emulators": "firebase emulators:start --only auth,firestore",
+    "dev:full": "concurrently \"npm run dev:emulators\" \"npm run dev\"",
+    "dev:bg": "nohup npm run dev > dev.log 2>&1 &"
   },
   "devDependencies": {
+    "concurrently": "^9.1.2",
+    "firebase-tools": "^14.8.0",
     "nuxt": "^3.13.0"
   },
   "dependencies": {
     "@nuxtjs/tailwindcss": "^6.0.0",
-    "@pinia/nuxt": "^0.5.0"
+    "@pinia/nuxt": "^0.5.0",
+    "firebase": "^11.9.1"
   }
 }

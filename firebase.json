@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": ".",
+    "public": ".output/public",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -15,14 +15,29 @@
     ],
     "headers": [
       {
-        "source": "**/*.@(js|html)",
+        "source": "**/*.@(js|css)",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "max-age=0"
+            "value": "max-age=31536000"
           }
         ]
       }
     ]
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "hosting": {
+      "port": 5000
+    },
+    "ui": {
+      "enabled": true,
+      "port": 4000
+    }
   }
 }
