@@ -23,7 +23,6 @@ const devFirebaseConfig = {
 }
 
 export default defineNuxtPlugin(async () => {
-  
   if (process.server) {
     return {
       provide: {
@@ -36,32 +35,24 @@ export default defineNuxtPlugin(async () => {
       }
     }
   }
-
+  
   const isDev = process.env.NODE_ENV === 'development'
 
-  const activeConfig = isDev ? devFirebaseConfig : firebaseConfig
+  const activeConfig = firebaseConfig
 
   const app = initializeApp(activeConfig)
 
   const auth = getAuth(app)
   const db = getFirestore(app)
 
-  if (isDev) {
-    try {
-      
-      connectAuthEmulator(auth, 'http:
-
-      connectFirestoreEmulator(db, 'localhost', 8080)
-    } catch (error) {
-      
-      }
-  }
-
   let analytics = null
-  if (!isDev) {
-    analytics = getAnalytics(app)
-  }
-
+  try {
+    if (!isDev) {
+      analytics = getAnalytics(app)
+    }
+  } catch (analyticsError) {
+    }
+  
   return {
     provide: {
       firebase: {

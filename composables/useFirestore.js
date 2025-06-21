@@ -49,21 +49,35 @@ export const useFirestore = () => {
         id: doc.id,
         ...doc.data()
       }))
+      
+      ))
+      
       callback(projects)
-    })
+    }, (error) => {
+      })
   }
 
   const createProject = async (projectData) => {
-    if (!user.value) throw new Error('User not authenticated')
+    if (!user.value) {
+      throw new Error('User not authenticated')
+    }
     
-    const docRef = await addDoc(projectsCollection.value, {
-      ...projectData,
-      userId: user.value.uid,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    })
+    if (!$firebase?.db) {
+      throw new Error('Firestore not initialized')
+    }
     
-    return docRef.id
+    try {
+      const docRef = await addDoc(projectsCollection.value, {
+        ...projectData,
+        userId: user.value.uid,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })
+      
+      return docRef.id
+    } catch (error) {
+      throw error
+    }
   }
 
   const updateProject = async (projectId, updates) => {

@@ -46,6 +46,10 @@ export const useAuth = () => {
   }
 
   const signUpWithEmail = async (email, password) => {
+    if (!$firebase?.auth) {
+      return { success: false, error: 'Firebase not initialized' }
+    }
+    
     try {
       error.value = ''
       loading.value = true
@@ -63,6 +67,10 @@ export const useAuth = () => {
   }
 
   const signInWithGoogle = async () => {
+    if (!$firebase?.auth) {
+      return { success: false, error: 'Firebase not initialized' }
+    }
+    
     try {
       error.value = ''
       loading.value = true
@@ -75,6 +83,25 @@ export const useAuth = () => {
     } catch (err) {
       error.value = getErrorMessage(err.code)
       return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const signInWithDemo = async () => {
+    if (!$firebase?.auth) {
+      return { success: false, error: 'Firebase not initialized' }
+    }
+    
+    try {
+      error.value = ''
+      loading.value = true
+      
+      const result = await signInWithEmail('demo@test.com', 'password123')
+      return result
+    } catch (err) {
+      const result = await signUpWithEmail('demo@test.com', 'password123')
+      return result
     } finally {
       loading.value = false
     }
@@ -116,6 +143,7 @@ export const useAuth = () => {
     signInWithEmail,
     signUpWithEmail,
     signInWithGoogle,
+    signInWithDemo,
     logout
   }
 }

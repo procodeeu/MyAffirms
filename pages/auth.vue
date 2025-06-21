@@ -58,6 +58,14 @@
           Kontynuuj z Google
         </button>
 
+        <button
+          @click="signInWithDemo"
+          :disabled="authLoading"
+          class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-medium"
+        >
+          🧪 Demo Login (Emulator)
+        </button>
+
         <div class="text-center">
           <button
             @click="isRegistering = true"
@@ -119,6 +127,7 @@ const {
   signInWithEmail: authSignInWithEmail,
   signUpWithEmail: authSignUpWithEmail,
   signInWithGoogle: authSignInWithGoogle,
+  signInWithDemo: authSignInWithDemo,
   loading: authLoading,
   error: authError,
   user
@@ -157,6 +166,16 @@ const signInWithGoogle = async () => {
   if (result.success) {
     await navigateTo('/app')
   }
+}
+
+const signInWithDemo = async () => {
+  try {
+    const result = await authSignInWithDemo()
+    if (result.success) {
+      await navigateTo('/app')
+    }
+  } catch (error) {
+    }
 }
 
 useHead({

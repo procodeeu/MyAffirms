@@ -169,16 +169,47 @@ const loading = ref(false)
 
 let unsubscribe = null
 
+onMounted(() => {
+  
+  setTimeout(() => {
+    if (user.value?.uid) {
+      const saved = localStorage.getItem(`projects_${user.value.uid}`)
+      if (saved) {
+        projects.value = JSON.parse(saved)
+      }
+    }
+  }, 100)
+})
+
 watchEffect(() => {
   if (user.value) {
-    
     if (unsubscribe) {
       unsubscribe()
     }
 
-    unsubscribe = subscribeToUserProjects((userProjects) => {
-      projects.value = userProjects
-    })
+    const saved = localStorage.getItem(`projects_${user.value.uid}`)
+    if (saved) {
+      projects.value = JSON.parse(saved)
+    }
+
+    try {
+      unsubscribe = subscribeToUserProjects((userProjects) => {
+        const currentProjects = projects.value || []
+        const firebaseProjects = userProjects || []
+
+        const projectMap = new Map()
+
+        currentProjects.forEach(p => projectMap.set(p.id, p))
+
+        firebaseProjects.forEach(p => projectMap.set(p.id, p))
+        
+        const mergedProjects = Array.from(projectMap.values())
+        projects.value = mergedProjects
+        
+        localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(mergedProjects))
+      })
+    } catch (error) {
+      }
   } else {
     projects.value = []
   }
@@ -201,16 +232,32 @@ const createProject = async () => {
   loading.value = true
   try {
     const name = newProjectName.value.trim() || getDefaultProjectName()
-    
-    const projectId = await firestoreCreateProject({
+    const newProject = {
+      id: Date.now().toString(),
       name,
-      affirmations: []
-    })
+      affirmations: [],
+      userId: user.value?.uid,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+    
+    try {
+      
+      const projectId = await firestoreCreateProject({
+        name,
+        affirmations: []
+      })
+      newProject.id = projectId
+    } catch (firebaseError) {
+      projects.value.push(newProject)
+      
+      localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(projects.value))
+    }
     
     newProjectName.value = ''
     showNewProjectModal.value = false
 
-    navigateTo(`/project/${projectId}`)
+    navigateTo(`/project/${newProject.id}`)
   } catch (error) {
     alert('Failed to create project')
   } finally {
