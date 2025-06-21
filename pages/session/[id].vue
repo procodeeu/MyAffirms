@@ -112,6 +112,7 @@
 import { Play } from 'lucide-vue-next'
 
 const route = useRoute()
+const { user } = useAuth()
 const { getUserProjects } = useFirestore()
 
 const project = ref(null)
@@ -131,13 +132,38 @@ const currentAffirmation = computed(() =>
 const synth = ref(null)
 const currentUtterance = ref(null)
 
-onMounted(async () => {
-  
+const loadProject = async () => {
   try {
-    const projects = await getUserProjects()
-    project.value = projects.find(p => p.id === route.params.id)
+    if (user.value?.uid) {
+      const saved = localStorage.getItem(`projects_${user.value.uid}`)
+      if (saved) {
+        const projects = JSON.parse(saved)
+        project.value = projects.find(p => p.id === route.params.id)
+        }
+    }
+
+    if (!project.value) {
+      try {
+        const projects = await getUserProjects()
+        project.value = projects.find(p => p.id === route.params.id)
+        } catch (firebaseError) {
+        }
+    }
   } catch (error) {
     }
+}
+
+watchEffect(() => {
+  if (user.value) {
+    loadProject()
+  }
+})
+
+onMounted(async () => {
+  
+  if (user.value) {
+    await loadProject()
+  }
 
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     synth.value = window.speechSynthesis
@@ -156,9 +182,11 @@ const speak = (text) => {
     utterance.onend = () => {
       resolve()
     }
-    utterance.onerror = () => {
+    utterance.onerror = (error) => {
       resolve()
     }
+    utterance.onstart = () => {
+      }
     
     currentUtterance.value = utterance
     synth.value.speak(utterance)
@@ -166,7 +194,9 @@ const speak = (text) => {
 }
 
 const startSession = async () => {
-  if (activeAffirmations.value.length === 0) return
+  if (activeAffirmations.value.length === 0) {
+    return
+  }
   
   isPlaying.value = true
   currentIndex.value = 0
@@ -175,7 +205,9 @@ const startSession = async () => {
 }
 
 const playCurrentAffirmation = async () => {
-  if (!isPlaying.value || !currentAffirmation.value) return
+  if (!isPlaying.value || !currentAffirmation.value) {
+    return
+  }
   
   await speak(currentAffirmation.value.text)
   

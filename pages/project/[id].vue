@@ -115,13 +115,39 @@ const activeAffirmations = computed(() =>
   project.value?.affirmations?.filter(a => a.isActive) || []
 )
 
-onMounted(async () => {
+const loadProject = async () => {
   try {
-    const projects = await getUserProjects()
-    project.value = projects.find(p => p.id === route.params.id)
-  } catch (error) {
+    if (user.value?.uid) {
+      const saved = localStorage.getItem(`projects_${user.value.uid}`)
+      if (saved) {
+        const projects = JSON.parse(saved)
+        project.value = projects.find(p => p.id === route.params.id)
+        }
+    }
+
+    if (!project.value) {
+      try {
+        const projects = await getUserProjects()
+        project.value = projects.find(p => p.id === route.params.id)
+        } catch (firebaseError) {
+        }
+    }
+    
+    } catch (error) {
     } finally {
     loading.value = false
+  }
+}
+
+watchEffect(() => {
+  if (user.value) {
+    loadProject()
+  }
+})
+
+onMounted(() => {
+  if (user.value) {
+    loadProject()
   }
 })
 
@@ -141,8 +167,26 @@ const addAffirmation = async () => {
   ]
   
   try {
-    await updateProject(project.value.id, { affirmations: updatedAffirmations })
+    
+    try {
+      await updateProject(project.value.id, { affirmations: updatedAffirmations })
+    } catch (firebaseError) {
+      }
+
     project.value.affirmations = updatedAffirmations
+
+    if (user.value?.uid) {
+      const saved = localStorage.getItem(`projects_${user.value.uid}`)
+      if (saved) {
+        const projects = JSON.parse(saved)
+        const projectIndex = projects.findIndex(p => p.id === project.value.id)
+        if (projectIndex !== -1) {
+          projects[projectIndex] = { ...project.value }
+          localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(projects))
+        }
+      }
+    }
+    
     newAffirmationText.value = ''
   } catch (error) {
     alert('Failed to add affirmation')
@@ -159,8 +203,25 @@ const toggleAffirmation = async (affirmationId) => {
   )
   
   try {
-    await updateProject(project.value.id, { affirmations: updatedAffirmations })
+    
+    try {
+      await updateProject(project.value.id, { affirmations: updatedAffirmations })
+    } catch (firebaseError) {
+      }
+
     project.value.affirmations = updatedAffirmations
+
+    if (user.value?.uid) {
+      const saved = localStorage.getItem(`projects_${user.value.uid}`)
+      if (saved) {
+        const projects = JSON.parse(saved)
+        const projectIndex = projects.findIndex(p => p.id === project.value.id)
+        if (projectIndex !== -1) {
+          projects[projectIndex] = { ...project.value }
+          localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(projects))
+        }
+      }
+    }
   } catch (error) {
     }
 }
@@ -173,8 +234,25 @@ const deleteAffirmation = async (affirmationId) => {
   )
   
   try {
-    await updateProject(project.value.id, { affirmations: updatedAffirmations })
+    
+    try {
+      await updateProject(project.value.id, { affirmations: updatedAffirmations })
+    } catch (firebaseError) {
+      }
+
     project.value.affirmations = updatedAffirmations
+
+    if (user.value?.uid) {
+      const saved = localStorage.getItem(`projects_${user.value.uid}`)
+      if (saved) {
+        const projects = JSON.parse(saved)
+        const projectIndex = projects.findIndex(p => p.id === project.value.id)
+        if (projectIndex !== -1) {
+          projects[projectIndex] = { ...project.value }
+          localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(projects))
+        }
+      }
+    }
   } catch (error) {
     }
 }
