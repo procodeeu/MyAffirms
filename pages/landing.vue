@@ -1,123 +1,209 @@
 <template>
-  <div class="min-h-screen bg-brand-bg">
-    
-    <div class="container mx-auto px-4 py-16">
-      <div class="text-center mb-16">
-        <h1 class="text-5xl font-bold text-white mb-4 font-crimson">
-          My affirms
-        </h1>
-        <p class="text-2xl text-white mb-8 max-w-2xl mx-auto font-crimson italic opacity-95">
-          Affirmations that reveal, not just heal
-        </p>
-        <p class="text-lg text-white mb-8 max-w-2xl mx-auto opacity-90">
-          Twoja osobista aplikacja do afirmacji. Stwórz, organizuj i odtwarzaj pozytywne afirmacje które zmienią Twoje życie.
-        </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <button 
-            @click="$router.push('/auth')"
-            class="bg-white hover:bg-gray-100 text-brand-bg px-8 py-3 rounded-lg font-medium text-lg shadow-lg"
-          >
-            Zacznij za darmo
-          </button>
-          <button 
-            @click="scrollToDemo"
-            class="border-2 border-white text-white hover:bg-white hover:text-brand-bg px-8 py-3 rounded-lg font-medium text-lg transition-all"
-          >
-            Zobacz demo
-          </button>
-        </div>
-      </div>
-
-      <div class="grid md:grid-cols-3 gap-8 mb-16">
-        <div class="bg-white rounded-lg p-6 shadow-md">
-          <div class="text-blue-600 text-3xl mb-4"><Target class="w-6 h-6" /></div>
-          <h3 class="text-xl font-semibold mb-3">Projekty afirmacji</h3>
-          <p class="text-gray-600">Organizuj swoje afirmacje w tematyczne projekty. Kariera, zdrowie, relacje - wszystko w jednym miejscu.</p>
-        </div>
+  <div class="font-crimson bg-gradient-to-br from-sky-300 to-emerald-300 min-h-screen text-gray-700 leading-relaxed">
+    <div class="max-w-6xl mx-auto px-5">
+      
+      <header class="text-center py-16 pb-10 relative overflow-hidden">
         
-        <div class="bg-white rounded-lg p-6 shadow-md">
-          <div class="text-blue-600 text-3xl mb-4"><Music class="w-6 h-6" /></div>
-          <h3 class="text-xl font-semibold mb-3">Odtwarzanie głosowe</h3>
-          <p class="text-gray-600">Słuchaj swoich afirmacji z naturalnym głosem. Idealne na poranną rutynę lub medytację.</p>
-        </div>
+        <div class="absolute top-1/2 left-[-100px] transform -translate-y-1/2 text-[12rem] opacity-15 pointer-events-none z-10 animate-float-left md:block hidden"><ThumbsUp class="w-32 h-32" /></div>
+        <div class="absolute top-1/2 right-[-100px] transform -translate-y-1/2 text-[12rem] opacity-15 pointer-events-none z-10 animate-float-right md:block hidden"><ThumbsUp class="w-32 h-32" /></div>
         
-        <div class="bg-white rounded-lg p-6 shadow-md">
-          <div class="text-blue-600 text-3xl mb-4"><BarChart3 class="w-6 h-6" /></div>
-          <h3 class="text-xl font-semibold mb-3">Śledzenie postępów</h3>
-          <p class="text-gray-600">Monitoruj swoją praktykę afirmacji i buduj pozytywne nawyki dzień po dniu.</p>
-        </div>
-      </div>
-
-      <div id="demo" class="bg-white rounded-lg shadow-lg p-8 mb-16">
-        <h2 class="text-3xl font-bold text-center mb-8">Jak to działa?</h2>
-        
-        <div class="grid md:grid-cols-2 gap-8 items-center">
-          <div>
-            <div class="space-y-6">
-              <div class="flex items-start gap-4">
-                <div class="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center font-bold">1</div>
-                <div>
-                  <h4 class="font-semibold">Utwórz projekt</h4>
-                  <p class="text-gray-600">Zacznij od stworzenia projektu, np. "Pewność siebie"</p>
-                </div>
-              </div>
-              
-              <div class="flex items-start gap-4">
-                <div class="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center font-bold">2</div>
-                <div>
-                  <h4 class="font-semibold">Dodaj afirmacje</h4>
-                  <p class="text-gray-600">Wpisz pozytywne afirmacje które chcesz praktykować</p>
-                </div>
-              </div>
-              
-              <div class="flex items-start gap-4">
-                <div class="bg-blue-100 text-blue-600 rounded-full w-8 h-8 flex items-center justify-center font-bold">3</div>
-                <div>
-                  <h4 class="font-semibold">Rozpocznij sesję</h4>
-                  <p class="text-gray-600">Kliknij play i słuchaj swoich afirmacji</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="bg-gray-50 rounded-lg p-6">
-            <div class="bg-white rounded-lg p-4 mb-4 border">
-              <h5 class="font-medium mb-2"><Folder class="w-16 h-16" /> Pewność siebie</h5>
-              <div class="space-y-2 text-sm text-gray-600">
-                <p><Check class="w-4 h-4" /> Jestem pewny swojej wartości</p>
-                <p><Check class="w-4 h-4" /> Mam prawo do sukcesu</p>
-                <p><Check class="w-4 h-4" /> Każdego dnia staję się silniejszy</p>
-              </div>
-            </div>
-            <button class="w-full bg-blue-600 text-white py-2 rounded font-medium">
-              <Play class="w-4 h-4" /> Rozpocznij sesję
+        <div class="relative z-20">
+          <h1 class="font-crimson text-6xl md:text-7xl font-bold text-white mb-5 tracking-tight">My affirms</h1>
+          <p class="font-crimson text-xl text-white/90 italic mb-8 font-normal">
+            Affirmations that reveal, not just heal
+          </p>
+          <p class="font-crimson text-lg text-white/80 max-w-2xl mx-auto mb-10 leading-7">
+            Twoja osobista aplikacja do afirmacji. Stwórz, organizuj i odtwarzaj pozytywne afirmacje które 
+            zmienią Twoje życie.
+          </p>
+          <div class="flex gap-5 justify-center flex-wrap mb-16">
+            <button 
+              @click="$router.push('/auth')"
+              class="font-crimson px-8 py-4 border-0 text-base font-semibold cursor-pointer transition-all duration-300 no-underline inline-block bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 hover:text-white rounded-lg shadow-lg"
+            >
+              Zacznij za darmo
+            </button>
+            <button 
+              @click="scrollToDemo"
+              class="font-crimson px-8 py-4 border-0 text-base font-semibold cursor-pointer transition-all duration-300 no-underline inline-block bg-transparent border-2 border-white/50 text-white hover:bg-white/15 hover:text-white rounded-lg"
+            >
+              Zobacz demo
             </button>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div class="text-center bg-white text-brand-bg rounded-lg p-12 shadow-lg">
-        <h2 class="text-3xl font-bold mb-4">Gotowy na zmianę?</h2>
-        <p class="text-xl mb-6 opacity-80">
-          Dołącz do tysięcy osób które już zmieniły swoje życie z My affirms
+      <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
+        <div class="bg-white/95 p-10 rounded-3xl shadow-lg transition-all duration-300 backdrop-blur-sm hover:-translate-y-2 hover:shadow-xl feature-card">
+          <div class="w-15 h-15 bg-gradient-to-br from-cyan-600 to-cyan-400 rounded-2xl flex items-center justify-center mb-5 text-2xl">
+            <Target class="w-6 h-6" />
+          </div>
+          <h3 class="font-crimson text-xl font-semibold text-gray-800 mb-4">
+            Projekty afirmacji
+          </h3>
+          <p class="font-crimson text-gray-500 leading-relaxed">
+            Organizuj swoje afirmacje w tematyczne projekty. Kariera, zdrowie, relacje - 
+            wszystko w jednym miejscu.
+          </p>
+        </div>
+        
+        <div class="bg-white/95 p-10 rounded-3xl shadow-lg transition-all duration-300 backdrop-blur-sm hover:-translate-y-2 hover:shadow-xl feature-card">
+          <div class="w-15 h-15 bg-gradient-to-br from-cyan-600 to-cyan-400 rounded-2xl flex items-center justify-center mb-5 text-2xl">
+            <Music class="w-6 h-6" />
+          </div>
+          <h3 class="font-crimson text-xl font-semibold text-gray-800 mb-4">
+            Odtwarzanie głosowe
+          </h3>
+          <p class="font-crimson text-gray-500 leading-relaxed">
+            Słuchaj swoich afirmacji z naturalnym głosem. Idealne na poranną rutynę lub 
+            medytację.
+          </p>
+        </div>
+        
+        <div class="bg-white/95 p-10 rounded-3xl shadow-lg transition-all duration-300 backdrop-blur-sm hover:-translate-y-2 hover:shadow-xl feature-card">
+          <div class="w-15 h-15 bg-gradient-to-br from-cyan-600 to-cyan-400 rounded-2xl flex items-center justify-center mb-5 text-2xl">
+            <BarChart3 class="w-6 h-6" />
+          </div>
+          <h3 class="font-crimson text-xl font-semibold text-gray-800 mb-4">
+            Śledzenie postępów
+          </h3>
+          <p class="font-crimson text-gray-500 leading-relaxed">
+            Monitoruj swoją praktykę afirmacji i buduj pozytywne nawyki dzień po dniu.
+          </p>
+        </div>
+      </section>
+
+      <section id="demo" class="bg-white/95 rounded-3xl p-16 mb-16 backdrop-blur-sm shadow-lg">
+        <h2 class="font-crimson text-center text-4xl font-bold text-gray-800 mb-12">
+          Jak to działa?
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
+          <div class="text-center">
+            <div class="step-number w-15 h-15 bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-400 text-white rounded-2xl flex items-center justify-center font-orbitron font-black text-xl mx-auto mb-5 shadow-lg relative overflow-hidden">
+              1
+            </div>
+            <h3 class="font-crimson text-lg font-semibold text-gray-800 mb-3">
+              Utwórz projekt
+            </h3>
+            <p class="font-crimson text-gray-500 leading-6">
+              Zacznij od stworzenia projektu, np. "Pewność siebie"
+            </p>
+          </div>
+          
+          <div class="text-center">
+            <div class="step-number w-15 h-15 bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-400 text-white rounded-2xl flex items-center justify-center font-orbitron font-black text-xl mx-auto mb-5 shadow-lg relative overflow-hidden">
+              2
+            </div>
+            <h3 class="font-crimson text-lg font-semibold text-gray-800 mb-3">
+              Dodaj afirmacje
+            </h3>
+            <p class="font-crimson text-gray-500 leading-6">
+              Wpisz pozytywne afirmacje które chcesz praktykować
+            </p>
+          </div>
+          
+          <div class="text-center">
+            <div class="step-number w-15 h-15 bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-400 text-white rounded-2xl flex items-center justify-center font-orbitron font-black text-xl mx-auto mb-5 shadow-lg relative overflow-hidden">
+              3
+            </div>
+            <h3 class="font-crimson text-lg font-semibold text-gray-800 mb-3">
+              Rozpocznij sesję
+            </h3>
+            <p class="font-crimson text-gray-500 leading-6">
+              Kliknij play i słuchaj swoich afirmacji
+            </p>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 rounded-2xl p-8 mt-10">
+          <h4 class="font-crimson text-lg font-semibold text-gray-800 mb-4 flex items-center gap-3">
+            <Clipboard class="w-5 h-5" /> Pewność siebie
+          </h4>
+          <ul class="list-none p-0">
+            <li class="font-crimson py-2 text-gray-600 flex items-center gap-3">
+              <span class="text-emerald-600 font-bold"><Check class="w-4 h-4" /></span>
+              Jestem pewny swojej wartości
+            </li>
+            <li class="font-crimson py-2 text-gray-600 flex items-center gap-3">
+              <span class="text-emerald-600 font-bold"><Check class="w-4 h-4" /></span>
+              Mam prawo do sukcesu
+            </li>
+            <li class="font-crimson py-2 text-gray-600 flex items-center gap-3">
+              <span class="text-emerald-600 font-bold"><Check class="w-4 h-4" /></span>
+              Każdego dnia staję się silniejszy
+            </li>
+          </ul>
+        </div>
+
+        <div class="text-center mt-10">
+          <button class="font-crimson px-10 py-5 text-lg bg-transparent text-gray-800 border-0 font-semibold cursor-pointer transition-all duration-300 hover:bg-cyan-600/10 hover:text-purple-500 rounded-lg btn-large">
+            <Play class="w-4 h-4" /> Rozpocznij sesję
+          </button>
+        </div>
+      </section>
+
+      <footer class="text-center py-10 text-white/80">
+        <p class="font-crimson">
+          &copy; 2024 My affirms. Stwórz pozytywne zmiany w swoim życiu.
         </p>
-        <button 
-          @click="$router.push('/auth')"
-          class="bg-brand-bg text-white hover:bg-opacity-90 px-8 py-3 rounded-lg font-medium text-lg shadow-lg"
-        >
-          Rozpocznij teraz - za darmo
-        </button>
-      </div>
+      </footer>
     </div>
   </div>
 </template>
 
 <script setup>
-import { Target, Music, BarChart3, Folder, Play, Check } from 'lucide-vue-next'
+import { Target, Music, BarChart3, ThumbsUp, Clipboard, Play, Check } from 'lucide-vue-next'
 
 const scrollToDemo = () => {
   document.getElementById('demo').scrollIntoView({ behavior: 'smooth' })
 }
+
+onMounted(() => {
+  
+  const cards = document.querySelectorAll('.feature-card')
+  cards.forEach(card => {
+    card.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-8px) scale(1.02)'
+    })
+    
+    card.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0) scale(1)'
+    })
+  })
+
+  document.querySelectorAll('.btn-large, button').forEach(button => {
+    button.addEventListener('click', function(e) {
+      
+      const ripple = document.createElement('span')
+      const rect = this.getBoundingClientRect()
+      const size = Math.max(rect.width, rect.height)
+      const x = e.clientX - rect.left - size / 2
+      const y = e.clientY - rect.top - size / 2
+      
+      ripple.style.cssText = `
+        position: absolute;
+        width: ${size}px;
+        height: ${size}px;
+        left: ${x}px;
+        top: ${y}px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        transform: scale(0);
+        animation: ripple 0.6s ease-out;
+        pointer-events: none;
+      `
+      
+      this.style.position = 'relative'
+      this.style.overflow = 'hidden'
+      this.appendChild(ripple)
+      
+      setTimeout(() => {
+        ripple.remove()
+      }, 600)
+    })
+  })
+})
 
 useHead({
   title: 'My affirms - Twoja aplikacja do afirmacji',
@@ -129,3 +215,56 @@ useHead({
   ]
 })
 </script>
+
+<style scoped>
+@keyframes floatLeft {
+  0%, 100% { transform: translateY(-50%) rotate(-5deg); }
+  50% { transform: translateY(-60%) rotate(5deg); }
+}
+
+@keyframes floatRight {
+  0%, 100% { transform: translateY(-50%) rotate(5deg); }
+  50% { transform: translateY(-60%) rotate(-5deg); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+  50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+  100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-float-left {
+  animation: floatLeft 6s ease-in-out infinite;
+}
+
+.animate-float-right {
+  animation: floatRight 6s ease-in-out infinite reverse;
+}
+
+.step-number::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transform: rotate(45deg);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.w-15 {
+  width: 3.75rem;
+}
+
+.h-15 {
+  height: 3.75rem;
+}
+</style>

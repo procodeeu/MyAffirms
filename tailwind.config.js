@@ -13,7 +13,8 @@ module.exports = {
       fontFamily: {
         'sans': ['Crimson Text', 'serif'],
         'serif': ['Crimson Text', 'serif'],
-        'crimson': ['Crimson Text', 'serif']
+        'crimson': ['Crimson Text', 'serif'],
+        'orbitron': ['Orbitron', 'monospace']
       },
       colors: {
         'brand-blue': '#2C5282',
