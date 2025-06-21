@@ -1,18 +1,24 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-    <div class="container mx-auto px-4 py-8">
-      
-      <div class="text-center mb-8">
-        <button
-          @click="$router.back()"
-          class="text-gray-500 hover:text-gray-700 mb-4"
-        >
-          ← Powrót do projektu
-        </button>
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">
-          {{ project?.name || 'Sesja Afirmacji' }}
-        </h1>
+  <div class="min-h-screen bg-brand-bg">
+    
+    <header class="bg-brand-blue shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 py-4">
+        <div class="text-center">
+          <button
+            @click="$router.back()"
+            class="text-white hover:text-white opacity-90 hover:opacity-100 mb-4 inline-block"
+          >
+            ← Powrót do projektu
+          </button>
+          <div class="text-sm text-white font-crimson italic opacity-90 mb-2">My affirms</div>
+          <h1 class="text-3xl font-bold text-white mb-2">
+            {{ project?.name || 'Sesja Afirmacji' }}
+          </h1>
+        </div>
       </div>
+    </header>
+    
+    <div class="container mx-auto px-4 py-8">
 
       <div class="bg-white rounded-lg shadow-lg p-8 mb-6 max-w-2xl mx-auto">
         <div class="text-center mb-6">
@@ -205,6 +211,6 @@ definePageMeta({
 })
 
 useHead({
-  title: `Sesja: ${project.value?.name || 'Afirmacje'} - MyAffirms`
+  title: `Sesja: ${project.value?.name || 'Afirmacje'} - My affirms`
 })
 </script>

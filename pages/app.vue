@@ -1,14 +1,17 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     
-    <header class="bg-white shadow-sm border-b">
+    <header class="bg-brand-blue shadow-sm">
       <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-900">MyAffirms</h1>
+        <div>
+          <h1 class="text-2xl font-bold text-white font-crimson">My affirms</h1>
+          <p class="text-sm text-white font-crimson italic opacity-90">Affirmations that reveal, not just heal</p>
+        </div>
         <div class="flex items-center gap-4">
-          <span class="text-gray-600">Witaj, {{ user?.email || 'Użytkowniku' }}</span>
+          <span class="text-white opacity-90">Witaj, {{ user?.email || 'Użytkowniku' }}</span>
           <button
             @click="logout"
-            class="text-gray-500 hover:text-gray-700"
+            class="text-white hover:text-white opacity-90 hover:opacity-100"
           >
             Wyloguj
           </button>
@@ -298,6 +301,6 @@ definePageMeta({
 })
 
 useHead({
-  title: 'Moje projekty - MyAffirms'
+  title: 'Moje projekty - My affirms'
 })
 </script>

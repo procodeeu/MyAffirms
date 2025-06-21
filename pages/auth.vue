@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
     <div class="max-w-md w-full bg-white rounded-lg shadow-md p-8">
       <div class="text-center mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 mb-2">MyAffirms</h1>
+        <h1 class="text-2xl font-bold text-gray-900 mb-2 font-crimson">My affirms</h1>
         <p class="text-gray-600">Zaloguj się aby kontynuować</p>
       </div>
 
@@ -179,6 +179,6 @@ const signInWithDemo = async () => {
 }
 
 useHead({
-  title: 'Logowanie - MyAffirms'
+  title: 'Logowanie - My affirms'
 })
 </script>

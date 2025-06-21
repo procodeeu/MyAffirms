@@ -1,21 +1,24 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     
-    <header class="bg-white shadow-sm border-b">
+    <header class="bg-brand-blue shadow-sm">
       <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <div class="flex items-center gap-4">
           <button
             @click="$router.back()"
-            class="text-gray-500 hover:text-gray-700"
+            class="text-white hover:text-white opacity-90 hover:opacity-100"
           >
             ← Powrót
           </button>
-          <h1 class="text-2xl font-bold text-gray-900">{{ project?.name || 'Projekt' }}</h1>
+          <div>
+            <div class="text-xs text-white font-crimson italic opacity-90">My affirms</div>
+            <h1 class="text-2xl font-bold text-white">{{ project?.name || 'Projekt' }}</h1>
+          </div>
         </div>
         <button
           @click="startSession"
           :disabled="!activeAffirmations.length"
-          class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg font-medium"
+          class="bg-white hover:bg-gray-100 disabled:bg-gray-300 text-brand-blue px-4 py-2 rounded-lg font-medium"
         >
           <Play class="w-4 h-4" /> Rozpocznij sesję
         </button>
@@ -187,6 +190,6 @@ definePageMeta({
 })
 
 useHead({
-  title: `${project.value?.name || 'Projekt'} - MyAffirms`
+  title: `${project.value?.name || 'Projekt'} - My affirms`
 })
 </script>

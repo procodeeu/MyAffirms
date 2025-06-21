@@ -1,24 +1,27 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+  <div class="min-h-screen bg-brand-bg">
     
     <div class="container mx-auto px-4 py-16">
       <div class="text-center mb-16">
-        <h1 class="text-5xl font-bold text-gray-900 mb-6">
-          MyAffirms
+        <h1 class="text-5xl font-bold text-white mb-4 font-crimson">
+          My affirms
         </h1>
-        <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+        <p class="text-2xl text-white mb-8 max-w-2xl mx-auto font-crimson italic opacity-95">
+          Affirmations that reveal, not just heal
+        </p>
+        <p class="text-lg text-white mb-8 max-w-2xl mx-auto opacity-90">
           Twoja osobista aplikacja do afirmacji. Stwórz, organizuj i odtwarzaj pozytywne afirmacje które zmienią Twoje życie.
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <button 
             @click="$router.push('/auth')"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium text-lg"
+            class="bg-white hover:bg-gray-100 text-brand-bg px-8 py-3 rounded-lg font-medium text-lg shadow-lg"
           >
             Zacznij za darmo
           </button>
           <button 
             @click="scrollToDemo"
-            class="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 rounded-lg font-medium text-lg"
+            class="border-2 border-white text-white hover:bg-white hover:text-brand-bg px-8 py-3 rounded-lg font-medium text-lg transition-all"
           >
             Zobacz demo
           </button>
@@ -93,14 +96,14 @@
         </div>
       </div>
 
-      <div class="text-center bg-blue-600 text-white rounded-lg p-12">
+      <div class="text-center bg-white text-brand-bg rounded-lg p-12 shadow-lg">
         <h2 class="text-3xl font-bold mb-4">Gotowy na zmianę?</h2>
-        <p class="text-xl mb-6 text-blue-100">
-          Dołącz do tysięcy osób które już zmieniły swoje życie z MyAffirms
+        <p class="text-xl mb-6 opacity-80">
+          Dołącz do tysięcy osób które już zmieniły swoje życie z My affirms
         </p>
         <button 
           @click="$router.push('/auth')"
-          class="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-medium text-lg"
+          class="bg-brand-bg text-white hover:bg-opacity-90 px-8 py-3 rounded-lg font-medium text-lg shadow-lg"
         >
           Rozpocznij teraz - za darmo
         </button>
@@ -117,11 +120,11 @@ const scrollToDemo = () => {
 }
 
 useHead({
-  title: 'MyAffirms - Twoja aplikacja do afirmacji',
+  title: 'My affirms - Twoja aplikacja do afirmacji',
   meta: [
     { 
       name: 'description', 
-      content: 'Stwórz, organizuj i odtwarzaj pozytywne afirmacje. Zmień swoje życie z MyAffirms - darmowej aplikacji do praktyki afirmacji.' 
+      content: 'Stwórz, organizuj i odtwarzaj pozytywne afirmacje. Zmień swoje życie z My affirms - darmowej aplikacji do praktyki afirmacji.' 
     }
   ]
 })

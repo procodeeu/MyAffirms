@@ -7,5 +7,24 @@ export default defineNuxtConfig({
   ssr: true,
   devServer: {
     port: 3011
+  },
+  app: {
+    head: {
+      link: [
+        {
+          rel: 'preconnect',
+          href: 'https:
+        },
+        {
+          rel: 'preconnect',
+          href: 'https:
+          crossorigin: ''
+        },
+        {
+          rel: 'stylesheet',
+          href: 'https:
+        }
+      ]
+    }
   }
 })
