@@ -12,6 +12,7 @@
           <p class="font-crimson text-xl text-white/90 italic mb-8 font-normal">
             Affirmations that reveal, not just heal
           </p>
+          <div class="text-xs text-white/60 mb-4">v{{ appVersion }}</div>
           <p class="font-crimson text-lg text-white/80 max-w-2xl mx-auto mb-10 leading-7">
             Twoja osobista aplikacja do afirmacji. Stwórz, organizuj i odtwarzaj pozytywne afirmacje które 
             zmienią Twoje życie.
@@ -154,6 +155,9 @@
 
 <script setup>
 import { Target, Music, BarChart3, ThumbsUp, Clipboard, Play, Check } from 'lucide-vue-next'
+
+
+const appVersion = ref(`${Date.now()}`)
 
 const scrollToDemo = () => {
   document.getElementById('demo').scrollIntoView({ behavior: 'smooth' })

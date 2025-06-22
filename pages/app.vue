@@ -9,6 +9,7 @@
         </div>
         <div class="flex items-center gap-4">
           <span class="text-white opacity-90">Witaj, {{ user?.email || 'Użytkowniku' }}</span>
+          <span class="text-xs text-white opacity-60">v{{ appVersion }}</span>
           <button
             @click="logout"
             class="text-white hover:text-white opacity-90 hover:opacity-100"
@@ -29,7 +30,8 @@
           </div>
           <button
             @click="showNewProjectModal = true"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2"
+            :disabled="!user"
+            class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2"
           >
             <span class="text-lg">+</span>
             Nowy projekt
@@ -54,16 +56,11 @@
               </div>
               <div class="flex items-center gap-2">
                 <button
-                  @click.stop="editProject(project)"
+                  @click.stop="openProjectSettings(project)"
                   class="text-gray-400 hover:text-gray-600 p-1"
+                  title="Ustawienia projektu"
                 >
-                  ✏️
-                </button>
-                <button
-                  @click.stop="deleteProject(project.id)"
-                  class="text-gray-400 hover:text-red-600 p-1"
-                >
-                  🗑️
+                  <Settings class="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -152,23 +149,123 @@
         </div>
       </div>
     </div>
+
+    <div
+      v-if="showProjectSettingsModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+      @click="closeProjectSettings"
+    >
+      <div
+        class="bg-white rounded-lg p-6 w-full max-w-md"
+        @click.stop
+      >
+        <h3 class="text-lg font-semibold mb-4">Ustawienia projektu</h3>
+
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Nazwa projektu
+          </label>
+          <input
+            v-model="editingProjectName"
+            type="text"
+            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Wprowadź nazwę projektu..."
+            @keyup.enter="saveProjectName"
+          />
+        </div>
+
+        <div class="space-y-3">
+          <button
+            @click="saveProjectName"
+            :disabled="!editingProjectName.trim()"
+            class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white py-2 rounded font-medium"
+          >
+            Zapisz nazwę
+          </button>
+          
+          <button
+            @click="copyProject"
+            class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded font-medium flex items-center justify-center gap-2"
+          >
+            <Clipboard class="w-5 h-5" /> Kopiuj projekt
+          </button>
+          
+          <button
+            @click="showDeleteProjectConfirm = true"
+            class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded font-medium"
+          >
+            Usuń projekt
+          </button>
+          
+          <button
+            @click="closeProjectSettings"
+            class="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 py-2 rounded font-medium"
+          >
+            Anuluj
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-if="showDeleteProjectConfirm"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+      @click="showDeleteProjectConfirm = false"
+    >
+      <div
+        class="bg-white rounded-lg p-6 w-full max-w-md"
+        @click.stop
+      >
+        <h3 class="text-lg font-semibold mb-4 text-red-600">Usuń projekt</h3>
+        <div class="mb-6">
+          <p class="text-gray-700 mb-3">Czy na pewno chcesz usunąć projekt?</p>
+          <div class="bg-gray-50 p-3 rounded border-l-4 border-red-400">
+            <p class="text-gray-800 font-medium">{{ selectedProject?.name }}</p>
+            <p class="text-sm text-gray-600">{{ selectedProject?.affirmations?.length || 0 }} afirmacji</p>
+          </div>
+          <p class="text-sm text-gray-500 mt-2">Ta operacja jest nieodwracalna. Wszystkie afirmacje zostaną usunięte.</p>
+        </div>
+        <div class="flex gap-3">
+          <button
+            @click="confirmDeleteProject"
+            class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded font-medium"
+          >
+            Usuń projekt
+          </button>
+          <button
+            @click="showDeleteProjectConfirm = false"
+            class="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 py-2 rounded font-medium"
+          >
+            Anuluj
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { Folder, Play } from 'lucide-vue-next'
+import { Settings, Folder, Clipboard, Play } from 'lucide-vue-next'
 
 const { user, logout: authLogout } = useAuth()
 const { 
   subscribeToUserProjects,
   createProject: firestoreCreateProject,
-  deleteProject: firestoreDeleteProject
+  deleteProject: firestoreDeleteProject,
+  updateProject
 } = useFirestore()
+
+const appVersion = ref(`${Date.now()}`)
 
 const projects = ref([])
 const showNewProjectModal = ref(false)
 const newProjectName = ref('')
 const loading = ref(false)
+
+const showProjectSettingsModal = ref(false)
+const showDeleteProjectConfirm = ref(false)
+const selectedProject = ref(null)
+const editingProjectName = ref('')
 
 let unsubscribe = null
 
@@ -202,21 +299,10 @@ watchEffect(() => {
       unsubscribe = subscribeToUserProjects((userProjects) => {
         ))
 
-        const currentProjects = projects.value || []
         const firebaseProjects = userProjects || []
+        projects.value = firebaseProjects
         
-        const projectMap = new Map()
-
-        currentProjects.forEach(p => projectMap.set(p.id, p))
-
-        firebaseProjects.forEach(p => projectMap.set(p.id, p))
-        
-        const mergedProjects = Array.from(projectMap.values())
-        ))
-        
-        projects.value = mergedProjects
-        
-        localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(mergedProjects))
+        localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(firebaseProjects))
         })
       
       if (unsubscribe) {
@@ -243,6 +329,11 @@ const getDefaultProjectName = () => {
 const createProject = async () => {
   if (loading.value) return
   
+  if (!user.value) {
+    alert('Authentication required to create project')
+    return
+  }
+  
   loading.value = true
   try {
     const name = newProjectName.value.trim() || getDefaultProjectName()
@@ -250,7 +341,7 @@ const createProject = async () => {
       id: Date.now().toString(),
       name,
       affirmations: [],
-      userId: user.value?.uid,
+      userId: user.value.uid,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }
@@ -262,11 +353,11 @@ const createProject = async () => {
         affirmations: []
       })
       newProject.id = projectId
-    } catch (firebaseError) {
+      } catch (firebaseError) {
       projects.value.push(newProject)
       
       localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(projects.value))
-    }
+      }
     
     newProjectName.value = ''
     showNewProjectModal.value = false
@@ -283,17 +374,102 @@ const selectProject = (project) => {
   navigateTo(`/project/${project.id}`)
 }
 
-const editProject = (project) => {
-  navigateTo(`/project/${project.id}/edit`)
+const openProjectSettings = (project) => {
+  selectedProject.value = project
+  editingProjectName.value = project.name
+  showProjectSettingsModal.value = true
 }
 
-const deleteProject = async (projectId) => {
-  if (!confirm('Czy na pewno chcesz usunąć ten projekt?')) return
+const closeProjectSettings = () => {
+  showProjectSettingsModal.value = false
+  showDeleteProjectConfirm.value = false
+  selectedProject.value = null
+  editingProjectName.value = ''
+}
+
+const saveProjectName = async () => {
+  if (!editingProjectName.value.trim() || !selectedProject.value) return
   
   try {
-    await firestoreDeleteProject(projectId)
+    const updatedProject = {
+      ...selectedProject.value,
+      name: editingProjectName.value.trim(),
+      updatedAt: new Date().toISOString()
+    }
+
+    try {
+      await updateProject(selectedProject.value.id, { 
+        name: updatedProject.name,
+        updatedAt: updatedProject.updatedAt
+      })
+      } catch (error) {
+      }
+
+    const projectIndex = projects.value.findIndex(p => p.id === selectedProject.value.id)
+    if (projectIndex !== -1) {
+      projects.value[projectIndex] = updatedProject
+    }
+
+    if (user.value?.uid) {
+      localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(projects.value))
+      }
+    
+    closeProjectSettings()
+  } catch (error) {
+    alert('Failed to save project name')
+  }
+}
+
+const confirmDeleteProject = async () => {
+  if (!selectedProject.value) return
+  
+  try {
+    await firestoreDeleteProject(selectedProject.value.id)
+    closeProjectSettings()
   } catch (error) {
     alert('Failed to delete project')
+  }
+}
+
+const copyProject = async () => {
+  if (!selectedProject.value) return
+  
+  try {
+    
+    const originalProject = selectedProject.value
+    const copiedProject = {
+      id: Date.now().toString(),
+      name: `${originalProject.name} (kopia)`,
+      affirmations: originalProject.affirmations ? [...originalProject.affirmations].map(affirmation => ({
+        ...affirmation,
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 5), 
+        createdAt: new Date().toISOString()
+      })) : [],
+      userId: user.value.uid,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+    
+    try {
+      const projectId = await firestoreCreateProject({
+        name: copiedProject.name,
+        affirmations: copiedProject.affirmations
+      })
+      copiedProject.id = projectId
+      } catch (firebaseError) {
+      projects.value.push(copiedProject)
+      
+      localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(projects.value))
+      }
+    
+    closeProjectSettings()
+
+    setTimeout(() => {
+      alert(`Project "${originalProject.name}" copied as "${copiedProject.name}"`)
+    }, 100)
+    
+  } catch (error) {
+    alert('Failed to copy project')
   }
 }
 

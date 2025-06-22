@@ -25,7 +25,7 @@ export const useFirestore = () => {
     const q = query(
       projectsCollection.value,
       where('userId', '==', user.value.uid),
-      orderBy('createdAt', 'desc')
+      orderBy('createdAt', 'asc')
     )
     
     const querySnapshot = await getDocs(q)
@@ -47,7 +47,7 @@ export const useFirestore = () => {
     const q = query(
       projectsCollection.value,
       where('userId', '==', user.value.uid),
-      orderBy('createdAt', 'desc')
+      orderBy('createdAt', 'asc')
     )
     
     return onSnapshot(q, (querySnapshot) => {
