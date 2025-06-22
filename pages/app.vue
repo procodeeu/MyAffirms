@@ -192,14 +192,19 @@ watchEffect(() => {
 
     const saved = localStorage.getItem(`projects_${user.value.uid}`)
     if (saved) {
-      projects.value = JSON.parse(saved)
-    }
+      const localProjects = JSON.parse(saved)
+      ))
+      projects.value = localProjects
+    } else {
+      }
 
     try {
       unsubscribe = subscribeToUserProjects((userProjects) => {
+        ))
+
         const currentProjects = projects.value || []
         const firebaseProjects = userProjects || []
-
+        
         const projectMap = new Map()
 
         currentProjects.forEach(p => projectMap.set(p.id, p))
@@ -207,10 +212,16 @@ watchEffect(() => {
         firebaseProjects.forEach(p => projectMap.set(p.id, p))
         
         const mergedProjects = Array.from(projectMap.values())
+        ))
+        
         projects.value = mergedProjects
         
         localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(mergedProjects))
-      })
+        })
+      
+      if (unsubscribe) {
+        } else {
+        }
     } catch (error) {
       }
   } else {

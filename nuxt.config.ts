@@ -4,11 +4,20 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@pinia/nuxt'
   ],
-  ssr: true,
+  ssr: false,
+  nitro: {
+    preset: 'static',
+    routeRules: {}
+  },
   devServer: {
     port: 3011
   },
+  experimental: {
+    payloadExtraction: false
+  },
+  routeRules: {},
   app: {
+    baseURL: '/',
     head: {
       link: [
         {

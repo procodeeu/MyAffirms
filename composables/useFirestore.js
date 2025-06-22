@@ -36,7 +36,13 @@ export const useFirestore = () => {
   }
 
   const subscribeToUserProjects = (callback) => {
-    if (!user.value) return () => {}
+    if (!user.value) {
+      return () => {}
+    }
+    
+    if (!$firebase?.db) {
+      return () => {}
+    }
     
     const q = query(
       projectsCollection.value,

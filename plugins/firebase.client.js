@@ -35,31 +35,59 @@ export default defineNuxtPlugin(async () => {
       }
     }
   }
+
+  if (typeof window === 'undefined') {
+    return {
+      provide: {
+        firebase: {
+          app: null,
+          auth: null,
+          db: null,
+          analytics: null
+        }
+      }
+    }
+  }
   
-  const isDev = process.env.NODE_ENV === 'development'
-
-  const activeConfig = firebaseConfig
-
-  const app = initializeApp(activeConfig)
-
-  const auth = getAuth(app)
-  const db = getFirestore(app)
-
-  let analytics = null
   try {
-    if (!isDev) {
-      analytics = getAnalytics(app)
+    })
+
+    if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
+      throw new Error('Firebase config is incomplete')
     }
-  } catch (analyticsError) {
+
+    const app = initializeApp(firebaseConfig)
+    const auth = getAuth(app)
+    const db = getFirestore(app)
+    let analytics = null
+    try {
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      if (!isLocalhost && window.location.protocol === 'https:') {
+        analytics = getAnalytics(app)
+        } else {
+        }
+    } catch (analyticsError) {
+      }
+    
+    return {
+      provide: {
+        firebase: {
+          app,
+          auth,
+          db,
+          analytics
+        }
+      }
     }
-  
-  return {
-    provide: {
-      firebase: {
-        app,
-        auth,
-        db,
-        analytics
+  } catch (error) {
+    return {
+      provide: {
+        firebase: {
+          app: null,
+          auth: null,
+          db: null,
+          analytics: null
+        }
       }
     }
   }
