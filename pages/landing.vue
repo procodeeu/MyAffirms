@@ -150,6 +150,8 @@
         </p>
       </footer>
     </div>
+
+    <PWAInstallPrompt />
   </div>
 </template>
 
@@ -157,7 +159,8 @@
 import { Target, Music, BarChart3, ThumbsUp, Clipboard, Play, Check } from 'lucide-vue-next'
 
 
-const appVersion = ref(`${Date.now()}`)
+import { BUILD_VERSION } from '~/utils/version.js'
+const appVersion = ref(BUILD_VERSION)
 
 const scrollToDemo = () => {
   document.getElementById('demo').scrollIntoView({ behavior: 'smooth' })

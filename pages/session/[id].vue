@@ -77,16 +77,26 @@
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
-              Prędkość mowy: {{ speechRate }}x
+              Prędkość mowy: {{ speechRate }}x 
+              <span v-if="speechRate == 0.8" class="text-green-600 font-medium">(naturalna - {{ (speechRate * 100).toFixed(0) }}% prędkości pełnej)</span>
+              <span v-else-if="speechRate < 0.8" class="text-blue-600">{{ (speechRate * 100).toFixed(0) }}% prędkości pełnej</span>
+              <span v-else class="text-orange-600">{{ (speechRate * 100).toFixed(0) }}% prędkości pełnej</span>
             </label>
             <input
-              v-model="speechRate"
+              v-model.number="speechRate"
               type="range"
-              min="0.5"
-              max="2"
+              min="0.4"
+              max="1.6"
               step="0.1"
               class="w-full"
+              @input="() => nextTick(() => saveSettings())"
+              @change="() => nextTick(() => saveSettings())"
             />
+            <div class="flex justify-between text-xs text-gray-500 mt-1">
+              <span>0.4x (40%)</span>
+              <span class="text-green-600 font-medium">0.8x (naturalna - 80%)</span>
+              <span>1.6x (160%)</span>
+            </div>
           </div>
           
           <div>
@@ -94,13 +104,43 @@
               Pauza między afirmacjami: {{ pauseDuration }}s
             </label>
             <input
-              v-model="pauseDuration"
+              v-model.number="pauseDuration"
               type="range"
-              min="1"
-              max="10"
+              min="3"
+              max="30"
               step="1"
               class="w-full"
+              @input="saveSettings"
+              @change="saveSettings"
             />
+          </div>
+          
+          <div>
+            <label class="flex items-center text-sm font-medium text-gray-700 mb-2">
+              <input
+                v-model="repeatAffirmation"
+                type="checkbox"
+                class="mr-2"
+                @change="saveSettings"
+              />
+              Powtarzaj każdą afirmację drugi raz
+            </label>
+            
+            <div v-if="repeatAffirmation" class="ml-6 mt-2">
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Opóźnienie przed powtórzeniem: {{ repeatDelay }}s
+              </label>
+              <input
+                v-model.number="repeatDelay"
+                type="range"
+                min="3"
+                max="30"
+                step="1"
+                class="w-full"
+                @input="saveSettings"
+                @change="saveSettings"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -118,8 +158,18 @@ const { getUserProjects } = useFirestore()
 const project = ref(null)
 const isPlaying = ref(false)
 const currentIndex = ref(0)
-const speechRate = ref(0.9)
-const pauseDuration = ref(2)
+
+const defaultSettings = {
+  speechRate: 0.8,
+  pauseDuration: 15,
+  repeatAffirmation: false,
+  repeatDelay: 5
+}
+
+const speechRate = ref(defaultSettings.speechRate)
+const pauseDuration = ref(defaultSettings.pauseDuration)
+const repeatAffirmation = ref(defaultSettings.repeatAffirmation)
+const repeatDelay = ref(defaultSettings.repeatDelay)
 
 const activeAffirmations = computed(() => 
   project.value?.affirmations?.filter(a => a.isActive) || []
@@ -138,7 +188,9 @@ const loadProject = async () => {
       const saved = localStorage.getItem(`projects_${user.value.uid}`)
       if (saved) {
         const projects = JSON.parse(saved)
+        ))
         project.value = projects.find(p => p.id === route.params.id)
+        } else {
         }
     }
 
@@ -149,13 +201,102 @@ const loadProject = async () => {
         } catch (firebaseError) {
         }
     }
+
+    if (project.value) {
+      loadSettings()
+    }
   } catch (error) {
     }
+}
+
+const loadSettings = () => {
+  if (isSavingSettings) {
+    return
+  }
+  
+  isLoadingSettings = true
+  if (project.value?.sessionSettings) {
+    speechRate.value = Number(project.value.sessionSettings.speechRate ?? defaultSettings.speechRate)
+    pauseDuration.value = Number(project.value.sessionSettings.pauseDuration ?? defaultSettings.pauseDuration)
+    repeatAffirmation.value = Boolean(project.value.sessionSettings.repeatAffirmation ?? defaultSettings.repeatAffirmation)
+    repeatDelay.value = Number(project.value.sessionSettings.repeatDelay ?? defaultSettings.repeatDelay)
+  } else {
+    speechRate.value = defaultSettings.speechRate
+    pauseDuration.value = defaultSettings.pauseDuration
+    repeatAffirmation.value = defaultSettings.repeatAffirmation
+    repeatDelay.value = defaultSettings.repeatDelay
+  }
+  
+  isLoadingSettings = false
+}
+
+let isSavingSettings = false
+let isLoadingSettings = false
+
+const saveSettings = async () => {
+  if (!project.value || isSavingSettings || isLoadingSettings) {
+    return
+  }
+  
+  isSavingSettings = true
+  
+  const settings = {
+    speechRate: speechRate.value,
+    pauseDuration: pauseDuration.value,
+    repeatAffirmation: repeatAffirmation.value,
+    repeatDelay: repeatDelay.value
+  }
+
+  if (project.value.sessionSettings) {
+    Object.assign(project.value.sessionSettings, settings)
+  } else {
+    project.value.sessionSettings = settings
+  }
+
+  if (user.value?.uid) {
+    try {
+      const saved = localStorage.getItem(`projects_${user.value.uid}`)
+      if (saved) {
+        const projects = JSON.parse(saved)
+        const projectIndex = projects.findIndex(p => p.id === project.value.id)
+        if (projectIndex !== -1) {
+          projects[projectIndex].sessionSettings = settings
+          localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(projects))
+        }
+      }
+    } catch (error) {
+      }
+  }
+
+  clearTimeout(saveSettings.timeout)
+  saveSettings.timeout = setTimeout(async () => {
+    if (user.value?.uid && project.value?.id) {
+      try {
+        const { updateProject } = useFirestore()
+        await updateProject(project.value.id, { sessionSettings: settings })
+      } catch (error) {
+        
+        if (!error.message?.includes('not authenticated')) {
+          }
+      }
+    }
+    isSavingSettings = false
+  }, 1000)
+
+  setTimeout(() => {
+    isSavingSettings = false
+  }, 100)
 }
 
 watchEffect(() => {
   if (user.value) {
     loadProject()
+  }
+})
+
+watch(() => project.value?.id, (newProjectId, oldProjectId) => {
+  if (newProjectId && newProjectId !== oldProjectId) {
+    loadSettings()
   }
 })
 
@@ -210,6 +351,14 @@ const playCurrentAffirmation = async () => {
   }
   
   await speak(currentAffirmation.value.text)
+
+  if (isPlaying.value && repeatAffirmation.value) {
+    await new Promise(resolve => setTimeout(resolve, repeatDelay.value * 1000))
+    
+    if (isPlaying.value) {
+      await speak(currentAffirmation.value.text)
+    }
+  }
   
   if (isPlaying.value) {
     await new Promise(resolve => setTimeout(resolve, pauseDuration.value * 1000))

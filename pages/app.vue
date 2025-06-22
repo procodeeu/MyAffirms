@@ -241,6 +241,8 @@
         </div>
       </div>
     </div>
+
+    <PWAInstallPrompt />
   </div>
 </template>
 
@@ -255,7 +257,8 @@ const {
   updateProject
 } = useFirestore()
 
-const appVersion = ref(`${Date.now()}`)
+import { BUILD_VERSION } from '~/utils/version.js'
+const appVersion = ref(BUILD_VERSION)
 
 const projects = ref([])
 const showNewProjectModal = ref(false)
@@ -300,9 +303,27 @@ watchEffect(() => {
         ))
 
         const firebaseProjects = userProjects || []
-        projects.value = firebaseProjects
+        const localData = localStorage.getItem(`projects_${user.value.uid}`)
+        let localProjects = []
+        if (localData) {
+          try {
+            localProjects = JSON.parse(localData)
+          } catch (e) {
+            }
+        }
+
+        const mergedProjects = firebaseProjects.map(firebaseProject => {
+          const localProject = localProjects.find(p => p.id === firebaseProject.id)
+          return {
+            ...firebaseProject,
+            
+            sessionSettings: localProject?.sessionSettings || firebaseProject.sessionSettings
+          }
+        })
         
-        localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(firebaseProjects))
+        projects.value = mergedProjects
+        
+        localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(mergedProjects))
         })
       
       if (unsubscribe) {

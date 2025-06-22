@@ -2,6 +2,7 @@
   "name": "affirmations-app",
   "private": true,
   "scripts": {
+    "prebuild": "node build-version.js",
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
@@ -12,13 +13,16 @@
     "dev:bg": "nohup npm run dev > dev.log 2>&1 &"
   },
   "devDependencies": {
+    "@vite-pwa/nuxt": "^1.0.4",
     "concurrently": "^9.1.2",
     "firebase-tools": "^14.8.0",
-    "nuxt": "^3.13.0"
+    "nuxt": "^3.13.0",
+    "workbox-window": "^7.3.0"
   },
   "dependencies": {
     "@nuxtjs/tailwindcss": "^6.0.0",
     "@pinia/nuxt": "^0.5.0",
-    "firebase": "^11.9.1"
+    "firebase": "^11.9.1",
+    "lucide-vue-next": "^0.522.0"
   }
 }
