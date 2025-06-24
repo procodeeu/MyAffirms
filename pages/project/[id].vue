@@ -1,31 +1,31 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-pastel-vanilla">
     
-    <header class="bg-brand-blue shadow-sm">
+    <header class="bg-pastel-purple shadow-sm">
       <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <div class="flex items-center gap-4">
           <button
             @click="$router.back()"
-            class="text-white hover:text-white opacity-90 hover:opacity-100 inline-flex items-center gap-2"
+            class="text-gray-700 hover:text-gray-900 opacity-90 hover:opacity-100 inline-flex items-center gap-2 transition-colors"
           >
             <ChevronLeft class="w-4 h-4" /> Powrót
           </button>
           <div>
-            <div class="text-xs text-white font-crimson italic opacity-90">My affirms</div>
-            <h1 class="text-2xl font-bold text-white">{{ project?.name || 'Projekt' }}</h1>
+            <div class="text-xs text-gray-700 font-crimson italic opacity-90">My affirms</div>
+            <h1 class="text-2xl font-bold text-gray-800">{{ project?.name || 'Projekt' }}</h1>
           </div>
         </div>
         <button
           @click="startSession"
           :disabled="!activeAffirmations.length"
-          class="bg-white hover:bg-gray-100 disabled:bg-gray-300 text-brand-blue px-4 py-2 rounded-lg font-medium flex items-center gap-2"
+          class="bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 px-6 py-3 rounded-2xl font-semibold flex items-center gap-2 transition-colors duration-200"
         >
           <Play class="w-4 h-4" /> Rozpocznij sesję
         </button>
       </div>
     </header>
 
-    <div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto px-6 py-12">
       <div v-if="loading" class="text-center py-8">
         <p>Ładowanie...</p>
       </div>
@@ -36,7 +36,7 @@
 
       <div v-else>
         
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="bg-pastel-dun rounded-3xl p-8 mb-8 border border-pastel-cinereous">
           <h3 class="text-lg font-semibold text-gray-900 mb-4">Dodaj nową afirmację</h3>
           <div class="space-y-3">
             <textarea
@@ -51,7 +51,7 @@
               <button
                 @click="addAffirmation"
                 :disabled="!newAffirmationText.trim()"
-                class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-4 py-2 rounded-md font-medium"
+                class="bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 px-6 py-3 rounded-2xl font-semibold transition-colors duration-200"
               >
                 Dodaj
               </button>
@@ -59,7 +59,7 @@
           </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-6">
+        <div class="bg-pastel-dun rounded-3xl p-8 border border-pastel-cinereous">
           <h3 class="text-lg font-semibold text-gray-900 mb-4">
             Afirmacje ({{ project.affirmations?.length || 0 }})
           </h3>
@@ -75,7 +75,7 @@
               @dragenter.prevent
               @dragend="draggedIndex = null"
               :class="{
-                'border-blue-400 shadow-md bg-blue-50': draggedIndex === index,
+                'border-pastel-purple shadow-md bg-pastel-violet': draggedIndex === index,
                 'border-gray-200': draggedIndex !== index
               }"
               class="rounded-lg p-4 flex items-center justify-between cursor-move hover:border-blue-300 transition-all duration-200"
@@ -96,7 +96,7 @@
                   title="Przełącz aktywność"
                 >
                   <span
-                    class="inline-block h-2.5 w-2.5 transform rounded-full bg-white transition-transform duration-200"
+                    class="inline-block h-2.5 w-2.5 transform rounded-full bg-pastel-vanilla transition-transform duration-200"
                     :class="affirmation.isActive ? 'translate-x-3.5' : 'translate-x-0.5'"
                   ></span>
                 </button>
@@ -111,7 +111,7 @@
                   </button>
                   <div
                     v-if="activeActionMenu === affirmation.id"
-                    class="absolute right-0 top-8 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-32"
+                    class="absolute right-0 top-8 bg-pastel-khaki border border-gray-200 rounded-md shadow-lg z-10 min-w-32"
                   >
                     <button
                       @click.stop="startEditingAffirmation(affirmation.id)"
@@ -144,7 +144,7 @@
       @click="cancelAffirmationEdit"
     >
       <div
-        class="bg-white rounded-lg p-6 w-full max-w-md"
+        class="bg-pastel-khaki rounded-3xl p-8 w-full max-w-md border border-pastel-cinereous"
         @click.stop
       >
         <h3 class="text-lg font-semibold mb-4">Edytuj afirmację</h3>
@@ -164,13 +164,13 @@
           <button
             @click="saveAffirmationEdit(editingAffirmationId)"
             :disabled="!editingAffirmationText.trim()"
-            class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white py-2 rounded font-medium"
+            class="flex-1 bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-3 rounded-2xl font-semibold transition-colors duration-200"
           >
             Zapisz
           </button>
           <button
             @click="cancelAffirmationEdit"
-            class="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 py-2 rounded font-medium"
+            class="flex-1 border border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-2xl font-semibold transition-colors duration-200"
           >
             Anuluj
           </button>
@@ -184,7 +184,7 @@
       @click="cancelAffirmationDelete"
     >
       <div
-        class="bg-white rounded-lg p-6 w-full max-w-md"
+        class="bg-pastel-khaki rounded-3xl p-8 w-full max-w-md border border-pastel-cinereous"
         @click.stop
       >
         <h3 class="text-lg font-semibold mb-4 text-red-600">Usuń afirmację</h3>
@@ -204,7 +204,7 @@
           </button>
           <button
             @click="cancelAffirmationDelete"
-            class="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 py-2 rounded font-medium"
+            class="flex-1 border border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-2xl font-semibold transition-colors duration-200"
           >
             Anuluj
           </button>

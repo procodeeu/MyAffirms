@@ -1,16 +1,16 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-sky-300 to-emerald-300">
+  <div class="min-h-screen bg-pastel-vanilla">
     
-    <header class="bg-brand-blue shadow-sm">
+    <header class="bg-pastel-purple shadow-sm">
       <div class="max-w-7xl mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
           <div>
-            <div class="text-xs text-white font-crimson italic opacity-90">My affirms</div>
-            <h1 class="text-2xl font-bold text-white">Demo Afirmacji</h1>
+            <div class="text-xs text-gray-700 font-crimson italic opacity-90">My affirms</div>
+            <h1 class="text-2xl font-bold text-gray-800">Demo Afirmacji</h1>
           </div>
           <button
             @click="$router.push('/auth')"
-            class="bg-white hover:bg-gray-100 text-brand-blue px-4 py-2 rounded-lg font-medium"
+            class="bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 px-6 py-3 rounded-2xl font-semibold transition-colors duration-200"
           >
             Zaloguj się
           </button>
@@ -21,15 +21,15 @@
     <div class="container mx-auto px-4 py-8">
       
       <!-- Wybór projektu demo -->
-      <div class="bg-white rounded-lg shadow-lg p-6 mb-6 max-w-md mx-auto">
+      <div class="bg-pastel-violet border border-pastel-rose rounded-3xl p-8 mb-8 max-w-md mx-auto">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Wybierz kategorię afirmacji</h3>
         <div class="space-y-2">
           <button
             v-for="project in demoProjects"
             :key="project.id"
             @click="selectProject(project)"
-            :class="selectedProject?.id === project.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'"
-            class="w-full px-4 py-3 rounded-lg font-medium transition-colors"
+            :class="selectedProject?.id === project.id ? 'bg-pastel-purple text-gray-800' : 'bg-pastel-khaki text-gray-800 hover:bg-pastel-khaki-2'"
+            class="w-full px-4 py-3 rounded-2xl font-semibold transition-all duration-200"
           >
             {{ project.name }}
           </button>
@@ -37,13 +37,13 @@
       </div>
 
       <!-- Interfejs sesji -->
-      <div v-if="selectedProject" class="bg-white rounded-lg shadow-lg p-8 mb-6 max-w-2xl mx-auto">
+      <div v-if="selectedProject" class="bg-pastel-khaki border border-pastel-dun rounded-3xl p-10 mb-8 max-w-2xl mx-auto">
         <div class="text-center mb-6">
           <h2 class="text-xl font-semibold text-gray-900 mb-4">
             {{ isPlaying ? 'Trwa sesja' : 'Gotowy do rozpoczęcia' }}
           </h2>
           
-          <div v-if="currentAffirmation" class="bg-blue-50 rounded-lg p-6 mb-6">
+          <div v-if="currentAffirmation" class="bg-pastel-dun rounded-lg p-6 mb-6 border border-pastel-cinereous">
             <p class="text-lg text-gray-900 leading-relaxed">{{ currentAffirmation.text }}</p>
           </div>
           
@@ -53,7 +53,7 @@
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2">
               <div 
-                class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                class="bg-pastel-purple h-2 rounded-full transition-all duration-300"
                 :style="{ width: `${(currentIndex + 1) / activeAffirmations.length * 100}%` }"
               ></div>
             </div>
@@ -64,7 +64,7 @@
               v-if="!isPlaying"
               @click="startSession"
               :disabled="activeAffirmations.length === 0"
-              class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-8 py-3 rounded-lg font-medium text-lg flex items-center gap-2"
+              class="bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 px-10 py-4 rounded-2xl font-semibold text-lg flex items-center gap-2 transition-colors duration-200"
             >
               <Play class="w-4 h-4" /> Rozpocznij sesję
             </button>
@@ -72,7 +72,7 @@
             <button
               v-if="isPlaying"
               @click="stopSession"
-              class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2"
+              class="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-2xl font-semibold flex items-center gap-2 transition-colors duration-200"
             >
               <Square class="w-4 h-4" /> Stop
             </button>
@@ -80,7 +80,7 @@
             <button
               v-if="isPlaying"
               @click="nextAffirmation"
-              class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2"
+              class="bg-gray-600 hover:bg-gray-700 text-white px-8 py-4 rounded-2xl font-semibold flex items-center gap-2 transition-colors duration-200"
             >
               <SkipForward class="w-4 h-4" /> Następna
             </button>
@@ -89,7 +89,7 @@
       </div>
 
       <!-- Ustawienia sesji -->
-      <div v-if="selectedProject" class="bg-white rounded-lg shadow p-6 max-w-md mx-auto mb-6">
+      <div v-if="selectedProject" class="bg-pastel-khaki rounded-3xl p-8 max-w-md mx-auto mb-8 border border-pastel-cinereous">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Ustawienia sesji</h3>
         
         <div class="space-y-4">
@@ -147,12 +147,12 @@
       </div>
 
       <!-- Call to action -->
-      <div class="bg-white/95 rounded-lg shadow-lg p-6 max-w-md mx-auto text-center">
+      <div class="bg-pastel-dun rounded-3xl p-8 max-w-md mx-auto text-center border border-pastel-cinereous">
         <h3 class="text-lg font-semibold text-gray-900 mb-2">Podoba Ci się?</h3>
         <p class="text-gray-600 mb-4">Utwórz konto i stwórz własne afirmacje!</p>
         <button
           @click="$router.push('/auth')"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium w-full"
+          class="bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 px-8 py-4 rounded-2xl font-semibold w-full transition-colors duration-200"
         >
           Zacznij za darmo
         </button>

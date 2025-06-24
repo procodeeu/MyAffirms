@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
-    <div class="max-w-md w-full bg-white rounded-lg shadow-md p-8">
+  <div class="min-h-screen bg-pastel-vanilla flex items-center justify-center py-12 px-4">
+    <div class="max-w-md w-full bg-pastel-dun rounded-3xl p-10 border border-pastel-cinereous">
       <div class="text-center mb-8">
         <h1 class="text-2xl font-bold text-gray-900 mb-2 font-crimson">My affirms</h1>
         <p class="text-gray-600">Zaloguj się aby kontynuować</p>
@@ -30,7 +30,7 @@
         <button
           @click="signInWithEmail"
           :disabled="authLoading"
-          class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white py-2 rounded-md font-medium"
+          class="w-full bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-3 rounded-2xl font-semibold transition-colors duration-200"
         >
           {{ authLoading ? 'Logowanie...' : 'Zaloguj się' }}
         </button>
@@ -40,14 +40,14 @@
             <div class="w-full border-t border-gray-300"></div>
           </div>
           <div class="relative flex justify-center text-sm">
-            <span class="px-2 bg-white text-gray-500">lub</span>
+            <span class="px-2 bg-pastel-dun text-gray-500">lub</span>
           </div>
         </div>
 
         <button
           @click="signInWithGoogle"
           :disabled="authLoading"
-          class="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 py-2 rounded-md font-medium flex items-center justify-center gap-2"
+          class="w-full border border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-2xl font-semibold flex items-center justify-center gap-2 transition-colors duration-200"
         >
           <svg class="w-5 h-5" viewBox="0 0 24 24">
             <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -61,7 +61,7 @@
         <button
           @click="signInWithDemo"
           :disabled="authLoading"
-          class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-medium"
+          class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-2xl font-semibold transition-colors duration-200"
         >
           🧪 Demo Login (Emulator)
         </button>
@@ -100,7 +100,7 @@
         <button
           @click="signUpWithEmail"
           :disabled="authLoading"
-          class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white py-2 rounded-md font-medium"
+          class="w-full bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-3 rounded-2xl font-semibold transition-colors duration-200"
         >
           {{ authLoading ? 'Rejestracja...' : 'Zarejestruj się' }}
         </button>

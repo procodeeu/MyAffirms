@@ -1,17 +1,17 @@
 <template>
-  <div class="min-h-screen bg-brand-bg">
+  <div class="min-h-screen bg-pastel-vanilla">
     
-    <header class="bg-brand-blue shadow-sm">
+    <header class="bg-pastel-purple shadow-sm">
       <div class="max-w-7xl mx-auto px-4 py-4">
         <div class="text-center">
           <button
             @click="$router.back()"
-            class="text-white hover:text-white opacity-90 hover:opacity-100 mb-4 inline-flex items-center gap-2"
+            class="text-gray-700 hover:text-gray-900 opacity-90 hover:opacity-100 mb-4 inline-flex items-center gap-2 transition-colors"
           >
             <ChevronLeft class="w-4 h-4" /> Powrót do projektu
           </button>
-          <div class="text-sm text-white font-crimson italic opacity-90 mb-2">My affirms</div>
-          <h1 class="text-3xl font-bold text-white mb-2">
+          <div class="text-sm text-gray-700 font-crimson italic opacity-90 mb-2">My affirms</div>
+          <h1 class="text-3xl font-bold text-gray-800 mb-2">
             {{ project?.name || 'Sesja Afirmacji' }}
           </h1>
         </div>
@@ -20,13 +20,13 @@
     
     <div class="container mx-auto px-4 py-8">
 
-      <div class="bg-white rounded-lg shadow-lg p-8 mb-6 max-w-2xl mx-auto">
+      <div class="bg-pastel-dun rounded-3xl p-10 mb-8 max-w-2xl mx-auto border border-pastel-cinereous">
         <div class="text-center mb-6">
           <h2 class="text-xl font-semibold text-gray-900 mb-4">
             {{ isPlaying ? 'Trwa sesja' : 'Gotowy do rozpoczęcia' }}
           </h2>
           
-          <div v-if="currentAffirmation" class="bg-blue-50 rounded-lg p-6 mb-6">
+          <div v-if="currentAffirmation" class="bg-pastel-dun rounded-lg p-6 mb-6 border border-pastel-cinereous">
             <p class="text-lg text-gray-900 leading-relaxed">{{ currentAffirmation.text }}</p>
           </div>
           
@@ -36,7 +36,7 @@
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2">
               <div 
-                class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                class="bg-pastel-purple h-2 rounded-full transition-all duration-300"
                 :style="{ width: `${(currentIndex + 1) / activeAffirmations.length * 100}%` }"
               ></div>
             </div>
@@ -47,7 +47,7 @@
               v-if="!isPlaying"
               @click="startSession"
               :disabled="activeAffirmations.length === 0"
-              class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-8 py-3 rounded-lg font-medium text-lg flex items-center gap-2"
+              class="bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 px-10 py-4 rounded-2xl font-semibold text-lg flex items-center gap-2 transition-colors duration-200"
             >
               <Play class="w-4 h-4" /> Rozpocznij sesję
             </button>
@@ -55,7 +55,7 @@
             <button
               v-if="isPlaying"
               @click="stopSession"
-              class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium"
+              class="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-2xl font-semibold transition-colors duration-200"
             >
               ⏹ Stop
             </button>
@@ -63,7 +63,7 @@
             <button
               v-if="isPlaying"
               @click="nextAffirmation"
-              class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium"
+              class="bg-gray-600 hover:bg-gray-700 text-white px-8 py-4 rounded-2xl font-semibold transition-colors duration-200"
             >
               ⏭ Następna
             </button>
@@ -71,7 +71,7 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-lg shadow p-6 max-w-md mx-auto">
+      <div class="bg-pastel-khaki rounded-3xl p-8 max-w-md mx-auto border border-pastel-cinereous">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Ustawienia sesji</h3>
         
         <div class="space-y-4">

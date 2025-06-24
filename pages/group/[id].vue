@@ -1,24 +1,24 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-pastel-vanilla">
     
-    <header class="bg-brand-blue shadow-sm">
+    <header class="bg-pastel-purple shadow-sm">
       <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <div class="flex items-center gap-4">
           <button
             @click="$router.back()"
-            class="text-white hover:text-white opacity-90 hover:opacity-100 inline-flex items-center gap-2"
+            class="text-gray-700 hover:text-gray-900 opacity-90 hover:opacity-100 inline-flex items-center gap-2 transition-colors"
           >
             <ChevronLeft class="w-4 h-4" /> Powrót
           </button>
           <div>
-            <div class="text-xs text-white font-crimson italic opacity-90">My affirms</div>
-            <h1 class="text-2xl font-bold text-white">{{ group?.name || 'Grupa' }}</h1>
+            <div class="text-xs text-gray-700 font-crimson italic opacity-90">My affirms</div>
+            <h1 class="text-2xl font-bold text-gray-800">{{ group?.name || 'Grupa' }}</h1>
           </div>
         </div>
         <button
           @click="startGroupSession"
           :disabled="!hasActiveAffirmations"
-          class="bg-white hover:bg-gray-100 disabled:bg-gray-300 text-brand-blue px-4 py-2 rounded-lg font-medium flex items-center gap-2"
+          class="bg-pastel-violet hover:bg-pastel-purple disabled:bg-gray-300 text-gray-800 px-6 py-3 rounded-2xl font-semibold flex items-center gap-2 transition-colors duration-200"
         >
           <Play class="w-4 h-4" /> Rozpocznij sesję grupową
         </button>
@@ -36,15 +36,15 @@
       </div>
 
       <div v-else>
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="bg-pastel-violet border border-pastel-rose rounded-lg shadow p-6 mb-6">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Plus class="w-5 h-5 text-purple-600" />
+              <Plus class="w-5 h-5 text-gray-700" />
               Dodaj projekty do grupy
             </h3>
             <button
               @click="showAddProjectSection = !showAddProjectSection"
-              class="text-purple-600 hover:text-purple-700"
+              class="text-gray-700 hover:text-gray-900 transition-colors"
             >
               <ChevronDown :class="showAddProjectSection ? 'rotate-180' : ''" class="w-5 h-5 transition-transform" />
             </button>
@@ -67,7 +67,7 @@
                 </div>
                 <button
                   @click="addProject(project.id)"
-                  class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm flex items-center gap-1"
+                  class="bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-1 transition-colors duration-200"
                 >
                   <Plus class="w-3 h-3" /> Dodaj
                 </button>
@@ -79,11 +79,11 @@
         <div 
           v-for="project in groupProjects" 
           :key="project.id"
-          class="bg-white rounded-lg shadow p-6 mb-6"
+          class="bg-pastel-khaki border border-pastel-dun rounded-lg shadow p-6 mb-6"
         >
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Folder class="w-5 h-5 text-purple-600" />
+              <Folder class="w-5 h-5 text-gray-700" />
               {{ project.name }} ({{ getActiveAffirmationsCount(project) }})
             </h3>
             
@@ -98,7 +98,7 @@
               
               <div
                 v-if="activeProjectMenu === project.id"
-                class="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-48"
+                class="absolute right-0 top-8 bg-pastel-dun border border-gray-200 rounded-lg shadow-lg z-10 min-w-48"
               >
                 <div class="py-1">
                   <button
@@ -135,7 +135,7 @@
               v-for="affirmation in project.affirmations || []"
               :key="affirmation.id"
               class="border border-gray-200 rounded-lg p-4 flex items-center justify-between transition-all duration-200"
-              :class="affirmation.isActive ? 'bg-white' : 'bg-gray-50'"
+              :class="affirmation.isActive ? 'bg-pastel-dun' : 'bg-gray-50'"
             >
               <div class="flex items-center gap-3 flex-1">
                 <div class="flex-1">
@@ -153,7 +153,7 @@
                   title="Przełącz aktywność"
                 >
                   <span
-                    class="inline-block h-2.5 w-2.5 transform rounded-full bg-white transition-transform duration-200"
+                    class="inline-block h-2.5 w-2.5 transform rounded-full bg-pastel-vanilla transition-transform duration-200"
                     :class="affirmation.isActive ? 'translate-x-3.5' : 'translate-x-0.5'"
                   ></span>
                 </button>
