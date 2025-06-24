@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-pastel-vanilla flex items-center justify-center py-12 px-4">
-    <div class="max-w-md w-full bg-pastel-dun rounded-3xl p-10 border border-pastel-cinereous">
+    <div class="max-w-md w-full bg-pastel-dun rounded-4xl p-10 border-2 border-pastel-cinereous">
       <div class="text-center mb-8">
         <h1 class="text-2xl font-bold text-gray-900 mb-2 font-crimson">My affirms</h1>
         <p class="text-gray-600">Zaloguj się aby kontynuować</p>
@@ -12,7 +12,7 @@
           <input
             v-model="email"
             type="email"
-            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-violet"
             placeholder="twoj@email.com"
           />
         </div>
@@ -22,7 +22,7 @@
           <input
             v-model="password"
             type="password"
-            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-violet"
             placeholder="••••••••"
           />
         </div>
@@ -30,7 +30,7 @@
         <button
           @click="signInWithEmail"
           :disabled="authLoading"
-          class="w-full bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-3 rounded-2xl font-semibold transition-colors duration-200"
+          class="w-full bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-3 rounded-full font-medium  border-2 border-pastel-khaki-2 hover:border-gray-800"
         >
           {{ authLoading ? 'Logowanie...' : 'Zaloguj się' }}
         </button>
@@ -47,7 +47,7 @@
         <button
           @click="signInWithGoogle"
           :disabled="authLoading"
-          class="w-full border border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-2xl font-semibold flex items-center justify-center gap-2 transition-colors duration-200"
+          class="w-full border-2 border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-full font-medium flex items-center justify-center gap-2  hover:border-gray-700"
         >
           <svg class="w-5 h-5" viewBox="0 0 24 24">
             <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -61,7 +61,7 @@
         <button
           @click="signInWithDemo"
           :disabled="authLoading"
-          class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-2xl font-semibold transition-colors duration-200"
+          class="w-full bg-pastel-violet hover:bg-pastel-purple text-gray-800 py-3 rounded-full font-medium  border-2 border-pastel-violet hover:border-gray-800"
         >
           🧪 Demo Login (Emulator)
         </button>
@@ -69,7 +69,7 @@
         <div class="text-center">
           <button
             @click="isRegistering = true"
-            class="text-blue-600 hover:text-blue-700 text-sm"
+            class="text-gray-600 hover:text-gray-800 text-sm"
           >
             Nie masz konta? Zarejestruj się
           </button>
@@ -82,7 +82,7 @@
           <input
             v-model="email"
             type="email"
-            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-violet"
             placeholder="twoj@email.com"
           />
         </div>
@@ -92,7 +92,7 @@
           <input
             v-model="password"
             type="password"
-            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-violet"
             placeholder="••••••••"
           />
         </div>
@@ -100,7 +100,7 @@
         <button
           @click="signUpWithEmail"
           :disabled="authLoading"
-          class="w-full bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-3 rounded-2xl font-semibold transition-colors duration-200"
+          class="w-full bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-3 rounded-full font-medium  border-2 border-pastel-khaki-2 hover:border-gray-800"
         >
           {{ authLoading ? 'Rejestracja...' : 'Zarejestruj się' }}
         </button>
@@ -108,7 +108,7 @@
         <div class="text-center">
           <button
             @click="isRegistering = false"
-            class="text-blue-600 hover:text-blue-700 text-sm"
+            class="text-gray-600 hover:text-gray-800 text-sm"
           >
             Masz już konto? Zaloguj się
           </button>

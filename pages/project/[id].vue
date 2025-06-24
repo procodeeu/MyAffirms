@@ -18,7 +18,7 @@
         <button
           @click="startSession"
           :disabled="!activeAffirmations.length"
-          class="bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 px-6 py-3 rounded-2xl font-semibold flex items-center gap-2 transition-colors duration-200"
+          class="bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 px-6 py-3 rounded-2xl font-semibold flex items-center gap-2 "
         >
           <Play class="w-4 h-4" /> Rozpocznij sesję
         </button>
@@ -51,7 +51,7 @@
               <button
                 @click="addAffirmation"
                 :disabled="!newAffirmationText.trim()"
-                class="bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 px-6 py-3 rounded-2xl font-semibold transition-colors duration-200"
+                class="bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 px-6 py-3 rounded-2xl font-semibold "
               >
                 Dodaj
               </button>
@@ -164,13 +164,13 @@
           <button
             @click="saveAffirmationEdit(editingAffirmationId)"
             :disabled="!editingAffirmationText.trim()"
-            class="flex-1 bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-3 rounded-2xl font-semibold transition-colors duration-200"
+            class="flex-1 bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-3 rounded-2xl font-semibold "
           >
             Zapisz
           </button>
           <button
             @click="cancelAffirmationEdit"
-            class="flex-1 border border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-2xl font-semibold transition-colors duration-200"
+            class="flex-1 border border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-2xl font-semibold "
           >
             Anuluj
           </button>
@@ -204,7 +204,7 @@
           </button>
           <button
             @click="cancelAffirmationDelete"
-            class="flex-1 border border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-2xl font-semibold transition-colors duration-200"
+            class="flex-1 border border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-2xl font-semibold "
           >
             Anuluj
           </button>

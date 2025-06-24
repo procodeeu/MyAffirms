@@ -48,7 +48,10 @@ module.exports = {
       borderRadius: {
         'xl': '0.75rem',
         '2xl': '1rem',
-        '3xl': '1.5rem'
+        '3xl': '1.5rem',
+        '4xl': '2rem',
+        'full': '9999px',
+        'full-btn': '9999px'
       },
       scale: {
         '102': '1.02'

@@ -1,19 +1,27 @@
 <template>
   <div class="min-h-screen bg-pastel-vanilla">
     
-    <header class="bg-pastel-purple shadow-sm">
+    <header class="">
       <div class="max-w-7xl mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
           <div>
             <div class="text-xs text-gray-700 font-crimson italic opacity-90">My affirms</div>
             <h1 class="text-2xl font-bold text-gray-800">Demo Afirmacji</h1>
           </div>
-          <button
-            @click="$router.push('/auth')"
-            class="bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 px-6 py-3 rounded-2xl font-semibold transition-colors duration-200"
-          >
-            Zaloguj się
-          </button>
+          <div class="flex items-center gap-3">
+            <button
+              @click="$router.push('/auth')"
+              class="bg-white hover:bg-gray-50 text-gray-800 px-6 py-3 rounded-full font-medium  border-2 border-gray-800"
+            >
+              Zaloguj się
+            </button>
+            <button
+              @click="$router.push('/auth')"
+              class="text-gray-700 hover:text-gray-900 px-6 py-3 rounded-full font-medium  border-2 border-transparent active:border-gray-800"
+            >
+              Zarejestruj się
+            </button>
+          </div>
         </div>
       </div>
     </header>
@@ -21,15 +29,15 @@
     <div class="container mx-auto px-4 py-8">
       
       <!-- Wybór projektu demo -->
-      <div class="bg-pastel-violet border border-pastel-rose rounded-3xl p-8 mb-8 max-w-md mx-auto">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Wybierz kategorię afirmacji</h3>
+      <div class="bg-pastel-violet border-2 border-pastel-rose rounded-4xl p-8 mb-8 max-w-md mx-auto">
+        <h3 class="text-base font-medium text-gray-900 mb-4">Wybierz kategorię afirmacji</h3>
         <div class="space-y-2">
           <button
             v-for="project in demoProjects"
             :key="project.id"
             @click="selectProject(project)"
             :class="selectedProject?.id === project.id ? 'bg-pastel-purple text-gray-800' : 'bg-pastel-khaki text-gray-800 hover:bg-pastel-khaki-2'"
-            class="w-full px-4 py-3 rounded-2xl font-semibold transition-all duration-200"
+            class="w-full px-4 py-3 rounded-full font-medium transition-all duration-200 border-2 border-transparent hover:border-gray-800"
           >
             {{ project.name }}
           </button>
@@ -37,14 +45,14 @@
       </div>
 
       <!-- Interfejs sesji -->
-      <div v-if="selectedProject" class="bg-pastel-khaki border border-pastel-dun rounded-3xl p-10 mb-8 max-w-2xl mx-auto">
+      <div v-if="selectedProject" class="bg-pastel-khaki border-2 border-pastel-dun rounded-4xl p-10 mb-8 max-w-2xl mx-auto">
         <div class="text-center mb-6">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          <h2 class="text-xl font-medium text-gray-900 mb-4">
             {{ isPlaying ? 'Trwa sesja' : 'Gotowy do rozpoczęcia' }}
           </h2>
           
           <div v-if="currentAffirmation" class="bg-pastel-dun rounded-lg p-6 mb-6 border border-pastel-cinereous">
-            <p class="text-lg text-gray-900 leading-relaxed">{{ currentAffirmation.text }}</p>
+            <p class="text-base text-gray-900 leading-relaxed">{{ currentAffirmation.text }}</p>
           </div>
           
           <div v-if="activeAffirmations.length > 0" class="mb-4">
@@ -64,7 +72,7 @@
               v-if="!isPlaying"
               @click="startSession"
               :disabled="activeAffirmations.length === 0"
-              class="bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 px-10 py-4 rounded-2xl font-semibold text-lg flex items-center gap-2 transition-colors duration-200"
+              class="bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 px-10 py-4 rounded-full font-medium text-base flex items-center gap-2  border-2 border-pastel-khaki-2 hover:border-gray-800"
             >
               <Play class="w-4 h-4" /> Rozpocznij sesję
             </button>
@@ -72,7 +80,7 @@
             <button
               v-if="isPlaying"
               @click="stopSession"
-              class="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-2xl font-semibold flex items-center gap-2 transition-colors duration-200"
+              class="bg-red-500 hover:bg-red-600 text-white px-8 py-4 rounded-full font-medium flex items-center gap-2  border-2 border-red-500 hover:border-white"
             >
               <Square class="w-4 h-4" /> Stop
             </button>
@@ -80,7 +88,7 @@
             <button
               v-if="isPlaying"
               @click="nextAffirmation"
-              class="bg-gray-600 hover:bg-gray-700 text-white px-8 py-4 rounded-2xl font-semibold flex items-center gap-2 transition-colors duration-200"
+              class="bg-gray-600 hover:bg-gray-700 text-white px-8 py-4 rounded-full font-medium flex items-center gap-2  border-2 border-gray-600 hover:border-white"
             >
               <SkipForward class="w-4 h-4" /> Następna
             </button>
@@ -89,8 +97,8 @@
       </div>
 
       <!-- Ustawienia sesji -->
-      <div v-if="selectedProject" class="bg-pastel-khaki rounded-3xl p-8 max-w-md mx-auto mb-8 border border-pastel-cinereous">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Ustawienia sesji</h3>
+      <div v-if="selectedProject" class="bg-pastel-khaki rounded-4xl p-8 max-w-md mx-auto mb-8 border-2 border-pastel-cinereous">
+        <h3 class="text-base font-medium text-gray-900 mb-4">Ustawienia sesji</h3>
         
         <div class="space-y-4">
           <div>
@@ -147,12 +155,12 @@
       </div>
 
       <!-- Call to action -->
-      <div class="bg-pastel-dun rounded-3xl p-8 max-w-md mx-auto text-center border border-pastel-cinereous">
-        <h3 class="text-lg font-semibold text-gray-900 mb-2">Podoba Ci się?</h3>
+      <div class="bg-pastel-dun rounded-4xl p-8 max-w-md mx-auto text-center border-2 border-pastel-cinereous">
+        <h3 class="text-base font-medium text-gray-900 mb-2">Podoba Ci się?</h3>
         <p class="text-gray-600 mb-4">Utwórz konto i stwórz własne afirmacje!</p>
         <button
           @click="$router.push('/auth')"
-          class="bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 px-8 py-4 rounded-2xl font-semibold w-full transition-colors duration-200"
+          class="bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 px-8 py-4 rounded-full font-medium w-full  border-2 border-pastel-khaki-2 hover:border-gray-800"
         >
           Zacznij za darmo
         </button>

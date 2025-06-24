@@ -1,7 +1,34 @@
 <template>
-  <div class="min-h-screen bg-pastel-vanilla">
+  <div class="min-h-screen bg-pastel-vanilla relative overflow-hidden">
+    <!-- Dekoracyjne bańki w tle -->
+    <div class="absolute inset-0 pointer-events-none">
+      <div 
+        class="absolute w-96 h-96 rounded-full" 
+        :style="{ 
+          top: bubblePositions.bubble1.top + 'px', 
+          left: bubblePositions.bubble1.left + 'px',
+          backgroundColor: 'rgba(255, 255, 255, 0.3)'
+        }"
+      ></div>
+      <div 
+        class="absolute w-80 h-80 rounded-full" 
+        :style="{ 
+          top: bubblePositions.bubble2.top + 'px', 
+          right: bubblePositions.bubble2.right + 'px',
+          backgroundColor: 'rgba(255, 252, 228, 0.6)'
+        }"
+      ></div>
+      <div 
+        class="absolute w-64 h-64 rounded-full" 
+        :style="{ 
+          bottom: bubblePositions.bubble3.bottom + 'px', 
+          left: bubblePositions.bubble3.left + 'px',
+          backgroundColor: 'rgba(248, 240, 180, 0.4)'
+        }"
+      ></div>
+    </div>
     
-    <header class="bg-pastel-purple shadow-sm">
+    <header class="bg-pastel-purple shadow-sm relative z-10">
       <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold text-gray-800 font-crimson">My affirms</h1>
@@ -12,7 +39,7 @@
           <span class="text-xs text-gray-600 opacity-60">v{{ appVersion }}</span>
           <button
             @click="logout"
-            class="text-gray-700 hover:text-gray-900 opacity-90 hover:opacity-100 transition-colors"
+            class="text-gray-700 hover:text-gray-900 px-4 py-2 rounded-full  border-2 border-transparent active:border-gray-800"
           >
             Wyloguj
           </button>
@@ -20,7 +47,7 @@
       </div>
     </header>
 
-    <div class="max-w-7xl mx-auto px-6 py-12">
+    <div class="max-w-7xl mx-auto px-6 py-12 relative z-10">
       
       <div class="mb-8">
         <div class="flex items-center justify-between mb-10">
@@ -32,7 +59,7 @@
             <button
               @click="showNewProjectModal = true"
               :disabled="!user"
-              class="bg-pastel-khaki hover:bg-pastel-khaki-2 disabled:bg-gray-400 disabled:cursor-not-allowed text-gray-900 px-6 py-3 rounded-2xl font-semibold flex items-center gap-2 transition-colors duration-200"
+              class="bg-pastel-khaki hover:bg-pastel-khaki-2 disabled:bg-gray-400 disabled:cursor-not-allowed text-gray-900 px-6 py-3 rounded-full font-medium flex items-center gap-2  border-2 border-pastel-khaki hover:border-gray-900 transition-colors duration-200"
             >
               <span class="text-lg">+</span>
               Nowy projekt
@@ -40,9 +67,9 @@
             <button
               @click="showNewGroupModal = true"
               :disabled="!user"
-              class="bg-pastel-violet hover:bg-pastel-purple disabled:bg-gray-400 disabled:cursor-not-allowed text-gray-900 px-6 py-3 rounded-2xl font-semibold flex items-center gap-2 transition-colors duration-200"
+              class="bg-pastel-violet hover:bg-pastel-purple disabled:bg-gray-400 disabled:cursor-not-allowed text-gray-900 px-6 py-3 rounded-full font-medium flex items-center gap-2  border-2 border-pastel-violet hover:border-gray-900 transition-colors duration-200"
             >
-              <Users class="w-4 h-4" />
+              <Group class="w-4 h-4" />
               Nowa grupa
             </button>
           </div>
@@ -53,14 +80,14 @@
           <div
             v-for="group in groups"
             :key="`group-${group.id}`"
-            class="bg-pastel-violet border border-pastel-rose rounded-2xl p-8 cursor-pointer hover:bg-pastel-purple transition-colors duration-300"
+            class="bg-pastel-violet border-2 border-pastel-rose rounded-4xl p-8 cursor-pointer hover:bg-pastel-purple transition-colors duration-300"
             @click="selectGroup(group)"
           >
             <div class="flex items-start justify-between mb-4">
               <div class="flex-1">
                 <div class="flex items-center gap-2 mb-2">
-                  <Users class="w-5 h-5 text-gray-700" />
-                  <h3 class="text-xl font-semibold text-gray-900 font-crimson">
+                  <Group class="w-5 h-5 text-gray-700" />
+                  <h3 class="text-xl font-medium text-gray-900 font-crimson">
                     {{ group.name }}
                   </h3>
                 </div>
@@ -83,7 +110,7 @@
               <div
                 v-for="projectName in getGroupProjectNames(group).slice(0, 3)"
                 :key="projectName"
-                class="text-sm text-gray-700 bg-pastel-khaki rounded p-2 border border-pastel-cinereous"
+                class="text-sm text-gray-700 bg-pastel-khaki rounded p-2 border-2 border-pastel-cinereous"
               >
                 {{ projectName }}
               </div>
@@ -99,7 +126,7 @@
               <button
                 @click.stop="startGroupSession(group)"
                 :disabled="!getGroupProjectsCount(group)"
-                class="w-full bg-pastel-purple hover:bg-pastel-purple-2 disabled:bg-gray-300 text-gray-800 py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 transition-colors duration-200"
+                class="w-full bg-pastel-purple hover:bg-pastel-purple-2 disabled:bg-gray-300 text-gray-800 py-4 rounded-full font-medium flex items-center justify-center gap-2  border-2 border-pastel-purple hover:border-gray-800 active:border-gray-900"
               >
                 <Play class="w-4 h-4" /> Rozpocznij sesję grupową
               </button>
@@ -110,12 +137,12 @@
           <div
             v-for="project in projects"
             :key="project.id"
-            class="bg-pastel-khaki border border-pastel-dun rounded-2xl p-8 cursor-pointer transition-colors duration-300"
+            class="bg-pastel-khaki border-2 border-pastel-dun rounded-4xl p-8 cursor-pointer transition-colors duration-300"
             @click="selectProject(project)"
           >
             <div class="flex items-start justify-between mb-4">
               <div class="flex-1">
-                <h3 class="text-xl font-semibold text-gray-900 mb-2 font-crimson">
+                <h3 class="text-xl font-medium text-gray-900 mb-2 font-crimson">
                   {{ project.name }}
                 </h3>
                 <p class="text-gray-600 text-sm">
@@ -137,7 +164,7 @@
               <div
                 v-for="affirmation in (project.affirmations || []).slice(0, 3)"
                 :key="affirmation.id"
-                class="text-sm text-gray-700 bg-pastel-dun rounded p-2 border border-pastel-cinereous"
+                class="text-sm text-gray-700 bg-pastel-dun rounded p-2 border-2 border-pastel-cinereous"
               >
                 {{ affirmation.text }}
               </div>
@@ -153,7 +180,7 @@
               <button
                 @click.stop="startSession(project)"
                 :disabled="!project.affirmations?.length"
-                class="w-full bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 transition-colors duration-200"
+                class="w-full bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-4 rounded-full font-medium flex items-center justify-center gap-2  border-2 border-pastel-khaki-2 hover:border-gray-800 active:border-gray-900"
               >
                 <Play class="w-4 h-4" /> Rozpocznij sesję
               </button>
@@ -169,7 +196,7 @@
             <p class="text-gray-600 mb-4">Stwórz swój pierwszy projekt afirmacji</p>
             <button
               @click="showNewProjectModal = true"
-              class="bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 px-8 py-4 rounded-2xl font-semibold transition-colors duration-200"
+              class="bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 px-8 py-4 rounded-full font-medium  border-2 border-pastel-khaki-2 hover:border-gray-800"
             >
               Utwórz projekt
             </button>
@@ -184,10 +211,10 @@
       @click="showNewProjectModal = false"
     >
       <div
-        class="bg-pastel-khaki rounded-3xl p-8 w-full max-w-md border border-pastel-cinereous"
+        class="bg-pastel-khaki rounded-4xl p-8 w-full max-w-md border-2 border-pastel-cinereous"
         @click.stop
       >
-        <h3 class="text-lg font-semibold mb-4 font-crimson">Nowy projekt</h3>
+        <h3 class="text-lg font-medium mb-4 font-crimson">Nowy projekt</h3>
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-2">
             Nazwa projektu
@@ -196,7 +223,7 @@
             v-model="newProjectName"
             type="text"
             :placeholder="getDefaultProjectName()"
-            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-violet"
+            class="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-violet"
             @keyup.enter="createProject"
           />
         </div>
@@ -204,13 +231,13 @@
           <button
             @click="createProject"
             :disabled="loading"
-            class="flex-1 bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-3 rounded-2xl font-semibold transition-colors duration-200"
+            class="flex-1 bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-3 rounded-full font-medium "
           >
             {{ loading ? 'Tworzenie...' : 'Utwórz' }}
           </button>
           <button
             @click="showNewProjectModal = false"
-            class="flex-1 border border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-2xl font-semibold transition-colors duration-200"
+            class="flex-1 border-2 border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-full font-medium "
           >
             Anuluj
           </button>
@@ -224,10 +251,10 @@
       @click="closeProjectSettings"
     >
       <div
-        class="bg-pastel-khaki rounded-3xl p-8 w-full max-w-md border border-pastel-cinereous"
+        class="bg-pastel-khaki rounded-4xl p-8 w-full max-w-md border-2 border-pastel-cinereous"
         @click.stop
       >
-        <h3 class="text-lg font-semibold mb-4 font-crimson">Ustawienia projektu</h3>
+        <h3 class="text-lg font-medium mb-4 font-crimson">Ustawienia projektu</h3>
 
         <div class="mb-6">
           <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -236,7 +263,7 @@
           <input
             v-model="editingProjectName"
             type="text"
-            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-violet"
+            class="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-violet"
             placeholder="Wprowadź nazwę projektu..."
             @keyup.enter="saveProjectName"
           />
@@ -246,28 +273,28 @@
           <button
             @click="saveProjectName"
             :disabled="!editingProjectName.trim()"
-            class="w-full bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-3 rounded-2xl font-semibold transition-colors duration-200"
+            class="w-full bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-3 rounded-full font-medium  border-2 border-pastel-khaki-2 hover:border-gray-800"
           >
             Zapisz nazwę
           </button>
           
           <button
             @click="copyProject"
-            class="w-full bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 py-3 rounded-2xl font-semibold flex items-center justify-center gap-2 transition-colors duration-200"
+            class="w-full bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 py-3 rounded-full font-medium flex items-center justify-center gap-2  border-2 border-pastel-khaki-2 hover:border-gray-800"
           >
             <Clipboard class="w-5 h-5" /> Kopiuj projekt
           </button>
           
           <button
             @click="showDeleteProjectConfirm = true"
-            class="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-2xl font-semibold transition-colors duration-200"
+            class="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-full font-medium  border-2 border-red-500 hover:border-white"
           >
             Usuń projekt
           </button>
           
           <button
             @click="closeProjectSettings"
-            class="w-full border border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-2xl font-semibold transition-colors duration-200"
+            class="w-full border-2 border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-full font-medium  hover:border-gray-700"
           >
             Anuluj
           </button>
@@ -281,10 +308,10 @@
       @click="showDeleteProjectConfirm = false"
     >
       <div
-        class="bg-pastel-khaki rounded-3xl p-8 w-full max-w-md border border-pastel-cinereous"
+        class="bg-pastel-khaki rounded-4xl p-8 w-full max-w-md border-2 border-pastel-cinereous"
         @click.stop
       >
-        <h3 class="text-lg font-semibold mb-4 text-red-600">Usuń projekt</h3>
+        <h3 class="text-lg font-medium mb-4 text-red-600">Usuń projekt</h3>
         <div class="mb-6">
           <p class="text-gray-700 mb-3">Czy na pewno chcesz usunąć projekt?</p>
           <div class="bg-gray-50 p-3 rounded border-l-4 border-red-400">
@@ -296,13 +323,13 @@
         <div class="flex gap-3">
           <button
             @click="confirmDeleteProject"
-            class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-2xl font-semibold transition-colors duration-200"
+            class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-full font-medium "
           >
             Usuń projekt
           </button>
           <button
             @click="showDeleteProjectConfirm = false"
-            class="flex-1 border border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-2xl font-semibold transition-colors duration-200"
+            class="flex-1 border-2 border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-full font-medium "
           >
             Anuluj
           </button>
@@ -317,10 +344,10 @@
       @click="showNewGroupModal = false"
     >
       <div
-        class="bg-pastel-khaki rounded-3xl p-8 w-full max-w-md border border-pastel-cinereous"
+        class="bg-pastel-khaki rounded-4xl p-8 w-full max-w-md border-2 border-pastel-cinereous"
         @click.stop
       >
-        <h3 class="text-lg font-semibold mb-4 font-crimson">Utwórz nową grupę</h3>
+        <h3 class="text-lg font-medium mb-4 font-crimson">Utwórz nową grupę</h3>
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-2">
             Nazwa grupy
@@ -328,7 +355,7 @@
           <input
             v-model="newGroupName"
             type="text"
-            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-violet"
+            class="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-violet"
             placeholder="Wprowadź nazwę grupy..."
             @keyup.enter="createNewGroup"
           />
@@ -363,7 +390,7 @@
           </button>
           <button
             @click="showNewGroupModal = false"
-            class="flex-1 border border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-2xl font-semibold transition-colors duration-200"
+            class="flex-1 border-2 border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-full font-medium "
           >
             Anuluj
           </button>
@@ -378,10 +405,10 @@
       @click="closeGroupSettings"
     >
       <div
-        class="bg-pastel-khaki rounded-3xl p-8 w-full max-w-md border border-pastel-cinereous"
+        class="bg-pastel-khaki rounded-4xl p-8 w-full max-w-md border-2 border-pastel-cinereous"
         @click.stop
       >
-        <h3 class="text-lg font-semibold mb-4">Ustawienia grupy</h3>
+        <h3 class="text-lg font-medium mb-4">Ustawienia grupy</h3>
 
         <div class="mb-6">
           <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -390,7 +417,7 @@
           <input
             v-model="editingGroupName"
             type="text"
-            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-violet"
+            class="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-violet"
             placeholder="Wprowadź nazwę grupy..."
             @keyup.enter="saveGroupName"
           />
@@ -414,7 +441,7 @@
           
           <button
             @click="closeGroupSettings"
-            class="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 py-2 rounded font-medium"
+            class="w-full border-2 border-gray-300 hover:bg-gray-50 text-gray-700 py-2 rounded font-medium"
           >
             Anuluj
           </button>
@@ -429,10 +456,10 @@
       @click="showDeleteGroupConfirm = false"
     >
       <div
-        class="bg-pastel-khaki rounded-3xl p-8 w-full max-w-md border border-pastel-cinereous"
+        class="bg-pastel-khaki rounded-4xl p-8 w-full max-w-md border-2 border-pastel-cinereous"
         @click.stop
       >
-        <h3 class="text-lg font-semibold mb-4 text-red-600">Usuń grupę</h3>
+        <h3 class="text-lg font-medium mb-4 text-red-600">Usuń grupę</h3>
         <div class="mb-6">
           <p class="text-gray-700 mb-3">Czy na pewno chcesz usunąć grupę?</p>
           <div class="bg-gray-50 p-3 rounded border-l-4 border-red-400">
@@ -450,7 +477,7 @@
           </button>
           <button
             @click="showDeleteGroupConfirm = false"
-            class="flex-1 border border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-2xl font-semibold transition-colors duration-200"
+            class="flex-1 border-2 border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-full font-medium "
           >
             Anuluj
           </button>
@@ -463,9 +490,53 @@
 </template>
 
 <script setup>
-import { Settings, Folder, Clipboard, Play, Users, Plus } from 'lucide-vue-next'
+import { Settings, Folder, Clipboard, Play, Group, Plus } from 'lucide-vue-next'
 
 const { user, logout: authLogout } = useAuth()
+
+// Obliczanie pozycji baniek na podstawie ID użytkownika
+const bubblePositions = computed(() => {
+  if (!user.value?.uid) {
+    return {
+      bubble1: { top: 80, left: 200 },
+      bubble2: { top: 160, right: 300 },
+      bubble3: { bottom: 80, left: 400 }
+    }
+  }
+  
+  // Prosta funkcja hash dla stringa
+  const hash = (str) => {
+    let hash = 0
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // Konwersja do 32bit
+    }
+    return Math.abs(hash)
+  }
+  
+  const userHash = hash(user.value.uid)
+  
+  // Generowanie pozycji na podstawie hash'a
+  const seed1 = (userHash * 1234567) % 1000000
+  const seed2 = (userHash * 2345678) % 1000000  
+  const seed3 = (userHash * 3456789) % 1000000
+  
+  return {
+    bubble1: { 
+      top: 50 + (seed1 % 200), 
+      left: 100 + (seed1 % 400) 
+    },
+    bubble2: { 
+      top: 100 + (seed2 % 250), 
+      right: 50 + (seed2 % 350) 
+    },
+    bubble3: { 
+      bottom: 50 + (seed3 % 150), 
+      left: 200 + (seed3 % 500) 
+    }
+  }
+})
 const { 
   subscribeToUserProjects,
   createProject: firestoreCreateProject,

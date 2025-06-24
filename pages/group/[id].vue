@@ -18,7 +18,7 @@
         <button
           @click="startGroupSession"
           :disabled="!hasActiveAffirmations"
-          class="bg-pastel-violet hover:bg-pastel-purple disabled:bg-gray-300 text-gray-800 px-6 py-3 rounded-2xl font-semibold flex items-center gap-2 transition-colors duration-200"
+          class="bg-pastel-violet hover:bg-pastel-purple disabled:bg-gray-300 text-gray-800 px-6 py-3 rounded-2xl font-semibold flex items-center gap-2 "
         >
           <Play class="w-4 h-4" /> Rozpocznij sesję grupową
         </button>
@@ -67,7 +67,7 @@
                 </div>
                 <button
                   @click="addProject(project.id)"
-                  class="bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-1 transition-colors duration-200"
+                  class="bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-1 "
                 >
                   <Plus class="w-3 h-3" /> Dodaj
                 </button>

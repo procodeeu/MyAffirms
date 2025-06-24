@@ -47,7 +47,7 @@
               v-if="!isPlaying"
               @click="startSession"
               :disabled="activeAffirmations.length === 0"
-              class="bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 px-10 py-4 rounded-2xl font-semibold text-lg flex items-center gap-2 transition-colors duration-200"
+              class="bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 px-10 py-4 rounded-2xl font-semibold text-lg flex items-center gap-2 "
             >
               <Play class="w-4 h-4" /> Rozpocznij sesję
             </button>
@@ -55,7 +55,7 @@
             <button
               v-if="isPlaying"
               @click="stopSession"
-              class="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-2xl font-semibold transition-colors duration-200"
+              class="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-2xl font-semibold "
             >
               ⏹ Stop
             </button>
@@ -63,7 +63,7 @@
             <button
               v-if="isPlaying"
               @click="nextAffirmation"
-              class="bg-gray-600 hover:bg-gray-700 text-white px-8 py-4 rounded-2xl font-semibold transition-colors duration-200"
+              class="bg-gray-600 hover:bg-gray-700 text-white px-8 py-4 rounded-2xl font-semibold "
             >
               ⏭ Następna
             </button>
