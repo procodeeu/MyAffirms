@@ -6,9 +6,9 @@
         <div class="flex items-center gap-4">
           <button
             @click="$router.back()"
-            class="text-white hover:text-white opacity-90 hover:opacity-100"
+            class="text-white hover:text-white opacity-90 hover:opacity-100 inline-flex items-center gap-2"
           >
-            ← Powrót
+            <ChevronLeft class="w-4 h-4" /> Powrót
           </button>
           <div>
             <div class="text-xs text-white font-crimson italic opacity-90">My affirms</div>
@@ -18,7 +18,7 @@
         <button
           @click="startSession"
           :disabled="!activeAffirmations.length"
-          class="bg-white hover:bg-gray-100 disabled:bg-gray-300 text-brand-blue px-4 py-2 rounded-lg font-medium"
+          class="bg-white hover:bg-gray-100 disabled:bg-gray-300 text-brand-blue px-4 py-2 rounded-lg font-medium flex items-center gap-2"
         >
           <Play class="w-4 h-4" /> Rozpocznij sesję
         </button>
@@ -81,7 +81,7 @@
               class="rounded-lg p-4 flex items-center justify-between cursor-move hover:border-blue-300 transition-all duration-200"
             >
               <div class="flex items-center gap-3 flex-1">
-                <div class="text-gray-400 text-sm select-none">⋮⋮</div>
+                <GripVertical class="w-4 h-4 text-gray-400" />
                 <div class="flex-1">
                   <p :class="affirmation.isActive ? 'text-gray-900' : 'text-gray-400 line-through'">
                     {{ affirmation.text }}
@@ -91,11 +91,14 @@
               <div class="flex items-center gap-2">
                 <button
                   @click.stop="toggleAffirmation(affirmation.id)"
-                  :class="affirmation.isActive ? 'text-green-600 hover:text-green-800' : 'text-gray-400 hover:text-gray-600'"
-                  class="px-2 py-1 rounded font-medium"
+                  class="relative inline-flex h-4 w-7 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-offset-1"
+                  :class="affirmation.isActive ? 'bg-green-600' : 'bg-gray-300'"
                   title="Przełącz aktywność"
                 >
-                  {{ affirmation.isActive ? '<Check class="w-4 h-4" />' : '<Circle class="w-4 h-4" />' }}
+                  <span
+                    class="inline-block h-2.5 w-2.5 transform rounded-full bg-white transition-transform duration-200"
+                    :class="affirmation.isActive ? 'translate-x-3.5' : 'translate-x-0.5'"
+                  ></span>
                 </button>
                 <div class="relative">
                   <button
@@ -104,7 +107,7 @@
                     title="Menu akcji"
                     data-menu-trigger
                   >
-                    ⋯
+                    <MoreVertical class="w-4 h-4" />
                   </button>
                   <div
                     v-if="activeActionMenu === affirmation.id"
@@ -114,13 +117,13 @@
                       @click.stop="startEditingAffirmation(affirmation.id)"
                       class="w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                     >
-                      ✏️ Edytuj
+                      <Edit3 class="w-4 h-4" /> Edytuj
                     </button>
                     <button
                       @click.stop="deleteAffirmation(affirmation.id)"
                       class="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2"
                     >
-                      🗑 Usuń
+                      <Trash2 class="w-4 h-4" /> Usuń
                     </button>
                   </div>
                 </div>
@@ -212,7 +215,7 @@
 </template>
 
 <script setup>
-import { Play, Check, Circle } from 'lucide-vue-next'
+import { Play, Check, Circle, MoreVertical, Edit3, Trash2, GripVertical, ChevronLeft } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -430,8 +433,6 @@ const handleDrop = async (event, dropIndex) => {
 
   affirmations.splice(newDropIndex, 0, draggedItem)
   
-  ))
-
   project.value.affirmations = affirmations
   project.value.updatedAt = new Date().toISOString()
   
@@ -501,8 +502,6 @@ const saveAffirmationEdit = async (affirmationId) => {
       project.value.affirmations[affirmationIndex].text = editingAffirmationText.value.trim()
       project.value.updatedAt = new Date().toISOString()
       
-      )
-
       try {
         await updateProject(project.value.id, { 
           affirmations: project.value.affirmations,

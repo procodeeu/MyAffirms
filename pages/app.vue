@@ -28,17 +28,85 @@
             <h2 class="text-3xl font-bold text-gray-900">Twoje projekty</h2>
             <p class="text-gray-600 mt-1">Organizuj afirmacje w tematyczne kolekcje</p>
           </div>
-          <button
-            @click="showNewProjectModal = true"
-            :disabled="!user"
-            class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2"
-          >
-            <span class="text-lg">+</span>
-            Nowy projekt
-          </button>
+          <div class="flex gap-2">
+            <button
+              @click="showNewProjectModal = true"
+              :disabled="!user"
+              class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2"
+            >
+              <span class="text-lg">+</span>
+              Nowy projekt
+            </button>
+            <button
+              @click="showNewGroupModal = true"
+              :disabled="!user"
+              class="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2"
+            >
+              <Users class="w-4 h-4" />
+              Nowa grupa
+            </button>
+          </div>
         </div>
 
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Karty grup -->
+          <div
+            v-for="group in groups"
+            :key="`group-${group.id}`"
+            class="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-all"
+            @click="selectGroup(group)"
+          >
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                  <Users class="w-5 h-5 text-purple-600" />
+                  <h3 class="text-xl font-semibold text-gray-900">
+                    {{ group.name }}
+                  </h3>
+                </div>
+                <p class="text-gray-600 text-sm">
+                  {{ getGroupProjectsCount(group) }} projektów w grupie
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  @click.stop="openGroupSettings(group)"
+                  class="text-gray-400 hover:text-gray-600 p-1"
+                  title="Ustawienia grupy"
+                >
+                  <Settings class="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            
+            <div class="space-y-2">
+              <div
+                v-for="projectName in getGroupProjectNames(group).slice(0, 3)"
+                :key="projectName"
+                class="text-sm text-purple-700 bg-purple-100 rounded p-2 border border-purple-200"
+              >
+                {{ projectName }}
+              </div>
+              <div
+                v-if="getGroupProjectNames(group).length > 3"
+                class="text-xs text-purple-600 text-center py-1"
+              >
+                +{{ getGroupProjectNames(group).length - 3 }} więcej
+              </div>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-purple-200">
+              <button
+                @click.stop="startGroupSession(group)"
+                :disabled="!getGroupProjectsCount(group)"
+                class="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white py-2 rounded font-medium flex items-center justify-center gap-2"
+              >
+                <Play class="w-4 h-4" /> Rozpocznij sesję grupową
+              </button>
+            </div>
+          </div>
+
+          <!-- Karty projektów -->
           <div
             v-for="project in projects"
             :key="project.id"
@@ -85,7 +153,7 @@
               <button
                 @click.stop="startSession(project)"
                 :disabled="!project.affirmations?.length"
-                class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white py-2 rounded font-medium"
+                class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white py-2 rounded font-medium flex items-center justify-center gap-2"
               >
                 <Play class="w-4 h-4" /> Rozpocznij sesję
               </button>
@@ -242,25 +310,180 @@
       </div>
     </div>
 
+    <!-- Modal nowej grupy -->
+    <div
+      v-if="showNewGroupModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+      @click="showNewGroupModal = false"
+    >
+      <div
+        class="bg-white rounded-lg p-6 w-full max-w-md"
+        @click.stop
+      >
+        <h3 class="text-lg font-semibold mb-4">Utwórz nową grupę</h3>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Nazwa grupy
+          </label>
+          <input
+            v-model="newGroupName"
+            type="text"
+            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            placeholder="Wprowadź nazwę grupy..."
+            @keyup.enter="createNewGroup"
+          />
+        </div>
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Wybierz projekty
+          </label>
+          <div class="space-y-2 max-h-40 overflow-y-auto">
+            <label
+              v-for="project in projects"
+              :key="project.id"
+              class="flex items-center"
+            >
+              <input
+                v-model="selectedProjectsForGroup"
+                :value="project.id"
+                type="checkbox"
+                class="mr-2"
+              />
+              {{ project.name }}
+            </label>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button
+            @click="createNewGroup"
+            :disabled="!newGroupName.trim()"
+            class="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white py-2 rounded font-medium"
+          >
+            Utwórz grupę
+          </button>
+          <button
+            @click="showNewGroupModal = false"
+            class="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 py-2 rounded font-medium"
+          >
+            Anuluj
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal ustawień grupy -->
+    <div
+      v-if="showGroupSettingsModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+      @click="closeGroupSettings"
+    >
+      <div
+        class="bg-white rounded-lg p-6 w-full max-w-md"
+        @click.stop
+      >
+        <h3 class="text-lg font-semibold mb-4">Ustawienia grupy</h3>
+
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Nazwa grupy
+          </label>
+          <input
+            v-model="editingGroupName"
+            type="text"
+            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            placeholder="Wprowadź nazwę grupy..."
+            @keyup.enter="saveGroupName"
+          />
+        </div>
+
+        <div class="space-y-3">
+          <button
+            @click="saveGroupName"
+            :disabled="!editingGroupName.trim()"
+            class="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white py-2 rounded font-medium"
+          >
+            Zapisz nazwę
+          </button>
+          
+          <button
+            @click="showDeleteGroupConfirm = true"
+            class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded font-medium"
+          >
+            Usuń grupę
+          </button>
+          
+          <button
+            @click="closeGroupSettings"
+            class="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 py-2 rounded font-medium"
+          >
+            Anuluj
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal potwierdzenia usunięcia grupy -->
+    <div
+      v-if="showDeleteGroupConfirm"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+      @click="showDeleteGroupConfirm = false"
+    >
+      <div
+        class="bg-white rounded-lg p-6 w-full max-w-md"
+        @click.stop
+      >
+        <h3 class="text-lg font-semibold mb-4 text-red-600">Usuń grupę</h3>
+        <div class="mb-6">
+          <p class="text-gray-700 mb-3">Czy na pewno chcesz usunąć grupę?</p>
+          <div class="bg-gray-50 p-3 rounded border-l-4 border-red-400">
+            <p class="text-gray-800 font-medium">{{ selectedGroup?.name }}</p>
+            <p class="text-sm text-gray-600">{{ getGroupProjectsCount(selectedGroup) }} projektów</p>
+          </div>
+          <p class="text-sm text-gray-500 mt-2">Ta operacja jest nieodwracalna. Projekty pozostaną nienaruszone.</p>
+        </div>
+        <div class="flex gap-3">
+          <button
+            @click="confirmDeleteGroup"
+            class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded font-medium"
+          >
+            Usuń grupę
+          </button>
+          <button
+            @click="showDeleteGroupConfirm = false"
+            class="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-700 py-2 rounded font-medium"
+          >
+            Anuluj
+          </button>
+        </div>
+      </div>
+    </div>
+
     <PWAInstallPrompt />
   </div>
 </template>
 
 <script setup>
-import { Settings, Folder, Clipboard, Play } from 'lucide-vue-next'
+import { Settings, Folder, Clipboard, Play, Users, Plus } from 'lucide-vue-next'
 
 const { user, logout: authLogout } = useAuth()
 const { 
   subscribeToUserProjects,
   createProject: firestoreCreateProject,
   deleteProject: firestoreDeleteProject,
-  updateProject
+  updateProject,
+  subscribeToUserGroups,
+  createGroup,
+  updateGroup,
+  deleteGroup,
+  addProjectToGroup,
+  removeProjectFromGroup
 } = useFirestore()
 
 import { BUILD_VERSION } from '~/utils/version.js'
 const appVersion = ref(BUILD_VERSION)
 
 const projects = ref([])
+const groups = ref([])
 const showNewProjectModal = ref(false)
 const newProjectName = ref('')
 const loading = ref(false)
@@ -270,7 +493,16 @@ const showDeleteProjectConfirm = ref(false)
 const selectedProject = ref(null)
 const editingProjectName = ref('')
 
+const showNewGroupModal = ref(false)
+const showGroupSettingsModal = ref(false)
+const showDeleteGroupConfirm = ref(false)
+const selectedGroup = ref(null)
+const newGroupName = ref('')
+const editingGroupName = ref('')
+const selectedProjectsForGroup = ref([])
+
 let unsubscribe = null
+let unsubscribeGroups = null
 
 onMounted(() => {
   
@@ -293,15 +525,12 @@ watchEffect(() => {
     const saved = localStorage.getItem(`projects_${user.value.uid}`)
     if (saved) {
       const localProjects = JSON.parse(saved)
-      ))
       projects.value = localProjects
     } else {
       }
 
     try {
       unsubscribe = subscribeToUserProjects((userProjects) => {
-        ))
-
         const firebaseProjects = userProjects || []
         const localData = localStorage.getItem(`projects_${user.value.uid}`)
         let localProjects = []
@@ -336,9 +565,30 @@ watchEffect(() => {
   }
 })
 
+watchEffect(() => {
+  if (user.value) {
+    if (unsubscribeGroups) {
+      unsubscribeGroups()
+    }
+
+    try {
+      unsubscribeGroups = subscribeToUserGroups((userGroups) => {
+        groups.value = userGroups || []
+      })
+    } catch (error) {
+      console.error('Error subscribing to groups:', error)
+    }
+  } else {
+    groups.value = []
+  }
+})
+
 onUnmounted(() => {
   if (unsubscribe) {
     unsubscribe()
+  }
+  if (unsubscribeGroups) {
+    unsubscribeGroups()
   }
 })
 
@@ -498,6 +748,92 @@ const startSession = (project) => {
   if (project.affirmations?.length > 0) {
     navigateTo(`/session/${project.id}`)
   }
+}
+
+const getGroupProjectsCount = (group) => {
+  if (!group?.projectIds) return 0
+  return group.projectIds.length
+}
+
+const getGroupProjectNames = (group) => {
+  if (!group?.projectIds) return []
+  return group.projectIds
+    .map(id => projects.value.find(p => p.id === id)?.name)
+    .filter(Boolean)
+}
+
+const createNewGroup = async () => {
+  if (!newGroupName.value.trim()) return
+  
+  try {
+    loading.value = true
+    
+    const groupData = {
+      name: newGroupName.value.trim(),
+      projectIds: selectedProjectsForGroup.value
+    }
+    
+    await createGroup(groupData)
+    
+    newGroupName.value = ''
+    selectedProjectsForGroup.value = []
+    showNewGroupModal.value = false
+  } catch (error) {
+    console.error('Failed to create group:', error)
+    alert('Nie udało się utworzyć grupy')
+  } finally {
+    loading.value = false
+  }
+}
+
+const openGroupSettings = (group) => {
+  selectedGroup.value = group
+  editingGroupName.value = group.name
+  showGroupSettingsModal.value = true
+}
+
+const closeGroupSettings = () => {
+  showGroupSettingsModal.value = false
+  showDeleteGroupConfirm.value = false
+  selectedGroup.value = null
+  editingGroupName.value = ''
+}
+
+const saveGroupName = async () => {
+  if (!editingGroupName.value.trim() || !selectedGroup.value) return
+  
+  try {
+    await updateGroup(selectedGroup.value.id, {
+      name: editingGroupName.value.trim()
+    })
+    
+    closeGroupSettings()
+  } catch (error) {
+    console.error('Failed to update group:', error)
+    alert('Nie udało się zaktualizować grupy')
+  }
+}
+
+const confirmDeleteGroup = async () => {
+  if (!selectedGroup.value) return
+  
+  try {
+    await deleteGroup(selectedGroup.value.id)
+    showDeleteGroupConfirm.value = false
+    closeGroupSettings()
+  } catch (error) {
+    console.error('Failed to delete group:', error)
+    alert('Nie udało się usunąć grupy')
+  }
+}
+
+const selectGroup = (group) => {
+  navigateTo(`/group/${group.id}`)
+}
+
+const startGroupSession = (group) => {
+  console.log('Starting group session for:', group.name)
+  // navigateTo(`/group-session/${group.id}`)
 }
 
 const logout = async () => {

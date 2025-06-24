@@ -6,9 +6,9 @@
         <div class="text-center">
           <button
             @click="$router.back()"
-            class="text-white hover:text-white opacity-90 hover:opacity-100 mb-4 inline-block"
+            class="text-white hover:text-white opacity-90 hover:opacity-100 mb-4 inline-flex items-center gap-2"
           >
-            ← Powrót do projektu
+            <ChevronLeft class="w-4 h-4" /> Powrót do projektu
           </button>
           <div class="text-sm text-white font-crimson italic opacity-90 mb-2">My affirms</div>
           <h1 class="text-3xl font-bold text-white mb-2">
@@ -47,7 +47,7 @@
               v-if="!isPlaying"
               @click="startSession"
               :disabled="activeAffirmations.length === 0"
-              class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-8 py-3 rounded-lg font-medium text-lg"
+              class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-8 py-3 rounded-lg font-medium text-lg flex items-center gap-2"
             >
               <Play class="w-4 h-4" /> Rozpocznij sesję
             </button>
@@ -126,7 +126,7 @@
               Powtarzaj każdą afirmację drugi raz
             </label>
             
-            <div v-if="repeatAffirmation" class="ml-6 mt-2">
+            <div v-if="repeatAffirmation" class="mt-2">
               <label class="block text-sm font-medium text-gray-700 mb-2">
                 Opóźnienie przed powtórzeniem: {{ repeatDelay }}s
               </label>
@@ -149,7 +149,7 @@
 </template>
 
 <script setup>
-import { Play } from 'lucide-vue-next'
+import { Play, ChevronLeft } from 'lucide-vue-next'
 
 const route = useRoute()
 const { user } = useAuth()
@@ -188,7 +188,6 @@ const loadProject = async () => {
       const saved = localStorage.getItem(`projects_${user.value.uid}`)
       if (saved) {
         const projects = JSON.parse(saved)
-        ))
         project.value = projects.find(p => p.id === route.params.id)
         } else {
         }

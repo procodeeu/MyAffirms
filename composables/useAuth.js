@@ -13,7 +13,7 @@ export const useAuth = () => {
   const loading = ref(true)
   const error = ref('')
 
-  onMounted(() => {
+  nextTick(() => {
     if ($firebase?.auth) {
       onAuthStateChanged($firebase.auth, (firebaseUser) => {
         user.value = firebaseUser

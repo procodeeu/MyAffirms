@@ -50,7 +50,6 @@ export default defineNuxtPlugin(async () => {
   }
   
   try {
-    })
 
     if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
       throw new Error('Firebase config is incomplete')

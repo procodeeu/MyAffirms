@@ -19,6 +19,10 @@ export const useFirestore = () => {
     collection($firebase.db, 'projects')
   )
 
+  const groupsCollection = computed(() => 
+    collection($firebase.db, 'groups')
+  )
+
   const getUserProjects = async () => {
     if (!user.value) return []
     
@@ -56,11 +60,10 @@ export const useFirestore = () => {
         ...doc.data()
       }))
       
-      ))
-      
       callback(projects)
     }, (error) => {
-      })
+      console.error('Error subscribing to projects:', error)
+    })
   }
 
   const createProject = async (projectData) => {
@@ -156,6 +159,219 @@ export const useFirestore = () => {
     await updateProject(projectId, { affirmations: updatedAffirmations })
   }
 
+  const getUserGroups = async () => {
+    if (!user.value) {
+      console.log('getUserGroups: No user')
+      return []
+    }
+    
+    console.log('getUserGroups: User ID:', user.value.uid)
+    
+    try {
+      const q = query(
+        groupsCollection.value,
+        where('userId', '==', user.value.uid),
+        orderBy('createdAt', 'asc')
+      )
+      
+      console.log('getUserGroups: Trying indexed query...')
+      const querySnapshot = await getDocs(q)
+      const groups = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+      console.log('getUserGroups: Success with indexed query:', groups)
+      return groups
+    } catch (error) {
+      console.log('getUserGroups: Indexed query failed:', error.code, error.message)
+      
+      if (error.code === 'failed-precondition') {
+        try {
+          console.log('getUserGroups: Trying fallback query...')
+          const simpleQuery = query(
+            groupsCollection.value,
+            where('userId', '==', user.value.uid)
+          )
+          
+          const querySnapshot = await getDocs(simpleQuery)
+          const groups = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+          console.log('getUserGroups: Success with fallback query:', groups)
+          return groups
+        } catch (fallbackError) {
+          console.error('getUserGroups: Fallback query also failed:', fallbackError)
+          return []
+        }
+      }
+      console.error('getUserGroups: Other error:', error)
+      return []
+    }
+  }
+
+  const subscribeToUserGroups = (callback) => {
+    if (!user.value) {
+      return () => {}
+    }
+    
+    if (!$firebase?.db) {
+      return () => {}
+    }
+    
+    const q = query(
+      groupsCollection.value,
+      where('userId', '==', user.value.uid),
+      orderBy('createdAt', 'asc')
+    )
+    
+    return onSnapshot(q, (querySnapshot) => {
+      const groups = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+      
+      callback(groups)
+    }, (error) => {
+      console.error('Error subscribing to groups:', error)
+      if (error.code === 'failed-precondition') {
+        const simpleQuery = query(
+          groupsCollection.value,
+          where('userId', '==', user.value.uid)
+        )
+        
+        return onSnapshot(simpleQuery, (querySnapshot) => {
+          const groups = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+          
+          callback(groups)
+        }, (fallbackError) => {
+          console.error('Fallback query also failed:', fallbackError)
+          callback([])
+        })
+      } else {
+        callback([])
+      }
+    })
+  }
+
+  const createGroup = async (groupData) => {
+    if (!user.value) {
+      throw new Error('User not authenticated')
+    }
+    
+    if (!$firebase?.db) {
+      throw new Error('Firestore not initialized')
+    }
+    
+    try {
+      const projectOrder = (groupData.projectIds || []).reduce((order, projectId, index) => {
+        order[projectId] = index
+        return order
+      }, {})
+      
+      const docRef = await addDoc(groupsCollection.value, {
+        ...groupData,
+        userId: user.value.uid,
+        projectIds: groupData.projectIds || [],
+        projectOrder: projectOrder,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })
+      
+      return docRef.id
+    } catch (error) {
+      throw error
+    }
+  }
+
+  const updateGroup = async (groupId, updates) => {
+    if (!user.value) throw new Error('User not authenticated')
+    
+    const groupRef = doc($firebase.db, 'groups', groupId)
+    await updateDoc(groupRef, {
+      ...updates,
+      updatedAt: new Date().toISOString()
+    })
+  }
+
+  const deleteGroup = async (groupId) => {
+    if (!user.value) throw new Error('User not authenticated')
+    
+    const groupRef = doc($firebase.db, 'groups', groupId)
+    await deleteDoc(groupRef)
+  }
+
+  const addProjectToGroup = async (groupId, projectId) => {
+    if (!user.value) throw new Error('User not authenticated')
+
+    const groups = await getUserGroups()
+    const group = groups.find(g => g.id === groupId)
+    
+    if (!group) throw new Error('Group not found')
+    
+    const projectIds = [...(group.projectIds || []), projectId]
+    await updateGroup(groupId, { projectIds })
+  }
+
+  const removeProjectFromGroup = async (groupId, projectId) => {
+    if (!user.value) throw new Error('User not authenticated')
+
+    const groups = await getUserGroups()
+    const group = groups.find(g => g.id === groupId)
+    
+    if (!group) throw new Error('Group not found')
+    
+    const projectIds = (group.projectIds || []).filter(id => id !== projectId)
+    
+    const newProjectOrder = {}
+    projectIds.forEach((id, index) => {
+      newProjectOrder[id] = index
+    })
+    
+    await updateGroup(groupId, { 
+      projectIds,
+      projectOrder: newProjectOrder
+    })
+  }
+
+  const moveProjectInGroup = async (groupId, projectId, direction) => {
+    if (!user.value) throw new Error('User not authenticated')
+
+    const groups = await getUserGroups()
+    const group = groups.find(g => g.id === groupId)
+    
+    if (!group) throw new Error('Group not found')
+    
+    const projectIds = [...(group.projectIds || [])]
+    const currentIndex = projectIds.indexOf(projectId)
+    
+    if (currentIndex === -1) return
+    
+    let newIndex
+    if (direction === 'up' && currentIndex > 0) {
+      newIndex = currentIndex - 1
+    } else if (direction === 'down' && currentIndex < projectIds.length - 1) {
+      newIndex = currentIndex + 1
+    } else {
+      return
+    }
+    
+    [projectIds[currentIndex], projectIds[newIndex]] = [projectIds[newIndex], projectIds[currentIndex]]
+    
+    const newProjectOrder = {}
+    projectIds.forEach((id, index) => {
+      newProjectOrder[id] = index
+    })
+    
+    await updateGroup(groupId, {
+      projectIds,
+      projectOrder: newProjectOrder
+    })
+  }
+
   return {
     getUserProjects,
     subscribeToUserProjects,
@@ -164,6 +380,14 @@ export const useFirestore = () => {
     deleteProject,
     addAffirmationToProject,
     updateAffirmationInProject,
-    deleteAffirmationFromProject
+    deleteAffirmationFromProject,
+    getUserGroups,
+    subscribeToUserGroups,
+    createGroup,
+    updateGroup,
+    deleteGroup,
+    addProjectToGroup,
+    removeProjectFromGroup,
+    moveProjectInGroup
   }
 }
