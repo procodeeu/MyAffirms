@@ -7,8 +7,7 @@ export default defineNuxtConfig({
   ],
   ssr: false,
   nitro: {
-    preset: 'static',
-    routeRules: {}
+    preset: 'static'
   },
   devServer: {
     port: 3011
