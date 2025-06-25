@@ -2,12 +2,15 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: [
     '@nuxtjs/tailwindcss',
-    '@pinia/nuxt',
-    '@vite-pwa/nuxt'
+    '@pinia/nuxt'
+    // '@vite-pwa/nuxt' - temporarily disabled
   ],
   ssr: false,
   nitro: {
-    preset: 'static'
+    preset: 'static',
+    prerender: {
+      routes: ['/']
+    }
   },
   devServer: {
     port: 3011
@@ -18,9 +21,13 @@ export default defineNuxtConfig({
   routeRules: {},
   pwa: {
     registerType: 'autoUpdate',
+    strategies: 'generateSW',
     workbox: {
       navigateFallback: '/',
       globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
+      cleanupOutdatedCaches: false,
+      dontCacheBustURLsMatching: /^\/_nuxt\//,
+      skipWaiting: true,
     },
     client: {
       installPrompt: true,

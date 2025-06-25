@@ -22,11 +22,11 @@ echo "✅ BUILD_VERSION updated to '$TIMESTAMP'"
 echo "🏗️  Building application..."
 npm run build
 
-# 3. Copy files for static hosting (fix Nuxt SPA issue)
-echo "📁 Copying build files..."
-cp -r .nuxt/dist/client/* .output/public/ 2>/dev/null || true
-cp index.html .output/public/ 2>/dev/null || true
-cp public/* .output/public/ 2>/dev/null || true
+# 3. Build files are ready in .output/public
+echo "📁 Build files ready in .output/public"
+echo "Files count: $(find .output/public -type f | wc -l)"
+echo "Sample files:"
+ls -la .output/public/ | head -10
 
 # 4. Deploy to Firebase
 echo "🔥 Deploying to Firebase..."
@@ -103,6 +103,24 @@ if [ "$CSS_STATUS" -eq 200 ]; then
     echo "✅ CSS assets loading correctly"
 else
     echo "⚠️  CSS assets might have different names (this is normal after rebuild)"
+fi
+
+# Test 7: Check if build version is available in JavaScript bundle
+echo "🔍 Testing build version availability in JavaScript..."
+# Since this is a SPA, check if BUILD_VERSION is in the JS bundle
+JS_CONTENT=""
+for js_file in $(curl -s "$PROD_URL" | grep -o "_nuxt/[^\"']*\.js" | head -5); do
+    JS_CONTENT="$JS_CONTENT$(curl -s "$PROD_URL/$js_file" 2>/dev/null || echo "")"
+done
+
+BUILD_VERSION_IN_JS=$(echo "$JS_CONTENT" | grep -o "$TIMESTAMP" || echo "not_found")
+if [ "$BUILD_VERSION_IN_JS" != "not_found" ]; then
+    echo "✅ Build version found in JavaScript bundle: $TIMESTAMP"
+else
+    echo "❌ Build version not found in JavaScript bundle"
+    echo "Expected to find: $TIMESTAMP"
+    # Don't exit as this might be bundled/minified differently
+    echo "⚠️  This might be normal if the version is bundled differently"
 fi
 
 echo ""

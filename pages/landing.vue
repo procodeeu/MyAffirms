@@ -165,12 +165,20 @@
           Zacznij za darmo
         </button>
       </div>
+      
+      <!-- Build Version Footer -->
+      <div class="text-center mt-8 mb-4">
+        <div class="text-xs text-gray-500">
+          Build: {{ BUILD_VERSION }}
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { Play, Square, SkipForward } from 'lucide-vue-next'
+import { BUILD_VERSION } from '~/utils/version.js'
 
 const demoProjects = ref([
   {

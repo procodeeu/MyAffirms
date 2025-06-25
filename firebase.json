@@ -25,7 +25,8 @@
       }
     ],
     "cleanUrls": true,
-    "trailingSlash": false
+    "trailingSlash": false,
+    "predeploy": []
   },
   "emulators": {
     "auth": {
