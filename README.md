@@ -30,14 +30,17 @@ The application has monetization potential through:
 - View all affirmations in project
 
 ### Playback Sessions
-- Play affirmations using Web Speech API
+- Play affirmations using Web Speech API or Google Cloud TTS (Premium)
 - Configure speed and pauses between affirmations
+- AI voice selection with different characters (Premium)
 - Random or sequential mode
 - Pause and resume sessions
 
 ### Technical Features
 - User authentication via Google
 - Data synchronization between devices
+- Premium user management system
+- Google Cloud Text-to-Speech integration
 - Offline mode with local storage
 - Progressive Web App (PWA) - mobile installation
 - Responsive design
@@ -64,11 +67,16 @@ The application has monetization potential through:
 │   └── PWAInstallPrompt.vue # PWA installation prompt
 ├── composables/
 │   ├── useAuth.js         # User authentication
-│   └── useFirestore.js    # Database operations
+│   ├── useFirestore.js    # Database operations
+│   ├── usePremium.js      # Premium user management
+│   └── useTextToSpeech.js # TTS with Google Cloud integration
 ├── stores/
 │   └── affirmations.js    # Application state (Pinia)
 ├── middleware/
 │   └── auth.js            # Authentication middleware
+├── server/
+│   └── api/
+│       └── tts.post.js    # Google Cloud TTS API endpoint
 └── plugins/
     └── firebase.client.js # Firebase initialization
 ```
@@ -78,6 +86,7 @@ The application has monetization potential through:
 ### Requirements
 - Node.js 18+
 - Firebase account with Authentication and Firestore enabled
+- Google Cloud account with Text-to-Speech API (for premium features)
 
 ### Local Development
 
@@ -104,6 +113,17 @@ npm run preview
 # Generate static site
 npm run generate
 ```
+
+## Premium Features Setup
+
+### Google Cloud Text-to-Speech API
+For premium AI voice features, see detailed setup instructions:
+[Google Cloud TTS Setup Guide](./GOOGLE_CLOUD_TTS_SETUP.md)
+
+This enables:
+- High-quality AI voices (Wavenet)
+- Multiple voice characters (Zofia, Marek, Agnieszka)
+- Significantly better voice quality than Web Speech API
 
 ## Firebase Setup
 

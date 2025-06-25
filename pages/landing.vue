@@ -28,7 +28,7 @@
 
     <div class="container mx-auto px-4 py-8">
       
-      <!-- Wybór projektu demo -->
+      <!-- Demo project selection -->
       <div class="bg-pastel-violet border-2 border-pastel-rose rounded-4xl p-8 mb-8 max-w-md mx-auto">
         <h3 class="text-base font-medium text-gray-900 mb-4">Wybierz kategorię afirmacji</h3>
         <div class="space-y-2">

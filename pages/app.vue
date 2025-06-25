@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-pastel-vanilla relative overflow-hidden">
-    <!-- Dekoracyjne bańki w tle -->
+    <!-- Decorative bubbles in background -->
     <div class="absolute inset-0 pointer-events-none">
       <div 
         class="absolute w-96 h-96 rounded-full" 
@@ -35,8 +35,18 @@
           <p class="text-sm text-gray-700 font-crimson italic opacity-90">Affirmations that reveal, not just heal</p>
         </div>
         <div class="flex items-center gap-4">
+          <div v-if="isPremiumActive" class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+            <span class="text-xs text-yellow-700 font-medium">PREMIUM</span>
+          </div>
           <span class="text-gray-700 opacity-90">Witaj, {{ user?.email || 'Użytkowniku' }}</span>
           <span class="text-xs text-gray-600 opacity-60">v{{ appVersion }}</span>
+          <button
+            @click="goToAdmin"
+            class="text-gray-700 hover:text-gray-900 px-3 py-1 rounded-full text-sm border-2 border-transparent hover:border-gray-300"
+          >
+            Admin
+          </button>
           <button
             @click="logout"
             class="text-gray-700 hover:text-gray-900 px-4 py-2 rounded-full  border-2 border-transparent active:border-gray-800"
@@ -133,7 +143,7 @@
             </div>
           </div>
 
-          <!-- Karty projektów -->
+          <!-- Project cards -->
           <div
             v-for="project in projects"
             :key="project.id"
@@ -398,7 +408,7 @@
       </div>
     </div>
 
-    <!-- Modal ustawień grupy -->
+    <!-- Group settings modal -->
     <div
       v-if="showGroupSettingsModal"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
@@ -449,7 +459,7 @@
       </div>
     </div>
 
-    <!-- Modal potwierdzenia usunięcia grupy -->
+    <!-- Group deletion confirmation modal -->
     <div
       v-if="showDeleteGroupConfirm"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
@@ -493,8 +503,9 @@
 import { Settings, Folder, Clipboard, Play, Group, Plus } from 'lucide-vue-next'
 
 const { user, logout: authLogout } = useAuth()
+const { isPremiumActive } = usePremium()
 
-// Obliczanie pozycji baniek na podstawie ID użytkownika
+// Calculate bubble positions based on user ID
 const bubblePositions = computed(() => {
   if (!user.value?.uid) {
     return {
@@ -909,6 +920,10 @@ const startGroupSession = (group) => {
 
 const logout = async () => {
   await authLogout()
+}
+
+const goToAdmin = () => {
+  navigateTo('/admin')
 }
 
 definePageMeta({

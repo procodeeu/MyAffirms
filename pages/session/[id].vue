@@ -55,17 +55,17 @@
             <button
               v-if="isPlaying"
               @click="stopSession"
-              class="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-2xl font-semibold "
+              class="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-2xl font-semibold flex items-center gap-2"
             >
-              ⏹ Stop
+              <Square class="w-4 h-4" /> Stop
             </button>
             
             <button
               v-if="isPlaying"
               @click="nextAffirmation"
-              class="bg-gray-600 hover:bg-gray-700 text-white px-8 py-4 rounded-2xl font-semibold "
+              class="bg-gray-600 hover:bg-gray-700 text-white px-8 py-4 rounded-2xl font-semibold flex items-center gap-2"
             >
-              ⏭ Następna
+              <SkipForward class="w-4 h-4" /> Next
             </button>
           </div>
         </div>
@@ -77,10 +77,10 @@
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
-              Prędkość mowy: {{ speechRate }}x 
-              <span v-if="speechRate == 0.8" class="text-green-600 font-medium">(naturalna - {{ (speechRate * 100).toFixed(0) }}% prędkości pełnej)</span>
-              <span v-else-if="speechRate < 0.8" class="text-blue-600">{{ (speechRate * 100).toFixed(0) }}% prędkości pełnej</span>
-              <span v-else class="text-orange-600">{{ (speechRate * 100).toFixed(0) }}% prędkości pełnej</span>
+              Speech rate: {{ speechRate }}x 
+              <span v-if="speechRate == 0.8" class="text-green-600 font-medium">(natural - {{ (speechRate * 100).toFixed(0) }}% of full speed)</span>
+              <span v-else-if="speechRate < 0.8" class="text-blue-600">{{ (speechRate * 100).toFixed(0) }}% of full speed</span>
+              <span v-else class="text-orange-600">{{ (speechRate * 100).toFixed(0) }}% of full speed</span>
             </label>
             <input
               v-model.number="speechRate"
@@ -94,14 +94,14 @@
             />
             <div class="flex justify-between text-xs text-gray-500 mt-1">
               <span>0.4x (40%)</span>
-              <span class="text-green-600 font-medium">0.8x (naturalna - 80%)</span>
+              <span class="text-green-600 font-medium">0.8x (natural - 80%)</span>
               <span>1.6x (160%)</span>
             </div>
           </div>
           
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
-              Pauza między afirmacjami: {{ pauseDuration }}s
+              Pause between affirmations: {{ pauseDuration }}s
             </label>
             <input
               v-model.number="pauseDuration"
@@ -123,12 +123,12 @@
                 class="mr-2"
                 @change="saveSettings"
               />
-              Powtarzaj każdą afirmację drugi raz
+              Repeat each affirmation twice
             </label>
             
             <div v-if="repeatAffirmation" class="mt-2">
               <label class="block text-sm font-medium text-gray-700 mb-2">
-                Opóźnienie przed powtórzeniem: {{ repeatDelay }}s
+                Delay before repeat: {{ repeatDelay }}s
               </label>
               <input
                 v-model.number="repeatDelay"
@@ -142,6 +142,119 @@
               />
             </div>
           </div>
+          
+          <div v-if="isFeatureEnabled('aiTts')" class="border-t border-gray-200 pt-4">
+            <div class="flex items-center justify-between mb-3">
+              <label class="text-sm font-medium text-gray-700">
+                TTS Voice Quality
+              </label>
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                <span class="text-xs text-yellow-700 font-medium">PREMIUM</span>
+              </div>
+            </div>
+            
+            <label class="flex items-center text-sm font-medium text-gray-700 mb-2">
+              <input
+                v-model="useAiTts"
+                type="checkbox"
+                class="mr-2"
+                @change="saveSettings"
+              />
+              Use AI TTS (higher voice quality)
+            </label>
+            
+            <div v-if="useAiTts" class="mt-3 space-y-3">
+              <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div class="text-xs text-blue-700">
+                  <div class="font-medium mb-1">AI TTS Premium active:</div>
+                  <div>• Different voice character simulation</div>
+                  <div>• Optimized parameters for each voice</div>
+                  <div>• AI processing delay</div>
+                  <div class="mt-2 text-xs opacity-75">
+                    <span v-if="ttsInfo.apiConfigured" class="text-green-600">✓ Google Cloud API configured</span>
+                    <span v-else class="text-yellow-600">⚠ Demo mode - configure API key in .env for real Google Cloud TTS</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Select AI voice
+                </label>
+                <select 
+                  v-model="aiVoiceId" 
+                  @change="saveSettings"
+                  class="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                >
+                  <option v-for="voice in getAvailableAiVoices()" :key="voice.id" :value="voice.id">
+                    {{ voice.name }} - {{ voice.description }}
+                  </option>
+                </select>
+              </div>
+              
+              <div class="flex gap-2">
+                <button
+                  @click="testCurrentVoice"
+                  :disabled="testingVoice"
+                  class="px-3 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200 disabled:opacity-50 flex items-center"
+                >
+                  <Volume2 class="w-3 h-3 mr-1" />{{ testingVoice ? 'Testing...' : 'Test voice' }}
+                </button>
+                
+                <button
+                  @click="showCacheInfo"
+                  class="px-3 py-1 bg-gray-100 text-gray-700 rounded text-xs hover:bg-gray-200 flex items-center"
+                >
+                  <BarChart3 class="w-3 h-3 mr-1" />Cache ({{ cacheSize }})
+                </button>
+                
+                <button
+                  @click="clearAudioCache"
+                  class="px-3 py-1 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200 flex items-center"
+                >
+                  <Trash2 class="w-3 h-3 mr-1" />Clear cache
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- TTS Info -->
+          <div class="border-t border-gray-200 pt-4 mt-4">
+            <details class="text-sm">
+              <summary class="cursor-pointer text-gray-600 hover:text-gray-800">
+                TTS Engine Information
+              </summary>
+              <div class="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600">
+                <div v-if="ttsInfoLoaded" class="space-y-1">
+                  <div><strong>Engine:</strong> {{ ttsInfo.engine }}</div>
+                  <div><strong>Premium Status:</strong> {{ ttsInfo.isPremium ? 'Active' : 'Inactive' }}</div>
+                  <div><strong>Available voices:</strong> {{ ttsInfo.availableVoices }}</div>
+                  <div><strong>Polish voices:</strong> {{ ttsInfo.polishVoices }}</div>
+                  <div><strong>Best PL voice:</strong> {{ ttsInfo.bestPolishVoice }}</div>
+                  
+                  <div v-if="ttsInfo.polishVoicesList?.length > 0" class="mt-2">
+                    <strong>Available Polish voices:</strong>
+                    <div class="ml-2 mt-1 space-y-1">
+                      <div v-for="voice in ttsInfo.polishVoicesList" :key="voice.name" class="text-xs">
+                        • {{ voice.name }} ({{ voice.lang }}) 
+                        <span v-if="voice.localService" class="text-green-600">- local</span>
+                        <span v-else class="text-blue-600">- online</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <button 
+                    @click="refreshTtsInfo" 
+                    class="mt-2 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200 flex items-center"
+                  >
+                    <RotateCcw class="w-3 h-3 mr-1" />Refresh TTS info
+                  </button>
+                </div>
+                <div v-else class="text-gray-500">Loading information...</div>
+              </div>
+            </details>
+          </div>
         </div>
       </div>
     </div>
@@ -149,11 +262,13 @@
 </template>
 
 <script setup>
-import { Play, ChevronLeft } from 'lucide-vue-next'
+import { Play, ChevronLeft, Volume2, BarChart3, Trash2, RotateCcw, Info, Square, SkipForward } from 'lucide-vue-next'
 
 const route = useRoute()
 const { user } = useAuth()
 const { getUserProjects } = useFirestore()
+const { isFeatureEnabled } = usePremium()
+const { speak: ttsSpeak, getTtsInfo, getAvailableAiVoices, testVoice, getCacheInfo, clearCache } = useTextToSpeech()
 
 const project = ref(null)
 const isPlaying = ref(false)
@@ -163,13 +278,17 @@ const defaultSettings = {
   speechRate: 0.8,
   pauseDuration: 15,
   repeatAffirmation: false,
-  repeatDelay: 5
+  repeatDelay: 5,
+  useAiTts: false,
+  aiVoiceId: 'pl-PL-ZofiaNeural'
 }
 
 const speechRate = ref(defaultSettings.speechRate)
 const pauseDuration = ref(defaultSettings.pauseDuration)
 const repeatAffirmation = ref(defaultSettings.repeatAffirmation)
 const repeatDelay = ref(defaultSettings.repeatDelay)
+const useAiTts = ref(defaultSettings.useAiTts)
+const aiVoiceId = ref(defaultSettings.aiVoiceId)
 
 const activeAffirmations = computed(() => 
   project.value?.affirmations?.filter(a => a.isActive) || []
@@ -181,6 +300,11 @@ const currentAffirmation = computed(() =>
 
 const synth = ref(null)
 const currentUtterance = ref(null)
+
+const ttsInfo = ref({})
+const ttsInfoLoaded = ref(false)
+const testingVoice = ref(false)
+const cacheSize = ref(0)
 
 const loadProject = async () => {
   try {
@@ -219,11 +343,15 @@ const loadSettings = () => {
     pauseDuration.value = Number(project.value.sessionSettings.pauseDuration ?? defaultSettings.pauseDuration)
     repeatAffirmation.value = Boolean(project.value.sessionSettings.repeatAffirmation ?? defaultSettings.repeatAffirmation)
     repeatDelay.value = Number(project.value.sessionSettings.repeatDelay ?? defaultSettings.repeatDelay)
+    useAiTts.value = Boolean(project.value.sessionSettings.useAiTts ?? defaultSettings.useAiTts)
+    aiVoiceId.value = project.value.sessionSettings.aiVoiceId ?? defaultSettings.aiVoiceId
   } else {
     speechRate.value = defaultSettings.speechRate
     pauseDuration.value = defaultSettings.pauseDuration
     repeatAffirmation.value = defaultSettings.repeatAffirmation
     repeatDelay.value = defaultSettings.repeatDelay
+    useAiTts.value = defaultSettings.useAiTts
+    aiVoiceId.value = defaultSettings.aiVoiceId
   }
   
   isLoadingSettings = false
@@ -243,7 +371,9 @@ const saveSettings = async () => {
     speechRate: speechRate.value,
     pauseDuration: pauseDuration.value,
     repeatAffirmation: repeatAffirmation.value,
-    repeatDelay: repeatDelay.value
+    repeatDelay: repeatDelay.value,
+    useAiTts: useAiTts.value,
+    aiVoiceId: aiVoiceId.value
   }
 
   if (project.value.sessionSettings) {
@@ -308,29 +438,31 @@ onMounted(async () => {
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     synth.value = window.speechSynthesis
   }
+  
+  try {
+    ttsInfo.value = await getTtsInfo()
+    ttsInfoLoaded.value = true
+    updateCacheSize()
+  } catch (error) {
+    console.error('Error loading TTS info:', error)
+    ttsInfoLoaded.value = true
+  }
 })
 
-const speak = (text) => {
-  return new Promise((resolve) => {
-    if (!synth.value) {
-      resolve()
-      return
+const speak = async (text) => {
+  try {
+    const options = {
+      rate: speechRate.value,
+      lang: 'pl-PL',
+      useAi: useAiTts.value && isFeatureEnabled('aiTts'),
+      voiceId: aiVoiceId.value
     }
-
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.rate = speechRate.value
-    utterance.onend = () => {
-      resolve()
-    }
-    utterance.onerror = (error) => {
-      resolve()
-    }
-    utterance.onstart = () => {
-      }
     
-    currentUtterance.value = utterance
-    synth.value.speak(utterance)
-  })
+    return await ttsSpeak(text, options)
+  } catch (error) {
+    console.error('TTS Error:', error)
+    return Promise.resolve()
+  }
 }
 
 const startSession = async () => {
@@ -383,6 +515,57 @@ const stopSession = () => {
   
   if (synth.value && synth.value.speaking) {
     synth.value.cancel()
+  }
+}
+
+const refreshTtsInfo = async () => {
+  try {
+    ttsInfoLoaded.value = false
+    ttsInfo.value = await getTtsInfo()
+    ttsInfoLoaded.value = true
+    updateCacheSize()
+  } catch (error) {
+    console.error('Error refreshing TTS info:', error)
+    ttsInfoLoaded.value = true
+  }
+}
+
+const updateCacheSize = () => {
+  try {
+    const cacheInfo = getCacheInfo()
+    cacheSize.value = cacheInfo.size
+  } catch (error) {
+    cacheSize.value = 0
+  }
+}
+
+const testCurrentVoice = async () => {
+  if (testingVoice.value || !useAiTts.value) return
+  
+  try {
+    testingVoice.value = true
+    const sampleText = "Hello! This is a premium voice test. Do you like its natural sound?"
+    
+    await testVoice(aiVoiceId.value, sampleText)
+    updateCacheSize()
+  } catch (error) {
+    console.error('Voice test failed:', error)
+    alert('Voice test failed. Check premium settings.')
+  } finally {
+    testingVoice.value = false
+  }
+}
+
+const showCacheInfo = () => {
+  const cacheInfo = getCacheInfo()
+  alert(`TTS Cache:\n\nNumber of items: ${cacheInfo.size}\n\nSaved fragments:\n${cacheInfo.keys.slice(0, 5).join('\n')}\n${cacheInfo.size > 5 ? '\n... and more' : ''}`)
+}
+
+const clearAudioCache = () => {
+  if (confirm('Are you sure you want to clear audio cache? All saved voice fragments will be removed.')) {
+    clearCache()
+    updateCacheSize()
+    alert('Cache has been cleared.')
   }
 }
 
