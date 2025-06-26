@@ -20,7 +20,7 @@ echo "✅ BUILD_VERSION updated to '$TIMESTAMP'"
 
 # 2. Build the application
 echo "🏗️  Building application..."
-npm run build
+npx nuxt generate
 
 # 3. Build files are ready in .output/public
 echo "📁 Build files ready in .output/public"

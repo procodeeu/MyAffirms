@@ -6,20 +6,21 @@
         <div class="flex items-center justify-between">
           <div>
             <div class="text-xs text-gray-700 font-crimson italic opacity-90">My affirms</div>
-            <h1 class="text-2xl font-bold text-gray-800">Demo Afirmacji</h1>
+            <h1 class="text-2xl font-bold text-gray-800">{{ $t('landing.demo_title') }}</h1>
           </div>
           <div class="flex items-center gap-3">
             <button
               @click="$router.push('/auth')"
               class="bg-white hover:bg-gray-50 text-gray-800 px-6 py-3 rounded-full font-medium  border-2 border-gray-800"
             >
-              Zaloguj się
+              {{ $t('auth.login') }}
             </button>
+            <LanguageSwitcher />
             <button
               @click="$router.push('/auth')"
               class="text-gray-700 hover:text-gray-900 px-6 py-3 rounded-full font-medium  border-2 border-transparent active:border-gray-800"
             >
-              Zarejestruj się
+              {{ $t('auth.register_button') }}
             </button>
           </div>
         </div>
@@ -30,7 +31,7 @@
       
       <!-- Demo project selection -->
       <div class="bg-pastel-violet border-2 border-pastel-rose rounded-4xl p-8 mb-8 max-w-md mx-auto">
-        <h3 class="text-base font-medium text-gray-900 mb-4">Wybierz kategorię afirmacji</h3>
+        <h3 class="text-base font-medium text-gray-900 mb-4">{{ $t('landing.select_category') }}</h3>
         <div class="space-y-2">
           <button
             v-for="project in demoProjects"
@@ -48,7 +49,7 @@
       <div v-if="selectedProject" class="bg-pastel-khaki border-2 border-pastel-dun rounded-4xl p-10 mb-8 max-w-2xl mx-auto">
         <div class="text-center mb-6">
           <h2 class="text-xl font-medium text-gray-900 mb-4">
-            {{ isPlaying ? 'Trwa sesja' : 'Gotowy do rozpoczęcia' }}
+            {{ isPlaying ? $t('landing.session.in_progress') : $t('landing.session.ready_to_start') }}
           </h2>
           
           <div v-if="currentAffirmation" class="bg-pastel-dun rounded-lg p-6 mb-6 border border-pastel-cinereous">
@@ -57,7 +58,7 @@
           
           <div v-if="activeAffirmations.length > 0" class="mb-4">
             <div class="text-sm text-gray-600 mb-2">
-              Postęp: {{ currentIndex + 1 }} / {{ activeAffirmations.length }}
+              {{ $t('landing.session.progress') }} {{ currentIndex + 1 }} / {{ activeAffirmations.length }}
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2">
               <div 
@@ -74,7 +75,7 @@
               :disabled="activeAffirmations.length === 0"
               class="bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 px-10 py-4 rounded-full font-medium text-base flex items-center gap-2  border-2 border-pastel-khaki-2 hover:border-gray-800"
             >
-              <Play class="w-4 h-4" /> Rozpocznij sesję
+              <Play class="w-4 h-4" /> {{ $t('app.projects.start_session') }}
             </button>
             
             <button
@@ -82,7 +83,7 @@
               @click="stopSession"
               class="bg-red-500 hover:bg-red-600 text-white px-8 py-4 rounded-full font-medium flex items-center gap-2  border-2 border-red-500 hover:border-white"
             >
-              <Square class="w-4 h-4" /> Stop
+              <Square class="w-4 h-4" /> {{ $t('common.stop') }}
             </button>
             
             <button
@@ -90,7 +91,7 @@
               @click="nextAffirmation"
               class="bg-gray-600 hover:bg-gray-700 text-white px-8 py-4 rounded-full font-medium flex items-center gap-2  border-2 border-gray-600 hover:border-white"
             >
-              <SkipForward class="w-4 h-4" /> Następna
+              <SkipForward class="w-4 h-4" /> {{ $t('common.next') }}
             </button>
           </div>
         </div>
@@ -98,12 +99,12 @@
 
       <!-- Ustawienia sesji -->
       <div v-if="selectedProject" class="bg-pastel-khaki rounded-4xl p-8 max-w-md mx-auto mb-8 border-2 border-pastel-cinereous">
-        <h3 class="text-base font-medium text-gray-900 mb-4">Ustawienia sesji</h3>
+        <h3 class="text-base font-medium text-gray-900 mb-4">{{ $t('project.session_settings_title') }}</h3>
         
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
-              Prędkość mowy: {{ speechRate }}x
+              {{ $t('project.session_settings.speech_rate', { rate: speechRate }) }}
             </label>
             <input
               v-model.number="speechRate"
@@ -117,7 +118,7 @@
           
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
-              Pauza między afirmacjami: {{ pauseDuration }}s
+              {{ $t('project.session_settings.pause_duration', { duration: pauseDuration }) }}
             </label>
             <input
               v-model.number="pauseDuration"
@@ -135,12 +136,12 @@
               type="checkbox"
               class="mr-2"
             />
-            Powtarzaj każdą afirmację drugi raz
+            {{ $t('project.session_settings.repeat_affirmation') }}
           </label>
           
           <div v-if="repeatAffirmation" class="mt-2">
             <label class="block text-sm font-medium text-gray-700 mb-2">
-              Opóźnienie przed powtórzeniem: {{ repeatDelay }}s
+              {{ $t('project.session_settings.repeat_delay', { delay: repeatDelay }) }}
             </label>
             <input
               v-model.number="repeatDelay"
@@ -156,13 +157,13 @@
 
       <!-- Call to action -->
       <div class="bg-pastel-dun rounded-4xl p-8 max-w-md mx-auto text-center border-2 border-pastel-cinereous">
-        <h3 class="text-base font-medium text-gray-900 mb-2">Podoba Ci się?</h3>
-        <p class="text-gray-600 mb-4">Utwórz konto i stwórz własne afirmacje!</p>
+        <h3 class="text-base font-medium text-gray-900 mb-2">{{ $t('landing.cta.like_it') }}</h3>
+        <p class="text-gray-600 mb-4">{{ $t('landing.cta.create_account') }}</p>
         <button
           @click="$router.push('/auth')"
           class="bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 px-8 py-4 rounded-full font-medium w-full  border-2 border-pastel-khaki-2 hover:border-gray-800"
         >
-          Zacznij za darmo
+          {{ $t('landing.cta.start_free') }}
         </button>
       </div>
       
@@ -178,6 +179,7 @@
 
 <script setup>
 import { Play, Square, SkipForward } from 'lucide-vue-next'
+import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 import { BUILD_VERSION } from '~/utils/version.js'
 
 const demoProjects = ref([

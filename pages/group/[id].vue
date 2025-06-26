@@ -1,173 +1,131 @@
 <template>
   <div class="min-h-screen bg-pastel-vanilla">
-    
     <header class="bg-pastel-purple shadow-sm">
       <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <div class="flex items-center gap-4">
-          <button
-            @click="$router.back()"
-            class="text-gray-700 hover:text-gray-900 opacity-90 hover:opacity-100 inline-flex items-center gap-2 transition-colors"
-          >
-            <ChevronLeft class="w-4 h-4" /> Powrót
+          <button @click="goBack" class="text-gray-700 hover:text-gray-900">
+            <ArrowLeft class="w-6 h-6" />
           </button>
           <div>
-            <div class="text-xs text-gray-700 font-crimson italic opacity-90">My affirms</div>
-            <h1 class="text-2xl font-bold text-gray-800">{{ group?.name || 'Grupa' }}</h1>
+            <h1 class="text-2xl font-bold text-gray-800 font-crimson">{{ group?.name }}</h1>
+            <p class="text-sm text-gray-700 font-crimson italic opacity-90">
+              {{ $t('group.projects_in_group', { count: projectsInGroup.length }) }}
+            </p>
           </div>
         </div>
-        <button
-          @click="startGroupSession"
-          :disabled="!hasActiveAffirmations"
-          class="bg-pastel-violet hover:bg-pastel-purple disabled:bg-gray-300 text-gray-800 px-6 py-3 rounded-2xl font-semibold flex items-center gap-2 "
-        >
-          <Play class="w-4 h-4" /> Rozpocznij sesję grupową
-        </button>
+        <div class="flex items-center gap-4">
+          <span class="text-gray-700 opacity-90">{{ $t('app.welcome') }} {{ user?.email || $t('app.user_placeholder') }}</span>
+          <LanguageSwitcher />
+          <button @click="logout" class="text-gray-700 hover:text-gray-900">{{ $t('auth.logout') }}</button>
+        </div>
       </div>
     </header>
 
-    <div class="max-w-4xl mx-auto px-4 py-8">
-      <div v-if="loading" class="text-center py-8">
-        <p>Ładowanie...</p>
-        <p v-if="!user" class="text-sm text-gray-500 mt-2">Oczekiwanie na uwierzytelnienie...</p>
-      </div>
+    <div class="max-w-7xl mx-auto px-6 py-12">
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-10">
+          <div>
+            <h2 class="text-3xl font-bold text-gray-900 font-crimson">{{ $t('group.title') }}</h2>
+            <p class="text-gray-600 mt-1">{{ $t('group.description') }}</p>
+          </div>
+          <button
+            @click="showAddProjectModal = true"
+            class="bg-pastel-khaki hover:bg-pastel-khaki-2 text-gray-900 px-6 py-3 rounded-full font-medium flex items-center gap-2 border-2 border-pastel-khaki hover:border-gray-900"
+          >
+            <span class="text-lg">+</span>
+            {{ $t('group.add_project') }}
+          </button>
+        </div>
 
-      <div v-else-if="!group" class="text-center py-8">
-        <p class="text-gray-500">Grupa nie została znaleziona</p>
-      </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div
+            v-for="project in projectsInGroup"
+            :key="project.id"
+            class="bg-pastel-khaki border-2 border-pastel-dun rounded-4xl p-8 cursor-pointer"
+            @click="selectProject(project)"
+          >
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex-1">
+                <h3 class="text-xl font-medium text-gray-900 mb-2 font-crimson">
+                  {{ project.name }}
+                </h3>
+                <p class="text-gray-600 text-sm">
+                  {{ $t('app.projects.affirmations_count', { count: project.affirmations?.length || 0 }) }}
+                </p>
+              </div>
+              <button
+                @click.stop="removeProjectFromGroup(project.id)"
+                class="text-red-500 hover:text-red-700 p-1"
+                :title="$t('group.remove_from_group')"
+              >
+                <X class="w-5 h-5" />
+              </button>
+            </div>
+          </div>
 
-      <div v-else>
-        <div class="bg-pastel-violet border border-pastel-rose rounded-lg shadow p-6 mb-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Plus class="w-5 h-5 text-gray-700" />
-              Dodaj projekty do grupy
-            </h3>
+          <div
+            v-if="projectsInGroup.length === 0"
+            class="col-span-full text-center py-12"
+          >
+            <div class="text-gray-400 text-6xl mb-4"><Folder class="w-16 h-16" /></div>
+            <h3 class="text-xl font-medium text-gray-900 mb-2 font-crimson">{{ $t('group.no_projects_title') }}</h3>
+            <p class="text-gray-600 mb-4">{{ $t('group.no_projects_description') }}</p>
             <button
-              @click="showAddProjectSection = !showAddProjectSection"
-              class="text-gray-700 hover:text-gray-900 transition-colors"
+              @click="showAddProjectModal = true"
+              class="bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 px-8 py-4 rounded-full font-medium border-2 border-pastel-khaki-2 hover:border-gray-800"
             >
-              <ChevronDown :class="showAddProjectSection ? 'rotate-180' : ''" class="w-5 h-5 transition-transform" />
+              {{ $t('group.add_project') }}
             </button>
           </div>
-          
-          <div v-if="showAddProjectSection" class="space-y-3">
-            <div v-if="!availableProjects.length" class="text-center py-4 text-gray-500">
-              Wszystkie projekty są już w tej grupie
-            </div>
-            <div v-else>
-              <div
-                v-for="project in availableProjects"
-                :key="project.id"
-                class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <div class="flex items-center gap-2">
-                  <Folder class="w-4 h-4 text-gray-500" />
-                  <span class="text-gray-900">{{ project.name }}</span>
-                  <span class="text-sm text-gray-500">({{ project.affirmations?.length || 0 }} afirmacji)</span>
-                </div>
-                <button
-                  @click="addProject(project.id)"
-                  class="bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-1 "
-                >
-                  <Plus class="w-3 h-3" /> Dodaj
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
+      </div>
+    </div>
 
-        <div 
-          v-for="project in groupProjects" 
-          :key="project.id"
-          class="bg-pastel-khaki border border-pastel-dun rounded-lg shadow p-6 mb-6"
-        >
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Folder class="w-5 h-5 text-gray-700" />
-              {{ project.name }} ({{ getActiveAffirmationsCount(project) }})
-            </h3>
-            
-            <div class="relative">
-              <button
-                @click="toggleProjectMenu(project.id)"
-                class="text-gray-400 hover:text-gray-600 p-1"
-                title="Opcje projektu"
-              >
-                <MoreVertical class="w-5 h-5" />
-              </button>
-              
-              <div
-                v-if="activeProjectMenu === project.id"
-                class="absolute right-0 top-8 bg-pastel-dun border border-gray-200 rounded-lg shadow-lg z-10 min-w-48"
-              >
-                <div class="py-1">
-                  <button
-                    @click="moveProject(project.id, 'up')"
-                    :disabled="!canMoveUp(project.id)"
-                    class="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-                  >
-                    <ChevronUp class="w-4 h-4" />
-                    Przesuń do góry
-                  </button>
-                  <button
-                    @click="moveProject(project.id, 'down')"
-                    :disabled="!canMoveDown(project.id)"
-                    class="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-                  >
-                    <ChevronDown class="w-4 h-4" />
-                    Przesuń do dołu
-                  </button>
-                  <div class="border-t border-gray-100"></div>
-                  <button
-                    @click="removeProject(project.id)"
-                    class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    <X class="w-4 h-4" />
-                    Usuń z grupy
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="space-y-3">
-            <div
-              v-for="affirmation in project.affirmations || []"
-              :key="affirmation.id"
-              class="border border-gray-200 rounded-lg p-4 flex items-center justify-between transition-all duration-200"
-              :class="affirmation.isActive ? 'bg-pastel-dun' : 'bg-gray-50'"
+    <!-- Add project to group modal -->
+    <div
+      v-if="showAddProjectModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+      @click="showAddProjectModal = false"
+    >
+      <div
+        class="bg-pastel-khaki rounded-4xl p-8 w-full max-w-md border-2 border-pastel-cinereous"
+        @click.stop
+      >
+        <h3 class="text-lg font-medium mb-4">{{ $t('group.add_projects_to_group') }}</h3>
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            {{ $t('group.select_projects_to_add') }}
+          </label>
+          <div class="space-y-2 max-h-60 overflow-y-auto">
+            <label
+              v-for="project in availableProjects"
+              :key="project.id"
+              class="flex items-center"
             >
-              <div class="flex items-center gap-3 flex-1">
-                <div class="flex-1">
-                  <p :class="affirmation.isActive ? 'text-gray-900' : 'text-gray-400 line-through'">
-                    {{ affirmation.text }}
-                  </p>
-                </div>
-              </div>
-              
-              <div class="flex items-center gap-2">
-                <button
-                  @click="toggleAffirmation(project.id, affirmation.id)"
-                  class="relative inline-flex h-4 w-7 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-offset-1"
-                  :class="affirmation.isActive ? 'bg-green-600' : 'bg-gray-300'"
-                  title="Przełącz aktywność"
-                >
-                  <span
-                    class="inline-block h-2.5 w-2.5 transform rounded-full bg-pastel-vanilla transition-transform duration-200"
-                    :class="affirmation.isActive ? 'translate-x-3.5' : 'translate-x-0.5'"
-                  ></span>
-                </button>
-              </div>
-            </div>
-            
-            <div v-if="!project.affirmations?.length" class="text-center py-8 text-gray-500">
-              Ten projekt nie zawiera żadnych afirmacji
-            </div>
+              <input
+                v-model="selectedProjectsToAdd"
+                :value="project.id"
+                type="checkbox"
+                class="mr-2"
+              />
+              {{ project.name }}
+            </label>
           </div>
         </div>
-
-        <div v-if="!groupProjects.length" class="text-center py-8">
-          <p class="text-gray-500">Ta grupa nie zawiera żadnych projektów</p>
+        <div class="flex gap-3">
+          <button
+            @click="addProjectsToGroup"
+            :disabled="selectedProjectsToAdd.length === 0"
+            class="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white py-2 rounded font-medium"
+          >
+            {{ $t('group.add_selected') }}
+          </button>
+          <button
+            @click="showAddProjectModal = false"
+            class="flex-1 border-2 border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-full font-medium"
+          >
+            {{ $t('common.cancel') }}
+          </button>
         </div>
       </div>
     </div>
@@ -175,208 +133,98 @@
 </template>
 
 <script setup>
-import { Play, ChevronLeft, Folder, ChevronUp, ChevronDown, MoreVertical, Plus, X } from 'lucide-vue-next'
+import { ArrowLeft, Folder, X } from 'lucide-vue-next'
+import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
+
+const { user, logout: authLogout } = useAuth()
+const { t } = useI18n()
+const { 
+  getGroupById, 
+  subscribeToUserProjects, 
+  updateGroup 
+} = useFirestore()
 
 const route = useRoute()
 const router = useRouter()
-const { user } = useAuth()
-const { 
-  getUserGroups,
-  getUserProjects,
-  updateProject,
-  moveProjectInGroup,
-  addProjectToGroup,
-  removeProjectFromGroup
-} = useFirestore()
+const groupId = route.params.id
 
 const group = ref(null)
-const groupProjects = ref([])
-const loading = ref(true)
 const allProjects = ref([])
+const projectsInGroup = ref([])
 const availableProjects = ref([])
-const activeProjectMenu = ref(null)
-const showAddProjectSection = ref(false)
 
-const hasActiveAffirmations = computed(() => {
-  return groupProjects.value.some(project => 
-    project.affirmations?.some(affirmation => affirmation.isActive)
-  )
-})
+const showAddProjectModal = ref(false)
+const selectedProjectsToAdd = ref([])
 
-const loadGroup = async () => {
-  try {
-    loading.value = true
-    
-    console.log('Loading group with ID:', route.params.id)
-    
-    const groups = await getUserGroups()
-    console.log('Available groups:', groups)
-    
-    group.value = groups.find(g => g.id === route.params.id)
-    console.log('Found group:', group.value)
-    
-    if (!group.value) {
-      console.log('Group not found!')
-      return
-    }
-    
-    allProjects.value = await getUserProjects()
-    console.log('All projects:', allProjects.value)
-    console.log('Group project IDs:', group.value.projectIds)
-    
-    const projectsInGroup = allProjects.value.filter(project => 
-      group.value.projectIds?.includes(project.id)
-    )
-    
-    groupProjects.value = projectsInGroup.sort((a, b) => {
-      const orderA = group.value.projectOrder?.[a.id] ?? 999
-      const orderB = group.value.projectOrder?.[b.id] ?? 999
-      return orderA - orderB
-    })
-    
-    console.log('Sorted group projects:', groupProjects.value)
-    
-    availableProjects.value = allProjects.value.filter(project => 
-      !group.value.projectIds?.includes(project.id)
-    )
-    
-  } catch (error) {
-    console.error('Error loading group:', error)
-  } finally {
-    loading.value = false
-  }
-}
+let unsubscribeProjects = null
 
-const getActiveAffirmationsCount = (project) => {
-  if (!project.affirmations) return 0
-  return project.affirmations.filter(a => a.isActive).length
-}
-
-const toggleAffirmation = async (projectId, affirmationId) => {
-  try {
-    const project = groupProjects.value.find(p => p.id === projectId)
-    if (!project) return
-    
-    const affirmationIndex = project.affirmations.findIndex(a => a.id === affirmationId)
-    if (affirmationIndex === -1) return
-    
-    project.affirmations[affirmationIndex].isActive = !project.affirmations[affirmationIndex].isActive
-    
-    await updateProject(projectId, {
-      affirmations: project.affirmations,
-      updatedAt: new Date().toISOString()
-    })
-    
-    if (user.value?.uid) {
-      const localData = localStorage.getItem(`projects_${user.value.uid}`)
-      if (localData) {
-        const localProjects = JSON.parse(localData)
-        const localProjectIndex = localProjects.findIndex(p => p.id === projectId)
-        if (localProjectIndex !== -1) {
-          localProjects[localProjectIndex] = project
-          localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(localProjects))
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Error toggling affirmation:', error)
-    const project = groupProjects.value.find(p => p.id === projectId)
-    if (project) {
-      const affirmationIndex = project.affirmations.findIndex(a => a.id === affirmationId)
-      if (affirmationIndex !== -1) {
-        project.affirmations[affirmationIndex].isActive = !project.affirmations[affirmationIndex].isActive
-      }
-    }
-  }
-}
-
-const startGroupSession = () => {
-  if (hasActiveAffirmations.value) {
-    console.log('Starting group session for:', group.value.name)
-  }
-}
-
-const toggleProjectMenu = (projectId) => {
-  activeProjectMenu.value = activeProjectMenu.value === projectId ? null : projectId
-}
-
-const moveProject = async (projectId, direction) => {
-  try {
-    await moveProjectInGroup(group.value.id, projectId, direction)
-    await loadGroup()
-    activeProjectMenu.value = null
-  } catch (error) {
-    console.error('Error moving project:', error)
-  }
-}
-
-const removeProject = async (projectId) => {
-  try {
-    await removeProjectFromGroup(group.value.id, projectId)
-    await loadGroup()
-    activeProjectMenu.value = null
-  } catch (error) {
-    console.error('Error removing project:', error)
-  }
-}
-
-const addProject = async (projectId) => {
-  try {
-    await addProjectToGroup(group.value.id, projectId)
-    await loadGroup()
-  } catch (error) {
-    console.error('Error adding project:', error)
-  }
-}
-
-const getProjectIndex = (projectId) => {
-  return groupProjects.value.findIndex(p => p.id === projectId)
-}
-
-const canMoveUp = (projectId) => {
-  return getProjectIndex(projectId) > 0
-}
-
-const canMoveDown = (projectId) => {
-  return getProjectIndex(projectId) < groupProjects.value.length - 1
-}
-
-onMounted(() => {
-  if (user.value) {
-    loadGroup()
-  }
+onMounted(async () => {
+  group.value = await getGroupById(groupId)
   
-  document.addEventListener('click', handleClickOutside)
+  unsubscribeProjects = subscribeToUserProjects((userProjects) => {
+    allProjects.value = userProjects || []
+    updateProjectLists()
+  })
 })
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
+  if (unsubscribeProjects) {
+    unsubscribeProjects()
+  }
 })
 
-const handleClickOutside = (event) => {
-  if (!event.target.closest('.relative')) {
-    activeProjectMenu.value = null
+watch([group, allProjects], () => {
+  updateProjectLists()
+})
+
+const updateProjectLists = () => {
+  if (group.value && allProjects.value.length > 0) {
+    projectsInGroup.value = allProjects.value.filter(p => group.value.projectIds?.includes(p.id))
+    availableProjects.value = allProjects.value.filter(p => !group.value.projectIds?.includes(p.id))
   }
 }
 
-watch(user, (newUser) => {
-  if (newUser) {
-    console.log('User logged in, loading group...')
-    loadGroup()
-  }
-}, { immediate: true })
+const goBack = () => {
+  router.push('/app')
+}
 
-watch(() => route.params.id, () => {
-  if (user.value) {
-    loadGroup()
-  }
-})
+const logout = async () => {
+  await authLogout()
+  router.push('/auth')
+}
 
-definePageMeta({
-  middleware: 'auth'
-})
+const selectProject = (project) => {
+  router.push(`/project/${project.id}`)
+}
+
+const addProjectsToGroup = async () => {
+  if (selectedProjectsToAdd.value.length === 0) return
+  
+  try {
+    const newProjectIds = [...(group.value.projectIds || []), ...selectedProjectsToAdd.value]
+    await updateGroup(groupId, { projectIds: newProjectIds })
+    
+    selectedProjectsToAdd.value = []
+    showAddProjectModal.value = false
+  } catch (error) {
+    console.error('Failed to add projects to group:', error)
+    alert(t('group.alerts.add_projects_failed'))
+  }
+}
+
+const removeProjectFromGroup = async (projectId) => {
+  if (!confirm(t('group.alerts.confirm_remove_project'))) return
+  
+  try {
+    const newProjectIds = group.value.projectIds.filter(id => id !== projectId)
+    await updateGroup(groupId, { projectIds: newProjectIds })
+  } catch (error) {
+    console.error('Failed to remove project from group:', error)
+    alert(t('group.alerts.remove_project_failed'))
+  }
+}
 
 useHead({
-  title: computed(() => `${group.value?.name || 'Grupa'} - My affirms`)
+  title: computed(() => t('group.page_title', { name: group.value?.name || 'Group' }))
 })
 </script>

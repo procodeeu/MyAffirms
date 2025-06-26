@@ -32,26 +32,27 @@
       <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <div>
           <h1 class="text-2xl font-bold text-gray-800 font-crimson">My affirms</h1>
-          <p class="text-sm text-gray-700 font-crimson italic opacity-90">Affirmations that reveal, not just heal</p>
+          <p class="text-sm text-gray-700 font-crimson italic opacity-90">{{ $t('app.tagline') }}</p>
         </div>
         <div class="flex items-center gap-4">
           <div v-if="isPremiumActive" class="flex items-center gap-2">
             <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-            <span class="text-xs text-yellow-700 font-medium">PREMIUM</span>
+            <span class="text-xs text-yellow-700 font-medium">{{ $t('premium.premium_tag') }}</span>
           </div>
-          <span class="text-gray-700 opacity-90">Witaj, {{ user?.email || 'Użytkowniku' }}</span>
+          <span class="text-gray-700 opacity-90">{{ $t('app.welcome') }} {{ user?.email || $t('app.user_placeholder') }}</span>
           <span class="text-xs text-gray-600 opacity-60">v{{ appVersion }}</span>
           <button
             @click="goToAdmin"
             class="text-gray-700 hover:text-gray-900 px-3 py-1 rounded-full text-sm border-2 border-transparent hover:border-gray-300"
           >
-            Admin
+            {{ $t('common.admin') }}
           </button>
+          <LanguageSwitcher />
           <button
             @click="logout"
             class="text-gray-700 hover:text-gray-900 px-4 py-2 rounded-full  border-2 border-transparent active:border-gray-800"
           >
-            Wyloguj
+            {{ $t('auth.logout') }}
           </button>
         </div>
       </div>
@@ -62,8 +63,8 @@
       <div class="mb-8">
         <div class="flex items-center justify-between mb-10">
           <div>
-            <h2 class="text-3xl font-bold text-gray-900 font-crimson">Twoje projekty</h2>
-            <p class="text-gray-600 mt-1">Organizuj afirmacje w tematyczne kolekcje</p>
+            <h2 class="text-3xl font-bold text-gray-900 font-crimson">{{ $t('app.projects.title') }}</h2>
+            <p class="text-gray-600 mt-1">{{ $t('app.projects.description') }}</p>
           </div>
           <div class="flex gap-2">
             <button
@@ -72,7 +73,7 @@
               class="bg-pastel-khaki hover:bg-pastel-khaki-2 disabled:bg-gray-400 disabled:cursor-not-allowed text-gray-900 px-6 py-3 rounded-full font-medium flex items-center gap-2  border-2 border-pastel-khaki hover:border-gray-900 transition-colors duration-200"
             >
               <span class="text-lg">+</span>
-              Nowy projekt
+              {{ $t('app.projects.new_project') }}
             </button>
             <button
               @click="showNewGroupModal = true"
@@ -80,7 +81,7 @@
               class="bg-pastel-violet hover:bg-pastel-purple disabled:bg-gray-400 disabled:cursor-not-allowed text-gray-900 px-6 py-3 rounded-full font-medium flex items-center gap-2  border-2 border-pastel-violet hover:border-gray-900 transition-colors duration-200"
             >
               <Group class="w-4 h-4" />
-              Nowa grupa
+              {{ $t('app.projects.new_group') }}
             </button>
           </div>
         </div>
@@ -102,14 +103,14 @@
                   </h3>
                 </div>
                 <p class="text-gray-600 text-sm">
-                  {{ getGroupProjectsCount(group) }} projektów w grupie
+                  {{ $t('app.projects.projects_in_group', { count: getGroupProjectsCount(group) }) }}
                 </p>
               </div>
               <div class="flex items-center gap-2">
                 <button
                   @click.stop="openGroupSettings(group)"
                   class="text-gray-400 hover:text-gray-600 p-1"
-                  title="Ustawienia grupy"
+                  :title="$t('app.projects.group_settings')"
                 >
                   <Settings class="w-5 h-5" />
                 </button>
@@ -128,7 +129,7 @@
                 v-if="getGroupProjectNames(group).length > 3"
                 class="text-xs text-gray-600 text-center py-1"
               >
-                +{{ getGroupProjectNames(group).length - 3 }} więcej
+                +{{ getGroupProjectNames(group).length - 3 }} {{ $t('common.more') }}
               </div>
             </div>
 
@@ -138,7 +139,7 @@
                 :disabled="!getGroupProjectsCount(group)"
                 class="w-full bg-pastel-purple hover:bg-pastel-purple-2 disabled:bg-gray-300 text-gray-800 py-4 rounded-full font-medium flex items-center justify-center gap-2  border-2 border-pastel-purple hover:border-gray-800 active:border-gray-900"
               >
-                <Play class="w-4 h-4" /> Rozpocznij sesję grupową
+                <Play class="w-4 h-4" /> {{ $t('app.projects.start_group_session') }}
               </button>
             </div>
           </div>
@@ -156,14 +157,14 @@
                   {{ project.name }}
                 </h3>
                 <p class="text-gray-600 text-sm">
-                  {{ project.affirmations?.length || 0 }} afirmacji
+                  {{ $t('app.projects.affirmations_count', { count: project.affirmations?.length || 0 }) }}
                 </p>
               </div>
               <div class="flex items-center gap-2">
                 <button
                   @click.stop="openProjectSettings(project)"
                   class="text-gray-400 hover:text-gray-600 p-1"
-                  title="Ustawienia projektu"
+                  :title="$t('app.projects.project_settings')"
                 >
                   <Settings class="w-5 h-5" />
                 </button>
@@ -182,7 +183,7 @@
                 v-if="(project.affirmations?.length || 0) > 3"
                 class="text-xs text-gray-500 text-center py-1"
               >
-                +{{ (project.affirmations?.length || 0) - 3 }} więcej
+                +{{ (project.affirmations?.length || 0) - 3 }} {{ $t('common.more') }}
               </div>
             </div>
 
@@ -192,7 +193,7 @@
                 :disabled="!project.affirmations?.length"
                 class="w-full bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-4 rounded-full font-medium flex items-center justify-center gap-2  border-2 border-pastel-khaki-2 hover:border-gray-800 active:border-gray-900"
               >
-                <Play class="w-4 h-4" /> Rozpocznij sesję
+                <Play class="w-4 h-4" /> {{ $t('app.projects.start_session') }}
               </button>
             </div>
           </div>
@@ -202,13 +203,13 @@
             class="col-span-full text-center py-12"
           >
             <div class="text-gray-400 text-6xl mb-4"><Folder class="w-16 h-16" /></div>
-            <h3 class="text-xl font-medium text-gray-900 mb-2 font-crimson">Brak projektów</h3>
-            <p class="text-gray-600 mb-4">Stwórz swój pierwszy projekt afirmacji</p>
+            <h3 class="text-xl font-medium text-gray-900 mb-2 font-crimson">{{ $t('app.projects.no_projects_title') }}</h3>
+            <p class="text-gray-600 mb-4">{{ $t('app.projects.no_projects_description') }}</p>
             <button
               @click="showNewProjectModal = true"
               class="bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 px-8 py-4 rounded-full font-medium  border-2 border-pastel-khaki-2 hover:border-gray-800"
             >
-              Utwórz projekt
+              {{ $t('app.projects.create_project_button') }}
             </button>
           </div>
         </div>
@@ -224,10 +225,10 @@
         class="bg-pastel-khaki rounded-4xl p-8 w-full max-w-md border-2 border-pastel-cinereous"
         @click.stop
       >
-        <h3 class="text-lg font-medium mb-4 font-crimson">Nowy projekt</h3>
+        <h3 class="text-lg font-medium mb-4 font-crimson">{{ $t('app.projects.new_project') }}</h3>
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            Nazwa projektu
+            {{ $t('app.modals.project_name') }}
           </label>
           <input
             v-model="newProjectName"
@@ -243,13 +244,13 @@
             :disabled="loading"
             class="flex-1 bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-3 rounded-full font-medium "
           >
-            {{ loading ? 'Tworzenie...' : 'Utwórz' }}
+            {{ loading ? $t('common.creating') : $t('common.create') }}
           </button>
           <button
             @click="showNewProjectModal = false"
             class="flex-1 border-2 border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-full font-medium "
           >
-            Anuluj
+            {{ $t('common.cancel') }}
           </button>
         </div>
       </div>
@@ -264,17 +265,17 @@
         class="bg-pastel-khaki rounded-4xl p-8 w-full max-w-md border-2 border-pastel-cinereous"
         @click.stop
       >
-        <h3 class="text-lg font-medium mb-4 font-crimson">Ustawienia projektu</h3>
+        <h3 class="text-lg font-medium mb-4 font-crimson">{{ $t('app.projects.project_settings') }}</h3>
 
         <div class="mb-6">
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            Nazwa projektu
+            {{ $t('app.modals.project_name') }}
           </label>
           <input
             v-model="editingProjectName"
             type="text"
             class="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-violet"
-            placeholder="Wprowadź nazwę projektu..."
+            :placeholder="$t('app.modals.project_name_placeholder')"
             @keyup.enter="saveProjectName"
           />
         </div>
@@ -285,28 +286,28 @@
             :disabled="!editingProjectName.trim()"
             class="w-full bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-3 rounded-full font-medium  border-2 border-pastel-khaki-2 hover:border-gray-800"
           >
-            Zapisz nazwę
+            {{ $t('common.save') }} {{ $t('app.modals.project_name') }}
           </button>
           
           <button
             @click="copyProject"
             class="w-full bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 py-3 rounded-full font-medium flex items-center justify-center gap-2  border-2 border-pastel-khaki-2 hover:border-gray-800"
           >
-            <Clipboard class="w-5 h-5" /> Kopiuj projekt
+            <Clipboard class="w-5 h-5" /> {{ $t('app.modals.copy_project') }}
           </button>
           
           <button
             @click="showDeleteProjectConfirm = true"
             class="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-full font-medium  border-2 border-red-500 hover:border-white"
           >
-            Usuń projekt
+            {{ $t('app.modals.delete_project') }}
           </button>
           
           <button
             @click="closeProjectSettings"
             class="w-full border-2 border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-full font-medium  hover:border-gray-700"
           >
-            Anuluj
+            {{ $t('common.cancel') }}
           </button>
         </div>
       </div>
@@ -321,27 +322,27 @@
         class="bg-pastel-khaki rounded-4xl p-8 w-full max-w-md border-2 border-pastel-cinereous"
         @click.stop
       >
-        <h3 class="text-lg font-medium mb-4 text-red-600">Usuń projekt</h3>
+        <h3 class="text-lg font-medium mb-4 text-red-600">{{ $t('app.modals.delete_project_title') }}</h3>
         <div class="mb-6">
-          <p class="text-gray-700 mb-3">Czy na pewno chcesz usunąć projekt?</p>
+          <p class="text-gray-700 mb-3">{{ $t('app.modals.delete_project_confirm') }}</p>
           <div class="bg-gray-50 p-3 rounded border-l-4 border-red-400">
             <p class="text-gray-800 font-medium">{{ selectedProject?.name }}</p>
-            <p class="text-sm text-gray-600">{{ selectedProject?.affirmations?.length || 0 }} afirmacji</p>
+            <p class="text-sm text-gray-600">{{ $t('app.projects.affirmations_count', { count: selectedProject?.affirmations?.length || 0 }) }}</p>
           </div>
-          <p class="text-sm text-gray-500 mt-2">Ta operacja jest nieodwracalna. Wszystkie afirmacje zostaną usunięte.</p>
+          <p class="text-sm text-gray-500 mt-2">{{ $t('app.modals.delete_project_warning') }}</p>
         </div>
         <div class="flex gap-3">
           <button
             @click="confirmDeleteProject"
             class="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-full font-medium "
           >
-            Usuń projekt
+            {{ $t('app.modals.delete_project') }}
           </button>
           <button
             @click="showDeleteProjectConfirm = false"
             class="flex-1 border-2 border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-full font-medium "
           >
-            Anuluj
+            {{ $t('common.cancel') }}
           </button>
         </div>
       </div>
@@ -357,22 +358,22 @@
         class="bg-pastel-khaki rounded-4xl p-8 w-full max-w-md border-2 border-pastel-cinereous"
         @click.stop
       >
-        <h3 class="text-lg font-medium mb-4 font-crimson">Utwórz nową grupę</h3>
+        <h3 class="text-lg font-medium mb-4 font-crimson">{{ $t('app.modals.create_new_group') }}</h3>
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            Nazwa grupy
+            {{ $t('app.modals.group_name') }}
           </label>
           <input
             v-model="newGroupName"
             type="text"
             class="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-violet"
-            placeholder="Wprowadź nazwę grupy..."
+            :placeholder="$t('app.modals.group_name_placeholder')"
             @keyup.enter="createNewGroup"
           />
         </div>
         <div class="mb-6">
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            Wybierz projekty
+            {{ $t('app.modals.select_projects') }}
           </label>
           <div class="space-y-2 max-h-40 overflow-y-auto">
             <label
@@ -396,13 +397,13 @@
             :disabled="!newGroupName.trim()"
             class="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white py-2 rounded font-medium"
           >
-            Utwórz grupę
+            {{ $t('app.modals.create_group_button') }}
           </button>
           <button
             @click="showNewGroupModal = false"
             class="flex-1 border-2 border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-full font-medium "
           >
-            Anuluj
+            {{ $t('common.cancel') }}
           </button>
         </div>
       </div>
@@ -418,17 +419,17 @@
         class="bg-pastel-khaki rounded-4xl p-8 w-full max-w-md border-2 border-pastel-cinereous"
         @click.stop
       >
-        <h3 class="text-lg font-medium mb-4">Ustawienia grupy</h3>
+        <h3 class="text-lg font-medium mb-4">{{ $t('app.modals.group_settings_title') }}</h3>
 
         <div class="mb-6">
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            Nazwa grupy
+            {{ $t('app.modals.group_name') }}
           </label>
           <input
             v-model="editingGroupName"
             type="text"
             class="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-violet"
-            placeholder="Wprowadź nazwę grupy..."
+            :placeholder="$t('app.modals.group_name_placeholder')"
             @keyup.enter="saveGroupName"
           />
         </div>
@@ -439,21 +440,21 @@
             :disabled="!editingGroupName.trim()"
             class="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white py-2 rounded font-medium"
           >
-            Zapisz nazwę
+            {{ $t('common.save') }} {{ $t('app.modals.group_name') }}
           </button>
           
           <button
             @click="showDeleteGroupConfirm = true"
             class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded font-medium"
           >
-            Usuń grupę
+            {{ $t('app.modals.delete_group') }}
           </button>
           
           <button
             @click="closeGroupSettings"
             class="w-full border-2 border-gray-300 hover:bg-gray-50 text-gray-700 py-2 rounded font-medium"
           >
-            Anuluj
+            {{ $t('common.cancel') }}
           </button>
         </div>
       </div>
@@ -469,27 +470,27 @@
         class="bg-pastel-khaki rounded-4xl p-8 w-full max-w-md border-2 border-pastel-cinereous"
         @click.stop
       >
-        <h3 class="text-lg font-medium mb-4 text-red-600">Usuń grupę</h3>
+        <h3 class="text-lg font-medium mb-4 text-red-600">{{ $t('app.modals.delete_group_title') }}</h3>
         <div class="mb-6">
-          <p class="text-gray-700 mb-3">Czy na pewno chcesz usunąć grupę?</p>
+          <p class="text-gray-700 mb-3">{{ $t('app.modals.delete_group_confirm') }}</p>
           <div class="bg-gray-50 p-3 rounded border-l-4 border-red-400">
             <p class="text-gray-800 font-medium">{{ selectedGroup?.name }}</p>
-            <p class="text-sm text-gray-600">{{ getGroupProjectsCount(selectedGroup) }} projektów</p>
+            <p class="text-sm text-gray-600">{{ $t('app.modals.projects_count', { count: getGroupProjectsCount(selectedGroup) }) }}</p>
           </div>
-          <p class="text-sm text-gray-500 mt-2">Ta operacja jest nieodwracalna. Projekty pozostaną nienaruszone.</p>
+          <p class="text-sm text-gray-500 mt-2">{{ $t('app.modals.delete_group_warning') }}</p>
         </div>
         <div class="flex gap-3">
           <button
             @click="confirmDeleteGroup"
             class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded font-medium"
           >
-            Usuń grupę
+            {{ $t('app.modals.delete_group') }}
           </button>
           <button
             @click="showDeleteGroupConfirm = false"
             class="flex-1 border-2 border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-full font-medium "
           >
-            Anuluj
+            {{ $t('common.cancel') }}
           </button>
         </div>
       </div>
@@ -501,9 +502,11 @@
 
 <script setup>
 import { Settings, Folder, Clipboard, Play, Group, Plus } from 'lucide-vue-next'
+import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 
 const { user, logout: authLogout } = useAuth()
 const { isPremiumActive } = usePremium()
+const { subscribeToLanguageChanges } = useI18nInit()
 
 // Calculate bubble positions based on user ID
 const bubblePositions = computed(() => {
@@ -587,6 +590,7 @@ let unsubscribe = null
 let unsubscribeGroups = null
 
 onMounted(() => {
+  subscribeToLanguageChanges()
   
   setTimeout(() => {
     if (user.value?.uid) {
@@ -676,14 +680,14 @@ onUnmounted(() => {
 
 const getDefaultProjectName = () => {
   const count = projects.value.length + 1
-  return `Bez nazwy ${count}`
+  return t('app.projects.unnamed', { count })
 }
 
 const createProject = async () => {
   if (loading.value) return
   
   if (!user.value) {
-    alert('Authentication required to create project')
+    alert(t('app.alerts.auth_required_for_project'))
     return
   }
   
@@ -717,7 +721,7 @@ const createProject = async () => {
 
     navigateTo(`/project/${newProject.id}`)
   } catch (error) {
-    alert('Failed to create project')
+    alert(t('app.alerts.create_project_failed'))
   } finally {
     loading.value = false
   }
@@ -769,7 +773,7 @@ const saveProjectName = async () => {
     
     closeProjectSettings()
   } catch (error) {
-    alert('Failed to save project name')
+    alert(t('app.alerts.save_project_name_failed'))
   }
 }
 
@@ -780,7 +784,7 @@ const confirmDeleteProject = async () => {
     await firestoreDeleteProject(selectedProject.value.id)
     closeProjectSettings()
   } catch (error) {
-    alert('Failed to delete project')
+    alert(t('app.alerts.delete_project_failed'))
   }
 }
 
@@ -792,7 +796,7 @@ const copyProject = async () => {
     const originalProject = selectedProject.value
     const copiedProject = {
       id: Date.now().toString(),
-      name: `${originalProject.name} (kopia)`,
+      name: `${originalProject.name} ${t('app.projects.copy_suffix')}`,
       affirmations: originalProject.affirmations ? [...originalProject.affirmations].map(affirmation => ({
         ...affirmation,
         id: Date.now().toString() + Math.random().toString(36).substr(2, 5), 
@@ -818,11 +822,11 @@ const copyProject = async () => {
     closeProjectSettings()
 
     setTimeout(() => {
-      alert(`Project "${originalProject.name}" copied as "${copiedProject.name}"`)
+      alert(t('app.alerts.project_copied', { name: originalProject.name, newName: copiedProject.name }))
     }, 100)
     
   } catch (error) {
-    alert('Failed to copy project')
+    alert(t('app.alerts.copy_project_failed'))
   }
 }
 
@@ -862,7 +866,7 @@ const createNewGroup = async () => {
     showNewGroupModal.value = false
   } catch (error) {
     console.error('Failed to create group:', error)
-    alert('Nie udało się utworzyć grupy')
+    alert(t('app.alerts.create_group_failed'))
   } finally {
     loading.value = false
   }
@@ -892,7 +896,7 @@ const saveGroupName = async () => {
     closeGroupSettings()
   } catch (error) {
     console.error('Failed to update group:', error)
-    alert('Nie udało się zaktualizować grupy')
+    alert(t('app.alerts.update_group_failed'))
   }
 }
 
@@ -905,7 +909,7 @@ const confirmDeleteGroup = async () => {
     closeGroupSettings()
   } catch (error) {
     console.error('Failed to delete group:', error)
-    alert('Nie udało się usunąć grupy')
+    alert(t('app.alerts.delete_group_failed'))
   }
 }
 
@@ -930,7 +934,9 @@ definePageMeta({
   middleware: 'auth'
 })
 
+const { t } = useI18n()
+
 useHead({
-  title: 'Moje projekty - My affirms'
+  title: computed(() => t('app.page_title'))
 })
 </script>

@@ -2,67 +2,19 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: [
     '@nuxtjs/tailwindcss',
-    '@pinia/nuxt'
+    '@pinia/nuxt',
+    '@nuxtjs/i18n'
     // '@vite-pwa/nuxt' - temporarily disabled
   ],
   ssr: false,
-  nitro: {
-    preset: 'static',
-    prerender: {
-      routes: ['/']
-    }
-  },
   devServer: {
-    port: 3011
+    port: 3000
   },
   experimental: {
     payloadExtraction: false
   },
   routeRules: {},
-  pwa: {
-    registerType: 'autoUpdate',
-    strategies: 'generateSW',
-    workbox: {
-      navigateFallback: '/',
-      globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
-      cleanupOutdatedCaches: false,
-      dontCacheBustURLsMatching: /^\/_nuxt\//,
-      skipWaiting: true,
-    },
-    client: {
-      installPrompt: true,
-      periodicSyncForUpdates: 20,
-    },
-    manifest: {
-      name: 'My Affirms - Affirmations App',
-      short_name: 'My Affirms',
-      description: 'Stwórz, organizuj i odtwarzaj pozytywne afirmacje. Zmień swoje życie z My Affirms.',
-      theme_color: '#1e40af',
-      background_color: '#ffffff',
-      display: 'standalone',
-      orientation: 'portrait',
-      scope: '/',
-      start_url: '/',
-      icons: [
-        {
-          src: 'icon-192.png',
-          sizes: '192x192',
-          type: 'image/png',
-        },
-        {
-          src: 'icon-512.png',
-          sizes: '512x512',
-          type: 'image/png',
-        },
-        {
-          src: 'icon-512.png',
-          sizes: '512x512',
-          type: 'image/png',
-          purpose: 'any maskable',
-        }
-      ]
-    }
-  },
+  
   app: {
     baseURL: '/',
     head: {
@@ -91,5 +43,10 @@ export default defineNuxtConfig({
         }
       ]
     }
+  },
+  i18n: {
+    defaultLocale: 'en',
+    locales: ['en', 'pl'],
+    strategy: 'prefix_except_default'
   }
 })

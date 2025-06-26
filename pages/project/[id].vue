@@ -1,212 +1,190 @@
 <template>
   <div class="min-h-screen bg-pastel-vanilla">
-    
     <header class="bg-pastel-purple shadow-sm">
       <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <div class="flex items-center gap-4">
-          <button
-            @click="$router.back()"
-            class="text-gray-700 hover:text-gray-900 opacity-90 hover:opacity-100 inline-flex items-center gap-2 transition-colors"
-          >
-            <ChevronLeft class="w-4 h-4" /> Powrót
+          <button @click="goBack" class="text-gray-700 hover:text-gray-900">
+            <ArrowLeft class="w-6 h-6" />
           </button>
           <div>
-            <div class="text-xs text-gray-700 font-crimson italic opacity-90">My affirms</div>
-            <h1 class="text-2xl font-bold text-gray-800">{{ project?.name || 'Projekt' }}</h1>
+            <h1 class="text-2xl font-bold text-gray-800 font-crimson">{{ project?.name }}</h1>
+            <p class="text-sm text-gray-700 font-crimson italic opacity-90">
+              {{ $t('app.projects.affirmations_count', { count: project?.affirmations?.length || 0 }) }}
+            </p>
           </div>
         </div>
-        <button
-          @click="startSession"
-          :disabled="!activeAffirmations.length"
-          class="bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 px-6 py-3 rounded-2xl font-semibold flex items-center gap-2 "
-        >
-          <Play class="w-4 h-4" /> Rozpocznij sesję
-        </button>
+        <div class="flex items-center gap-4">
+          <span class="text-gray-700 opacity-90">{{ $t('app.welcome') }} {{ user?.email || $t('app.user_placeholder') }}</span>
+          <LanguageSwitcher />
+          <button @click="logout" class="text-gray-700 hover:text-gray-900">{{ $t('auth.logout') }}</button>
+        </div>
       </div>
     </header>
 
-    <div class="max-w-4xl mx-auto px-6 py-12">
-      <div v-if="loading" class="text-center py-8">
-        <p>Ładowanie...</p>
-      </div>
-
-      <div v-else-if="!project" class="text-center py-8">
-        <p class="text-gray-500">Projekt nie został znaleziony</p>
-      </div>
-
-      <div v-else>
+    <div class="max-w-7xl mx-auto px-6 py-12">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        <div class="bg-pastel-dun rounded-3xl p-8 mb-8 border border-pastel-cinereous">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">Dodaj nową afirmację</h3>
-          <div class="space-y-3">
-            <textarea
-              v-model="newAffirmationText"
-              rows="2"
-              placeholder="Wprowadź swoją afirmację...&#10;Możesz napisać kilka linii tekstu."
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y min-h-[60px]"
-              @keyup.ctrl.enter="addAffirmation"
-            ></textarea>
-            <div class="flex justify-between items-center">
-              <p class="text-xs text-gray-500">Użyj Ctrl+Enter aby szybko dodać</p>
-              <button
-                @click="addAffirmation"
-                :disabled="!newAffirmationText.trim()"
-                class="bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 px-6 py-3 rounded-2xl font-semibold "
-              >
-                Dodaj
-              </button>
+        <!-- Affirmations list -->
+        <div class="lg:col-span-2 bg-pastel-khaki border-2 border-pastel-dun rounded-4xl p-8">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900 font-crimson">{{ $t('project.affirmations_list_title') }}</h2>
+              <p class="text-gray-600 mt-1">{{ $t('project.affirmations_list_description') }}</p>
             </div>
+            <button
+              @click="showNewAffirmationModal = true"
+              class="bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-900 px-6 py-3 rounded-full font-medium flex items-center gap-2 border-2 border-pastel-khaki-2 hover:border-gray-900"
+            >
+              <span class="text-lg">+</span>
+              {{ $t('project.add_affirmation') }}
+            </button>
           </div>
-        </div>
 
-        <div class="bg-pastel-dun rounded-3xl p-8 border border-pastel-cinereous">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">
-            Afirmacje ({{ project.affirmations?.length || 0 }})
-          </h3>
-          
-          <div class="space-y-3">
+          <div v-if="project?.affirmations?.length > 0" class="space-y-4">
             <div
               v-for="(affirmation, index) in project.affirmations"
               :key="affirmation.id"
-              draggable="true"
-              @dragstart="handleDragStart($event, index)"
-              @dragover.prevent
-              @drop="handleDrop($event, index)"
-              @dragenter.prevent
-              @dragend="draggedIndex = null"
-              :class="{
-                'border-pastel-purple shadow-md bg-pastel-violet': draggedIndex === index,
-                'border-gray-200': draggedIndex !== index
-              }"
-              class="rounded-lg p-4 flex items-center justify-between cursor-move hover:border-blue-300 transition-all duration-200"
+              class="bg-pastel-dun border-2 border-pastel-cinereous rounded-lg p-4 flex items-center justify-between"
             >
-              <div class="flex items-center gap-3 flex-1">
-                <GripVertical class="w-4 h-4 text-gray-400" />
-                <div class="flex-1">
-                  <p :class="affirmation.isActive ? 'text-gray-900' : 'text-gray-400 line-through'">
-                    {{ affirmation.text }}
-                  </p>
-                </div>
+              <div class="flex-1">
+                <p class="text-gray-800">{{ affirmation.text }}</p>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 ml-4">
                 <button
-                  @click.stop="toggleAffirmation(affirmation.id)"
-                  class="relative inline-flex h-4 w-7 items-center rounded-full transition-colors focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-offset-1"
-                  :class="affirmation.isActive ? 'bg-green-600' : 'bg-gray-300'"
-                  title="Przełącz aktywność"
+                  @click="editAffirmation(affirmation)"
+                  class="text-gray-500 hover:text-gray-700 p-1"
+                  :title="$t('common.edit')"
                 >
-                  <span
-                    class="inline-block h-2.5 w-2.5 transform rounded-full bg-pastel-vanilla transition-transform duration-200"
-                    :class="affirmation.isActive ? 'translate-x-3.5' : 'translate-x-0.5'"
-                  ></span>
+                  <Pencil class="w-5 h-5" />
                 </button>
-                <div class="relative">
-                  <button
-                    @click.stop="toggleActionMenu(affirmation.id)"
-                    class="text-gray-400 hover:text-gray-600 px-2 py-1 rounded"
-                    title="Menu akcji"
-                    data-menu-trigger
-                  >
-                    <MoreVertical class="w-4 h-4" />
-                  </button>
-                  <div
-                    v-if="activeActionMenu === affirmation.id"
-                    class="absolute right-0 top-8 bg-pastel-khaki border border-gray-200 rounded-md shadow-lg z-10 min-w-32"
-                  >
-                    <button
-                      @click.stop="startEditingAffirmation(affirmation.id)"
-                      class="w-full px-3 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <Edit3 class="w-4 h-4" /> Edytuj
-                    </button>
-                    <button
-                      @click.stop="deleteAffirmation(affirmation.id)"
-                      class="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2"
-                    >
-                      <Trash2 class="w-4 h-4" /> Usuń
-                    </button>
-                  </div>
-                </div>
+                <button
+                  @click="deleteAffirmation(affirmation.id)"
+                  class="text-red-500 hover:text-red-700 p-1"
+                  :title="$t('common.delete')"
+                >
+                  <Trash2 class="w-5 h-5" />
+                </button>
               </div>
+            </div>
+          </div>
+          
+          <div v-else class="text-center py-12">
+            <div class="text-gray-400 text-6xl mb-4"><MessageSquare class="w-16 h-16" /></div>
+            <h3 class="text-xl font-medium text-gray-900 mb-2 font-crimson">{{ $t('project.no_affirmations_title') }}</h3>
+            <p class="text-gray-600 mb-4">{{ $t('project.no_affirmations_description') }}</p>
+            <button
+              @click="showNewAffirmationModal = true"
+              class="bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 px-8 py-4 rounded-full font-medium border-2 border-pastel-khaki-2 hover:border-gray-800"
+            >
+              {{ $t('project.add_affirmation') }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Session settings -->
+        <div class="bg-pastel-violet border-2 border-pastel-rose rounded-4xl p-8">
+          <h2 class="text-2xl font-bold text-gray-900 mb-6 font-crimson">{{ $t('project.session_settings_title') }}</h2>
+          
+          <div class="space-y-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                {{ $t('project.session_settings.speech_rate', { rate: sessionSettings.speechRate }) }}
+              </label>
+              <input
+                v-model.number="sessionSettings.speechRate"
+                type="range"
+                min="0.5"
+                max="2"
+                step="0.1"
+                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+              />
             </div>
             
-            <div v-if="!project.affirmations?.length" class="text-center py-8">
-              <p class="text-gray-500">Brak afirmacji. Dodaj pierwszą powyżej!</p>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                {{ $t('project.session_settings.pause_duration', { duration: sessionSettings.pauseDuration }) }}
+              </label>
+              <input
+                v-model.number="sessionSettings.pauseDuration"
+                type="range"
+                min="1"
+                max="10"
+                step="0.5"
+                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+              />
             </div>
+            
+            <label class="flex items-center">
+              <input
+                v-model="sessionSettings.repeatAffirmation"
+                type="checkbox"
+                class="mr-2"
+              />
+              {{ $t('project.session_settings.repeat_affirmation') }}
+            </label>
+            
+            <div v-if="sessionSettings.repeatAffirmation" class="mt-2">
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                {{ $t('project.session_settings.repeat_delay', { delay: sessionSettings.repeatDelay }) }}
+              </label>
+              <input
+                v-model.number="sessionSettings.repeatDelay"
+                type="range"
+                min="3"
+                max="30"
+                step="1"
+                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+              />
+            </div>
+          </div>
+
+          <div class="mt-8">
+            <button
+              @click="startSession"
+              :disabled="!project?.affirmations?.length"
+              class="w-full bg-pastel-purple-2 hover:bg-pastel-purple disabled:bg-gray-300 text-gray-800 py-4 rounded-full font-medium flex items-center justify-center gap-2 border-2 border-pastel-purple-2 hover:border-gray-800"
+            >
+              <Play class="w-4 h-4" /> {{ $t('app.projects.start_session') }}
+            </button>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- New/Edit Affirmation Modal -->
     <div
-      v-if="showEditModal"
+      v-if="showNewAffirmationModal || editingAffirmation"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-      @click="cancelAffirmationEdit"
+      @click="closeAffirmationModal"
     >
       <div
-        class="bg-pastel-khaki rounded-3xl p-8 w-full max-w-md border border-pastel-cinereous"
+        class="bg-pastel-khaki rounded-4xl p-8 w-full max-w-md border-2 border-pastel-cinereous"
         @click.stop
       >
-        <h3 class="text-lg font-semibold mb-4">Edytuj afirmację</h3>
+        <h3 class="text-lg font-medium mb-4 font-crimson">
+          {{ editingAffirmation ? $t('project.modals.edit_affirmation') : $t('project.modals.new_affirmation') }}
+        </h3>
         <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Tekst afirmacji
-          </label>
           <textarea
-            v-model="editingAffirmationText"
-            rows="3"
-            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Wprowadź tekst afirmacji..."
-            @keyup.ctrl.enter="saveAffirmationEdit(editingAffirmationId)"
+            v-model="affirmationText"
+            rows="4"
+            class="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-violet"
+            :placeholder="$t('project.modals.affirmation_placeholder')"
           ></textarea>
         </div>
         <div class="flex gap-3">
           <button
-            @click="saveAffirmationEdit(editingAffirmationId)"
-            :disabled="!editingAffirmationText.trim()"
-            class="flex-1 bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-3 rounded-2xl font-semibold "
+            @click="saveAffirmation"
+            :disabled="!affirmationText.trim()"
+            class="flex-1 bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 py-3 rounded-full font-medium"
           >
-            Zapisz
+            {{ editingAffirmation ? $t('common.save') : $t('common.add') }}
           </button>
           <button
-            @click="cancelAffirmationEdit"
-            class="flex-1 border border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-2xl font-semibold "
+            @click="closeAffirmationModal"
+            class="flex-1 border-2 border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-full font-medium"
           >
-            Anuluj
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div
-      v-if="showDeleteModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-      @click="cancelAffirmationDelete"
-    >
-      <div
-        class="bg-pastel-khaki rounded-3xl p-8 w-full max-w-md border border-pastel-cinereous"
-        @click.stop
-      >
-        <h3 class="text-lg font-semibold mb-4 text-red-600">Usuń afirmację</h3>
-        <div class="mb-6">
-          <p class="text-gray-700 mb-3">Czy na pewno chcesz usunąć tę afirmację?</p>
-          <div class="bg-gray-50 p-3 rounded border-l-4 border-red-400">
-            <p class="text-gray-800 italic">{{ deletingAffirmationText }}</p>
-          </div>
-          <p class="text-sm text-gray-500 mt-2">Ta operacja jest nieodwracalna.</p>
-        </div>
-        <div class="flex gap-3">
-          <button
-            @click="confirmAffirmationDelete"
-            class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded font-medium"
-          >
-            Usuń
-          </button>
-          <button
-            @click="cancelAffirmationDelete"
-            class="flex-1 border border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-2xl font-semibold "
-          >
-            Anuluj
+            {{ $t('common.cancel') }}
           </button>
         </div>
       </div>
@@ -215,332 +193,151 @@
 </template>
 
 <script setup>
-import { Play, Check, Circle, MoreVertical, Edit3, Trash2, GripVertical, ChevronLeft } from 'lucide-vue-next'
+import { ArrowLeft, Pencil, Trash2, MessageSquare, Play } from 'lucide-vue-next'
+import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
+
+const { user, logout: authLogout } = useAuth()
+const { t } = useI18n()
+const { getProjectById, updateProject } = useFirestore()
 
 const route = useRoute()
 const router = useRouter()
-const { user } = useAuth()
-const { getUserProjects, updateProject } = useFirestore()
+const projectId = route.params.id
 
 const project = ref(null)
-const loading = ref(true)
-const newAffirmationText = ref('')
+const showNewAffirmationModal = ref(false)
+const editingAffirmation = ref(null)
+const affirmationText = ref('')
 
-const draggedIndex = ref(null)
-
-const activeActionMenu = ref(null)
-
-const editingAffirmationId = ref(null)
-const editingAffirmationText = ref('')
-const showEditModal = ref(false)
-
-const deletingAffirmationId = ref(null)
-const deletingAffirmationText = ref('')
-const showDeleteModal = ref(false)
-
-const activeAffirmations = computed(() => 
-  project.value?.affirmations?.filter(a => a.isActive) || []
-)
-
-const loadProject = async () => {
-  try {
-    if (user.value?.uid) {
-      const saved = localStorage.getItem(`projects_${user.value.uid}`)
-      if (saved) {
-        const projects = JSON.parse(saved)
-        project.value = projects.find(p => p.id === route.params.id)
-        }
-    }
-
-    if (!project.value) {
-      try {
-        const projects = await getUserProjects()
-        project.value = projects.find(p => p.id === route.params.id)
-        } catch (firebaseError) {
-        }
-    }
-    
-    } catch (error) {
-    } finally {
-    loading.value = false
-  }
-}
-
-watchEffect(() => {
-  if (user.value) {
-    loadProject()
-  }
+const sessionSettings = ref({
+  speechRate: 1.0,
+  pauseDuration: 3,
+  repeatAffirmation: false,
+  repeatDelay: 5
 })
 
-onMounted(() => {
-  if (user.value) {
-    loadProject()
+let unsubscribe = null
+
+onMounted(async () => {
+  
+  const savedProject = getProjectFromLocalStorage(projectId)
+  if (savedProject) {
+    project.value = savedProject
+    if (savedProject.sessionSettings) {
+      sessionSettings.value = savedProject.sessionSettings
+    }
   }
+
+  try {
+    const firestoreProject = await getProjectById(projectId)
+    if (firestoreProject) {
+      project.value = {
+        ...firestoreProject,
+        sessionSettings: project.value?.sessionSettings || firestoreProject.sessionSettings
+      }
+    }
+  } catch (error) {
+    }
 })
 
-const addAffirmation = async () => {
-  if (!newAffirmationText.value.trim() || !project.value) return
-  
-  const newAffirmation = {
-    id: Date.now().toString(),
-    text: newAffirmationText.value.trim(),
-    isActive: true,
-    createdAt: new Date().toISOString()
+watch(sessionSettings, (newSettings) => {
+  if (project.value) {
+    project.value.sessionSettings = newSettings
+    saveProjectToLocalStorage(project.value)
   }
+}, { deep: true })
+
+const getProjectFromLocalStorage = (id) => {
+  if (!user.value?.uid) return null
+  const saved = localStorage.getItem(`projects_${user.value.uid}`)
+  if (saved) {
+    const projects = JSON.parse(saved)
+    return projects.find(p => p.id === id)
+  }
+  return null
+}
+
+const saveProjectToLocalStorage = (proj) => {
+  if (!user.value?.uid) return
+  const saved = localStorage.getItem(`projects_${user.value.uid}`)
+  if (saved) {
+    const projects = JSON.parse(saved)
+    const index = projects.findIndex(p => p.id === proj.id)
+    if (index !== -1) {
+      projects[index] = proj
+      localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(projects))
+    }
+  }
+}
+
+const goBack = () => {
+  router.push('/app')
+}
+
+const logout = async () => {
+  await authLogout()
+  router.push('/auth')
+}
+
+const closeAffirmationModal = () => {
+  showNewAffirmationModal.value = false
+  editingAffirmation.value = null
+  affirmationText.value = ''
+}
+
+const saveAffirmation = async () => {
+  if (!affirmationText.value.trim()) return
   
-  const updatedAffirmations = [
-    ...(project.value.affirmations || []),
-    newAffirmation
-  ]
+  let updatedAffirmations
+  
+  if (editingAffirmation.value) {
+    updatedAffirmations = project.value.affirmations.map(aff => 
+      aff.id === editingAffirmation.value.id ? { ...aff, text: affirmationText.value.trim() } : aff
+    )
+  } else {
+    const newAffirmation = {
+      id: Date.now().toString(),
+      text: affirmationText.value.trim(),
+      createdAt: new Date().toISOString()
+    }
+    updatedAffirmations = [...(project.value.affirmations || []), newAffirmation]
+  }
   
   try {
-    
-    try {
-      await updateProject(project.value.id, { affirmations: updatedAffirmations })
-    } catch (firebaseError) {
-      }
-
+    await updateProject(projectId, { affirmations: updatedAffirmations })
     project.value.affirmations = updatedAffirmations
-
-    if (user.value?.uid) {
-      const saved = localStorage.getItem(`projects_${user.value.uid}`)
-      if (saved) {
-        const projects = JSON.parse(saved)
-        const projectIndex = projects.findIndex(p => p.id === project.value.id)
-        if (projectIndex !== -1) {
-          projects[projectIndex] = { ...project.value }
-          localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(projects))
-        }
-      }
-    }
-    
-    newAffirmationText.value = ''
+    closeAffirmationModal()
   } catch (error) {
-    alert('Failed to add affirmation')
+    alert(t('project.alerts.save_affirmation_failed'))
   }
 }
 
-const toggleAffirmation = async (affirmationId) => {
-  if (!project.value) return
+const editAffirmation = (affirmation) => {
+  editingAffirmation.value = affirmation
+  affirmationText.value = affirmation.text
+  showNewAffirmationModal.value = true
+}
+
+const deleteAffirmation = async (affirmationId) => {
+  if (!confirm(t('project.alerts.confirm_delete_affirmation'))) return
   
-  const updatedAffirmations = project.value.affirmations.map(affirmation =>
-    affirmation.id === affirmationId
-      ? { ...affirmation, isActive: !affirmation.isActive }
-      : affirmation
-  )
+  const updatedAffirmations = project.value.affirmations.filter(aff => aff.id !== affirmationId)
   
   try {
-    
-    try {
-      await updateProject(project.value.id, { affirmations: updatedAffirmations })
-    } catch (firebaseError) {
-      }
-
+    await updateProject(projectId, { affirmations: updatedAffirmations })
     project.value.affirmations = updatedAffirmations
-
-    if (user.value?.uid) {
-      const saved = localStorage.getItem(`projects_${user.value.uid}`)
-      if (saved) {
-        const projects = JSON.parse(saved)
-        const projectIndex = projects.findIndex(p => p.id === project.value.id)
-        if (projectIndex !== -1) {
-          projects[projectIndex] = { ...project.value }
-          localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(projects))
-        }
-      }
-    }
   } catch (error) {
-    }
-}
-
-const deleteAffirmation = (affirmationId) => {
-  const affirmation = project.value.affirmations.find(a => a.id === affirmationId)
-  if (affirmation) {
-    deletingAffirmationId.value = affirmationId
-    deletingAffirmationText.value = affirmation.text
-    showDeleteModal.value = true
-    activeActionMenu.value = null
+    alert(t('project.alerts.delete_affirmation_failed'))
   }
-}
-
-const confirmAffirmationDelete = async () => {
-  if (!project.value || !deletingAffirmationId.value) return
-  
-  const updatedAffirmations = project.value.affirmations.filter(
-    affirmation => affirmation.id !== deletingAffirmationId.value
-  )
-  
-  try {
-    
-    try {
-      await updateProject(project.value.id, { affirmations: updatedAffirmations })
-    } catch (firebaseError) {
-      }
-
-    project.value.affirmations = updatedAffirmations
-
-    if (user.value?.uid) {
-      const saved = localStorage.getItem(`projects_${user.value.uid}`)
-      if (saved) {
-        const projects = JSON.parse(saved)
-        const projectIndex = projects.findIndex(p => p.id === project.value.id)
-        if (projectIndex !== -1) {
-          projects[projectIndex] = { ...project.value }
-          localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(projects))
-        }
-      }
-    }
-  } catch (error) {
-    } finally {
-    deletingAffirmationId.value = null
-    deletingAffirmationText.value = ''
-    showDeleteModal.value = false
-  }
-}
-
-const cancelAffirmationDelete = () => {
-  deletingAffirmationId.value = null
-  deletingAffirmationText.value = ''
-  showDeleteModal.value = false
 }
 
 const startSession = () => {
-  if (activeAffirmations.value.length > 0) {
-    router.push(`/session/${project.value.id}`)
+  if (project.value?.affirmations?.length > 0) {
+    router.push(`/session/${projectId}`)
   }
 }
-
-const handleDragStart = (event, index) => {
-  draggedIndex.value = index
-  event.dataTransfer.effectAllowed = 'move'
-  event.dataTransfer.setData('text/html', event.target)
-}
-
-const handleDrop = async (event, dropIndex) => {
-  event.preventDefault()
-  
-  if (draggedIndex.value === null || draggedIndex.value === dropIndex) {
-    draggedIndex.value = null
-    return
-  }
-  
-  const affirmations = [...project.value.affirmations]
-  const draggedItem = affirmations[draggedIndex.value]
-
-  affirmations.splice(draggedIndex.value, 1)
-
-  const newDropIndex = draggedIndex.value < dropIndex ? dropIndex - 1 : dropIndex
-
-  affirmations.splice(newDropIndex, 0, draggedItem)
-  
-  project.value.affirmations = affirmations
-  project.value.updatedAt = new Date().toISOString()
-  
-  await nextTick()
-
-  try {
-    await updateProject(project.value.id, { affirmations })
-    } catch (error) {
-    }
-
-  if (user.value?.uid) {
-    const saved = localStorage.getItem(`projects_${user.value.uid}`)
-    if (saved) {
-      const projects = JSON.parse(saved)
-      const projectIndex = projects.findIndex(p => p.id === project.value.id)
-      if (projectIndex !== -1) {
-        projects[projectIndex] = { ...project.value }
-        localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(projects))
-        }
-    }
-  }
-  
-  draggedIndex.value = null
-}
-
-const toggleActionMenu = (affirmationId) => {
-  activeActionMenu.value = activeActionMenu.value === affirmationId ? null : affirmationId
-  }
-
-onMounted(() => {
-  document.addEventListener('click', (event) => {
-    
-    if (!event.target.closest('[data-menu-trigger]')) {
-      activeActionMenu.value = null
-    }
-  })
-})
-
-const startEditingAffirmation = (affirmationId) => {
-  const affirmation = project.value.affirmations.find(a => a.id === affirmationId)
-  if (affirmation) {
-    editingAffirmationId.value = affirmationId
-    editingAffirmationText.value = affirmation.text
-    showEditModal.value = true
-    activeActionMenu.value = null
-
-    nextTick(() => {
-      const textarea = document.querySelector('textarea')
-      if (textarea) {
-        textarea.focus()
-        textarea.select()
-      }
-    })
-  }
-}
-
-const saveAffirmationEdit = async (affirmationId) => {
-  if (!editingAffirmationText.value.trim()) {
-    cancelAffirmationEdit()
-    return
-  }
-  
-  try {
-    
-    const affirmationIndex = project.value.affirmations.findIndex(a => a.id === affirmationId)
-    if (affirmationIndex !== -1) {
-      project.value.affirmations[affirmationIndex].text = editingAffirmationText.value.trim()
-      project.value.updatedAt = new Date().toISOString()
-      
-      try {
-        await updateProject(project.value.id, { 
-          affirmations: project.value.affirmations,
-          updatedAt: project.value.updatedAt
-        })
-        } catch (error) {
-        }
-
-      if (user.value?.uid) {
-        const saved = localStorage.getItem(`projects_${user.value.uid}`)
-        if (saved) {
-          const projects = JSON.parse(saved)
-          const projectIndex = projects.findIndex(p => p.id === project.value.id)
-          if (projectIndex !== -1) {
-            projects[projectIndex] = { ...project.value }
-            localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(projects))
-            }
-        }
-      }
-    }
-  } catch (error) {
-    } finally {
-    editingAffirmationId.value = null
-    editingAffirmationText.value = ''
-    showEditModal.value = false
-  }
-}
-
-const cancelAffirmationEdit = () => {
-  editingAffirmationId.value = null
-  editingAffirmationText.value = ''
-  showEditModal.value = false
-}
-
-definePageMeta({
-  middleware: 'auth'
-})
 
 useHead({
-  title: `${project.value?.name || 'Projekt'} - My affirms`
+  title: computed(() => t('project.page_title', { name: project.value?.name || 'Project' }))
 })
 </script>

@@ -194,13 +194,15 @@ const activatePremium = async (duration = 'monthly') => {
     activating.value = true
     await grantPremium('premium', duration)
     
-    const message = duration === 'yearly' ? 'Premium na 12 miesięcy aktywowany!' : 'Premium na 1 miesiąc aktywowany!'
+    const message = duration === 'yearly' 
+      ? t('admin.alerts.premium_yearly_activated') 
+      : t('admin.alerts.premium_monthly_activated')
     
     // Simple success feedback
     alert(message)
   } catch (error) {
     console.error('Error activating premium:', error)
-    alert('Błąd podczas aktywacji premium')
+    alert(t('admin.alerts.premium_activation_error'))
   } finally {
     activating.value = false
   }
@@ -209,17 +211,17 @@ const activatePremium = async (duration = 'monthly') => {
 const deactivatePremium = async () => {
   if (deactivating.value) return
   
-  if (!confirm('Czy na pewno chcesz dezaktywować premium?')) {
+  if (!confirm(t('admin.alerts.confirm_deactivate_premium'))) {
     return
   }
   
   try {
     deactivating.value = true
     await revokePremium()
-    alert('Premium zostało dezaktywowane')
+    alert(t('admin.alerts.premium_deactivated'))
   } catch (error) {
     console.error('Error deactivating premium:', error)
-    alert('Błąd podczas dezaktywacji premium')
+    alert(t('admin.alerts.premium_deactivation_error'))
   } finally {
     deactivating.value = false
   }
