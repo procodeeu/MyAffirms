@@ -105,22 +105,22 @@ else
     echo "⚠️  CSS assets might have different names (this is normal after rebuild)"
 fi
 
-# Test 7: Check if build version is available in JavaScript bundle
-echo "🔍 Testing build version availability in JavaScript..."
-# Since this is a SPA, check if BUILD_VERSION is in the JS bundle
-JS_CONTENT=""
-for js_file in $(curl -s "$PROD_URL" | grep -o "_nuxt/[^\"']*\.js" | head -5); do
-    JS_CONTENT="$JS_CONTENT$(curl -s "$PROD_URL/$js_file" 2>/dev/null || echo "")"
-done
-
-BUILD_VERSION_IN_JS=$(echo "$JS_CONTENT" | grep -o "$TIMESTAMP" || echo "not_found")
-if [ "$BUILD_VERSION_IN_JS" != "not_found" ]; then
-    echo "✅ Build version found in JavaScript bundle: $TIMESTAMP"
+# Test 7: Run Playwright E2E tests to verify version display
+echo "🔍 Running Playwright E2E tests..."
+if command -v npx >/dev/null 2>&1; then
+    echo "Running version verification test..."
+    npx playwright test tests/version-check.spec.js --reporter=line
+    
+    if [ $? -eq 0 ]; then
+        echo "✅ Playwright E2E tests passed - version verification successful!"
+    else
+        echo "❌ Playwright E2E tests failed - version verification failed!"
+        echo "This indicates the build version is not displayed correctly on the frontend"
+        exit 1
+    fi
 else
-    echo "❌ Build version not found in JavaScript bundle"
-    echo "Expected to find: $TIMESTAMP"
-    # Don't exit as this might be bundled/minified differently
-    echo "⚠️  This might be normal if the version is bundled differently"
+    echo "⚠️  Playwright not available, skipping E2E version verification"
+    echo "To enable E2E testing, run: npm install --save-dev playwright"
 fi
 
 echo ""

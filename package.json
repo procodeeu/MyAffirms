@@ -9,16 +9,20 @@
     "preview": "nuxt preview",
     "deploy": "./deploy-test.sh",
     "deploy:prod": "./deploy-test.sh",
+    "test:e2e": "playwright test",
+    "test:version": "playwright test tests/version-check.spec.js",
     "emulators": "firebase emulators:start",
     "dev:emulators": "firebase emulators:start --only auth,firestore",
     "dev:full": "concurrently \"npm run dev:emulators\" \"npm run dev\"",
     "dev:bg": "nohup npm run dev > dev.log 2>&1 &"
   },
   "devDependencies": {
+    "@playwright/test": "^1.53.1",
     "@vite-pwa/nuxt": "^1.0.4",
     "concurrently": "^9.1.2",
     "firebase-tools": "^14.8.0",
     "nuxt": "^3.13.0",
+    "playwright": "^1.53.1",
     "workbox-window": "^7.3.0"
   },
   "dependencies": {
