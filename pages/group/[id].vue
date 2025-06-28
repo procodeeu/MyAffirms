@@ -27,6 +27,7 @@
           <div>
             <h2 class="text-3xl font-bold text-gray-900 font-crimson">{{ $t('group.title') }}</h2>
             <p class="text-gray-600 mt-1">{{ $t('group.description') }}</p>
+            <p class="text-xs text-red-600 mt-1">DEBUG: Group: {{ !!group }}, Projects in group: {{ projectsInGroup.length }}, All projects: {{ allProjects.length }}</p>
           </div>
           <button
             @click="showAddProjectModal = true"
@@ -139,7 +140,7 @@ import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 const { user, logout: authLogout } = useAuth()
 const { t } = useI18n()
 const { 
-  getGroupById, 
+  getUserGroups,
   subscribeToUserProjects, 
   updateGroup 
 } = useFirestore()
@@ -158,13 +159,51 @@ const selectedProjectsToAdd = ref([])
 
 let unsubscribeProjects = null
 
-onMounted(async () => {
-  group.value = await getGroupById(groupId)
+const loadGroup = async () => {
+  console.log('🔍 Loading group:', groupId, 'user:', user.value?.uid)
   
+  if (!user.value?.uid) {
+    console.log('⏳ Waiting for user authentication...')
+    return
+  }
+  
+  try {
+    const groups = await getUserGroups()
+    console.log('🔥 All groups:', groups.length)
+    const foundGroup = groups.find(g => g.id === groupId)
+    console.log('🔥 Found group:', foundGroup)
+    
+    if (foundGroup) {
+      group.value = foundGroup
+      console.log('✅ Group loaded:', foundGroup.name, 'with', foundGroup.projectIds?.length || 0, 'projects')
+    } else {
+      console.log('❌ Group not found!')
+    }
+  } catch (error) {
+    console.error('❌ Error loading group:', error)
+  }
+  
+  // Subskrybuj projekty
+  if (unsubscribeProjects) unsubscribeProjects()
   unsubscribeProjects = subscribeToUserProjects((userProjects) => {
+    console.log('🔔 Projects updated:', userProjects?.length || 0)
     allProjects.value = userProjects || []
     updateProjectLists()
   })
+}
+
+// Załaduj grupę gdy użytkownik jest dostępny
+watch(user, (newUser) => {
+  if (newUser) {
+    loadGroup()
+  }
+}, { immediate: true })
+
+onMounted(() => {
+  // Jeśli użytkownik już jest załadowany, załaduj grupę od razu
+  if (user.value) {
+    loadGroup()
+  }
 })
 
 onUnmounted(() => {
@@ -178,9 +217,15 @@ watch([group, allProjects], () => {
 })
 
 const updateProjectLists = () => {
+  console.log('🔄 updateProjectLists: group exists:', !!group.value, 'allProjects:', allProjects.value.length)
+  console.log('🔄 Group projectIds:', group.value?.projectIds)
+  
   if (group.value && allProjects.value.length > 0) {
     projectsInGroup.value = allProjects.value.filter(p => group.value.projectIds?.includes(p.id))
     availableProjects.value = allProjects.value.filter(p => !group.value.projectIds?.includes(p.id))
+    console.log('✅ Projects in group:', projectsInGroup.value.length, 'Available:', availableProjects.value.length)
+  } else {
+    console.log('⏳ Waiting for group and projects data...')
   }
 }
 
