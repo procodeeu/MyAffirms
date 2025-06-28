@@ -617,23 +617,36 @@ watchEffect(() => {
 
     try {
       unsubscribe = subscribeToUserProjects((userProjects) => {
+        console.log('🔥 App.vue: Firestore projects received:', userProjects?.length || 0)
+        userProjects?.forEach((p, i) => {
+          console.log(`🔥 Project ${i}: ${p.name} - affirmations: ${p.affirmations?.length || 0}`)
+        })
+        
         const firebaseProjects = userProjects || []
         const localData = localStorage.getItem(`projects_${user.value.uid}`)
         let localProjects = []
         if (localData) {
           try {
             localProjects = JSON.parse(localData)
+            console.log('📱 App.vue: localStorage projects:', localProjects.length)
           } catch (e) {
-            }
+            console.error('📱 App.vue: Error parsing localStorage:', e)
+          }
         }
 
         const mergedProjects = firebaseProjects.map(firebaseProject => {
           const localProject = localProjects.find(p => p.id === firebaseProject.id)
+          console.log(`🔄 Merging project ${firebaseProject.name}: Firestore affirmations: ${firebaseProject.affirmations?.length || 0}`)
           return {
             ...firebaseProject,
             
             sessionSettings: localProject?.sessionSettings || firebaseProject.sessionSettings
           }
+        })
+        
+        console.log('✅ App.vue: Final merged projects:', mergedProjects.length)
+        mergedProjects.forEach((p, i) => {
+          console.log(`✅ Merged project ${i}: ${p.name} - affirmations: ${p.affirmations?.length || 0}`)
         })
         
         projects.value = mergedProjects

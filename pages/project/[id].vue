@@ -30,6 +30,7 @@
             <div>
               <h2 class="text-2xl font-bold text-gray-900 font-crimson">{{ $t('project.affirmations_list_title') }}</h2>
               <p class="text-gray-600 mt-1">{{ $t('project.affirmations_list_description') }}</p>
+              <p class="text-xs text-red-600 mt-1">DEBUG: project: {{ !!project }}, affirmations: {{ project?.affirmations?.length || 0 }}</p>
             </div>
             <button
               @click="showNewAffirmationModal = true"
@@ -41,6 +42,7 @@
           </div>
 
           <div v-if="project?.affirmations?.length > 0" class="space-y-4">
+            <p class="text-xs text-blue-600">DEBUG: Showing {{ project.affirmations.length }} affirmations</p>
             <div
               v-for="(affirmation, index) in project.affirmations"
               :key="affirmation.id"
@@ -72,6 +74,7 @@
             <div class="text-gray-400 text-6xl mb-4"><MessageSquare class="w-16 h-16" /></div>
             <h3 class="text-xl font-medium text-gray-900 mb-2 font-crimson">{{ $t('project.no_affirmations_title') }}</h3>
             <p class="text-gray-600 mb-4">{{ $t('project.no_affirmations_description') }}</p>
+            <p class="text-xs text-red-600">DEBUG: Project ID: {{ projectId }}, Project exists: {{ !!project }}, Affirmations array: {{ project?.affirmations ? 'exists' : 'null/undefined' }}</p>
             <button
               @click="showNewAffirmationModal = true"
               class="bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 px-8 py-4 rounded-full font-medium border-2 border-pastel-khaki-2 hover:border-gray-800"
@@ -198,7 +201,7 @@ import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 
 const { user, logout: authLogout } = useAuth()
 const { t } = useI18n()
-const { getProjectById, updateProject } = useFirestore()
+const { getUserProjects, updateProject, subscribeToUserProjects } = useFirestore()
 
 const route = useRoute()
 const router = useRouter()
@@ -218,26 +221,84 @@ const sessionSettings = ref({
 
 let unsubscribe = null
 
-onMounted(async () => {
+const loadProject = async () => {
+  console.log('🔍 Loading project:', projectId, 'user:', user.value?.uid)
   
-  const savedProject = getProjectFromLocalStorage(projectId)
-  if (savedProject) {
-    project.value = savedProject
-    if (savedProject.sessionSettings) {
-      sessionSettings.value = savedProject.sessionSettings
+  if (!user.value?.uid) {
+    console.log('⏳ Waiting for user authentication...')
+    return
+  }
+  
+  // Najpierw spróbuj z localStorage (tam są zmergowane dane z app.vue)
+  const loadProjectFromData = () => {
+    const savedProject = getProjectFromLocalStorage(projectId)
+    console.log('📱 localStorage project:', savedProject)
+    if (savedProject) {
+      project.value = savedProject
+      console.log('📱 Project affirmations from localStorage:', savedProject.affirmations?.length || 0)
+      if (savedProject.sessionSettings) {
+        sessionSettings.value = savedProject.sessionSettings
+      }
+      return true
+    }
+    return false
+  }
+
+  // Załaduj dane z localStorage
+  const foundInLocalStorage = loadProjectFromData()
+  
+  // Jeśli nie ma w localStorage, spróbuj Firestore jako fallback
+  if (!foundInLocalStorage) {
+    console.log('🔄 Not found in localStorage, trying Firestore...')
+    try {
+      const projects = await getUserProjects()
+      console.log('🔥 All Firestore projects:', projects.length)
+      const firestoreProject = projects.find(p => p.id === projectId)
+      console.log('🔥 Found Firestore project:', firestoreProject)
+      
+      if (firestoreProject) {
+        project.value = firestoreProject
+        console.log('🔥 Using Firestore project with affirmations:', firestoreProject.affirmations?.length || 0)
+        saveProjectToLocalStorage(project.value)
+      } else {
+        console.log('❌ Project not found anywhere!')
+      }
+    } catch (error) {
+      console.error('❌ Error loading project from Firestore:', error)
     }
   }
 
-  try {
-    const firestoreProject = await getProjectById(projectId)
-    if (firestoreProject) {
+  // Subskrybuj aktualizacje z Firestore
+  if (unsubscribe) unsubscribe()
+  unsubscribe = subscribeToUserProjects((projects) => {
+    console.log('🔔 Real-time update received, projects:', projects.length)
+    const updatedProject = projects.find(p => p.id === projectId)
+    if (updatedProject) {
+      console.log('🔔 Updated project affirmations:', updatedProject.affirmations?.length || 0)
       project.value = {
-        ...firestoreProject,
-        sessionSettings: project.value?.sessionSettings || firestoreProject.sessionSettings
+        ...updatedProject,
+        sessionSettings: project.value?.sessionSettings || updatedProject.sessionSettings
       }
+      
+      saveProjectToLocalStorage(project.value)
     }
-  } catch (error) {
-    }
+  })
+  
+  console.log('✅ Final project loaded:', !!project.value, 'with', project.value?.affirmations?.length || 0, 'affirmations')
+}
+
+// Załaduj projekt gdy użytkownik jest dostępny
+watch(user, (newUser) => {
+  if (newUser) {
+    loadProject()
+  }
+}, { immediate: true })
+
+onMounted(() => {
+  // Jeśli użytkownik już jest załadowany, załaduj projekt od razu
+  if (user.value) {
+    loadProject()
+  }
 })
 
 watch(sessionSettings, (newSettings) => {
@@ -248,12 +309,33 @@ watch(sessionSettings, (newSettings) => {
 }, { deep: true })
 
 const getProjectFromLocalStorage = (id) => {
-  if (!user.value?.uid) return null
-  const saved = localStorage.getItem(`projects_${user.value.uid}`)
-  if (saved) {
-    const projects = JSON.parse(saved)
-    return projects.find(p => p.id === id)
+  console.log('🔍 getProjectFromLocalStorage - user:', user.value?.uid, 'looking for ID:', id)
+  if (!user.value?.uid) {
+    console.log('❌ No user UID')
+    return null
   }
+  
+  const key = `projects_${user.value.uid}`
+  const saved = localStorage.getItem(key)
+  console.log('📱 localStorage key:', key, 'data exists:', !!saved)
+  
+  if (saved) {
+    try {
+      const projects = JSON.parse(saved)
+      console.log('📱 Found', projects.length, 'projects in localStorage')
+      projects.forEach((p, i) => {
+        console.log(`📱 Project ${i}: ID=${p.id}, name=${p.name}, affirmations=${p.affirmations?.length || 0}`)
+      })
+      
+      const found = projects.find(p => p.id === id)
+      console.log('📱 Project found:', !!found, found ? `with ${found.affirmations?.length || 0} affirmations` : '')
+      return found
+    } catch (e) {
+      console.error('❌ Error parsing localStorage projects:', e)
+      return null
+    }
+  }
+  console.log('📱 No localStorage data')
   return null
 }
 
@@ -306,6 +388,7 @@ const saveAffirmation = async () => {
   try {
     await updateProject(projectId, { affirmations: updatedAffirmations })
     project.value.affirmations = updatedAffirmations
+    saveProjectToLocalStorage(project.value)
     closeAffirmationModal()
   } catch (error) {
     alert(t('project.alerts.save_affirmation_failed'))
@@ -326,6 +409,7 @@ const deleteAffirmation = async (affirmationId) => {
   try {
     await updateProject(projectId, { affirmations: updatedAffirmations })
     project.value.affirmations = updatedAffirmations
+    saveProjectToLocalStorage(project.value)
   } catch (error) {
     alert(t('project.alerts.delete_affirmation_failed'))
   }
@@ -336,6 +420,12 @@ const startSession = () => {
     router.push(`/session/${projectId}`)
   }
 }
+
+onUnmounted(() => {
+  if (unsubscribe) {
+    unsubscribe()
+  }
+})
 
 useHead({
   title: computed(() => t('project.page_title', { name: project.value?.name || 'Project' }))
