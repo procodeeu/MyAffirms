@@ -65,34 +65,34 @@
 
         <!-- Premium Management Actions -->
         <div class="bg-white rounded-lg shadow-sm p-6">
-          <h2 class="text-xl font-semibold text-gray-800 mb-4">Zarządzanie Premium</h2>
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">{{ t('admin.premium_management.title') }}</h2>
           
           <div class="space-y-4">
             <div v-if="!isPremiumActive" class="space-y-3">
-              <h3 class="font-medium text-gray-700">Aktywuj Premium</h3>
+              <h3 class="font-medium text-gray-700">{{ t('admin.premium_management.activate_premium') }}</h3>
               <div class="flex flex-wrap gap-2">
                 <button @click="activatePremium('monthly')" 
                         :disabled="activating"
                         class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                  <span v-if="activating">Aktywowanie...</span>
-                  <span v-else>Premium Miesięczny</span>
+                  <span v-if="activating">{{ t('common.activating') }}</span>
+                  <span v-else>{{ t('admin.premium_management.premium_monthly') }}</span>
                 </button>
                 <button @click="activatePremium('yearly')" 
                         :disabled="activating"
                         class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                  <span v-if="activating">Aktywowanie...</span>
-                  <span v-else>Premium Roczny</span>
+                  <span v-if="activating">{{ t('common.activating') }}</span>
+                  <span v-else>{{ t('admin.premium_management.premium_yearly') }}</span>
                 </button>
               </div>
             </div>
 
             <div v-else class="space-y-3">
-              <h3 class="font-medium text-gray-700">Dezaktywuj Premium</h3>
+              <h3 class="font-medium text-gray-700">{{ t('admin.premium_management.deactivate_premium') }}</h3>
               <button @click="deactivatePremium" 
                       :disabled="deactivating"
                       class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                <span v-if="deactivating">Dezaktywowanie...</span>
-                <span v-else>Usuń Premium</span>
+                <span v-if="deactivating">{{ t('common.deactivating') }}</span>
+                <span v-else>{{ t('admin.premium_management.remove_premium') }}</span>
               </button>
             </div>
           </div>
@@ -163,6 +163,7 @@
 
 <script setup>
 const { user } = useAuth()
+const { t } = useI18n()
 const { 
   premiumStatus, 
   loading: premiumLoading, 

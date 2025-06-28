@@ -27,7 +27,6 @@
           <div>
             <h2 class="text-3xl font-bold text-gray-900 font-crimson">{{ $t('group.title') }}</h2>
             <p class="text-gray-600 mt-1">{{ $t('group.description') }}</p>
-            <p class="text-xs text-red-600 mt-1">DEBUG: Group: {{ !!group }}, Projects in group: {{ projectsInGroup.length }}, All projects: {{ allProjects.length }}</p>
           </div>
           <button
             @click="showAddProjectModal = true"

@@ -28,7 +28,6 @@
           <p class="text-gray-600">
             {{ $t('session.session_contains_affirmations', { count: activeAffirmations.length }) }}
           </p>
-          <p class="text-xs text-red-600">DEBUG: Project: {{ !!project }}, All affirmations: {{ project?.affirmations?.length || 0 }}, Active: {{ activeAffirmations.length }}</p>
           <button
             @click="startSession"
             :disabled="activeAffirmations.length === 0"

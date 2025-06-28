@@ -30,7 +30,6 @@
             <div>
               <h2 class="text-2xl font-bold text-gray-900 font-crimson">{{ $t('project.affirmations_list_title') }}</h2>
               <p class="text-gray-600 mt-1">{{ $t('project.affirmations_list_description') }}</p>
-              <p class="text-xs text-red-600 mt-1">DEBUG: project: {{ !!project }}, affirmations: {{ project?.affirmations?.length || 0 }}</p>
             </div>
             <button
               @click="showNewAffirmationModal = true"
@@ -42,7 +41,6 @@
           </div>
 
           <div v-if="project?.affirmations?.length > 0" class="space-y-4">
-            <p class="text-xs text-blue-600">DEBUG: Showing {{ project.affirmations.length }} affirmations</p>
             <div
               v-for="(affirmation, index) in project.affirmations"
               :key="affirmation.id"
@@ -74,7 +72,6 @@
             <div class="text-gray-400 text-6xl mb-4"><MessageSquare class="w-16 h-16" /></div>
             <h3 class="text-xl font-medium text-gray-900 mb-2 font-crimson">{{ $t('project.no_affirmations_title') }}</h3>
             <p class="text-gray-600 mb-4">{{ $t('project.no_affirmations_description') }}</p>
-            <p class="text-xs text-red-600">DEBUG: Project ID: {{ projectId }}, Project exists: {{ !!project }}, Affirmations array: {{ project?.affirmations ? 'exists' : 'null/undefined' }}</p>
             <button
               @click="showNewAffirmationModal = true"
               class="bg-pastel-khaki-2 hover:bg-pastel-dun text-gray-800 px-8 py-4 rounded-full font-medium border-2 border-pastel-khaki-2 hover:border-gray-800"
