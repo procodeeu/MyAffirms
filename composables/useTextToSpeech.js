@@ -6,6 +6,36 @@ export const useTextToSpeech = () => {
   // Track active audio elements for proper cleanup
   let activeAudioElements = []
   let isStopped = false
+  const findWebSpeechVoice = (voiceId, language = 'pl-PL') => {
+    const voices = window.speechSynthesis.getVoices()
+    
+    // Try to find voice by language first (most important)
+    const languageVoices = voices.filter(voice => voice.lang.startsWith(language.substring(0, 2)))
+    
+    // If we have language-matching voices, prefer them
+    if (languageVoices.length > 0) {
+      // Try to find a female voice first
+      const femaleVoice = languageVoices.find(voice => 
+        voice.name.toLowerCase().includes('female') || 
+        voice.name.toLowerCase().includes('kobieta') ||
+        voice.name.toLowerCase().includes('zofia') ||
+        voice.name.toLowerCase().includes('paulina')
+      )
+      
+      if (femaleVoice) {
+        console.log('🎤 Found female voice for', language, ':', femaleVoice.name)
+        return femaleVoice
+      }
+      
+      // Fallback to first voice of this language
+      console.log('🎤 Using first voice for', language, ':', languageVoices[0].name)
+      return languageVoices[0]
+    }
+    
+    console.log('🎤 No voice found for', language, 'using default')
+    return null
+  }
+
   const createWebSpeechUtterance = (text, options = {}) => {
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.rate = options.rate || 0.8
@@ -13,7 +43,15 @@ export const useTextToSpeech = () => {
     utterance.volume = options.volume || 1
     utterance.pitch = options.pitch || 1
     
-    if (options.voice) {
+    // If voiceId is provided, try to find appropriate Web Speech voice
+    if (options.voiceId) {
+      const language = options.voiceId.substring(0, 5) // Extract language from voiceId like 'pl-PL'
+      const webVoice = findWebSpeechVoice(options.voiceId, language)
+      if (webVoice) {
+        utterance.voice = webVoice
+        utterance.lang = webVoice.lang
+      }
+    } else if (options.voice) {
       utterance.voice = options.voice
     }
     

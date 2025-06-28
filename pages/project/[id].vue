@@ -262,7 +262,8 @@ const sessionSettings = ref({
   sentencePause: 4,
   repeatAffirmation: false,
   repeatDelay: 5,
-  voiceId: 'pl-PL-ZofiaNeural'
+  voiceId: 'pl-PL-ZofiaNeural',
+  voicesByLanguage: {} // Store selected voices per language
 })
 
 const availableVoices = computed(() => {
@@ -274,10 +275,32 @@ const availableVoices = computed(() => {
 watch(locale, (newLocale) => {
   const ttsLanguage = getLanguageMapping(newLocale)
   const voices = getAvailableAiVoices(ttsLanguage)
+  
   if (voices.length > 0) {
-    // Set default voice (first female voice or first available)
-    const defaultVoice = voices.find(v => v.gender === 'female') || voices[0]
-    sessionSettings.value.voiceId = defaultVoice.id
+    // Check if we have a saved voice for this language
+    const savedVoiceId = sessionSettings.value.voicesByLanguage[ttsLanguage]
+    const savedVoiceExists = savedVoiceId && voices.find(v => v.id === savedVoiceId)
+    
+    if (savedVoiceExists) {
+      // Use saved voice for this language
+      console.log('🎤 Restoring saved voice for', ttsLanguage, ':', savedVoiceId)
+      sessionSettings.value.voiceId = savedVoiceId
+    } else {
+      // Set default voice and save it
+      const defaultVoice = voices.find(v => v.gender === 'female') || voices[0]
+      console.log('🎤 Setting default voice for', ttsLanguage, ':', defaultVoice.id)
+      sessionSettings.value.voiceId = defaultVoice.id
+      sessionSettings.value.voicesByLanguage[ttsLanguage] = defaultVoice.id
+    }
+  }
+})
+
+// Watch for voice changes and save per language
+watch(() => sessionSettings.value.voiceId, (newVoiceId) => {
+  if (newVoiceId) {
+    const ttsLanguage = getLanguageMapping(locale.value)
+    console.log('🎤 Saving voice choice for', ttsLanguage, ':', newVoiceId)
+    sessionSettings.value.voicesByLanguage[ttsLanguage] = newVoiceId
   }
 })
 
@@ -299,7 +322,12 @@ const loadProject = async () => {
       project.value = savedProject
       console.log('📱 Project affirmations from localStorage:', savedProject.affirmations?.length || 0)
       if (savedProject.sessionSettings) {
-        sessionSettings.value = savedProject.sessionSettings
+        // Merge saved settings with default structure to preserve new properties
+        sessionSettings.value = {
+          ...sessionSettings.value,
+          ...savedProject.sessionSettings,
+          voicesByLanguage: savedProject.sessionSettings.voicesByLanguage || {}
+        }
       }
       return true
     }

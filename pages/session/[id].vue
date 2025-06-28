@@ -96,9 +96,9 @@ import { ArrowLeft, Play, Square, SkipForward, CheckCircle } from 'lucide-vue-ne
 import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 
 const { user, logout: authLogout } = useAuth()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { getUserProjects } = useFirestore()
-const { speak, stop, isSpeaking } = useTextToSpeech()
+const { speak, stop, isSpeaking, getLanguageMapping, getAvailableAiVoices } = useTextToSpeech()
 
 const route = useRoute()
 const router = useRouter()
@@ -222,13 +222,45 @@ const startSession = async () => {
   playCurrentAffirmation()
 }
 
+const getAppropriateVoiceId = (sessionSettings = {}) => {
+  const currentLanguage = getLanguageMapping(locale.value)
+  const voices = getAvailableAiVoices(currentLanguage)
+  
+  // Check if saved voice is for current language
+  const savedVoiceId = sessionSettings.voiceId
+  if (savedVoiceId && savedVoiceId.startsWith(currentLanguage)) {
+    console.log('🎤 Using saved voice for current language:', savedVoiceId)
+    return savedVoiceId
+  }
+  
+  // Check if we have a saved voice for current language in voicesByLanguage
+  const savedByLanguage = sessionSettings.voicesByLanguage?.[currentLanguage]
+  if (savedByLanguage && voices.find(v => v.id === savedByLanguage)) {
+    console.log('🎤 Using voice from voicesByLanguage for', currentLanguage, ':', savedByLanguage)
+    return savedByLanguage
+  }
+  
+  // Fallback to default voice for current language
+  if (voices.length > 0) {
+    const defaultVoice = voices.find(v => v.gender === 'female') || voices[0]
+    console.log('🎤 Using default voice for', currentLanguage, ':', defaultVoice.id)
+    return defaultVoice.id
+  }
+  
+  console.log('🎤 No voice found, using fallback')
+  return 'pl-PL-ZofiaNeural'
+}
+
 const playCurrentAffirmation = async () => {
   if (!isPlaying.value) return
   
   currentAffirmation.value = activeAffirmations.value[currentIndex.value]
   
   const settings = project.value?.sessionSettings || {}
-  const { speechRate = 1.0, pauseDuration = 3, sentencePause = 4, repeatAffirmation = false, repeatDelay = 5, voiceId = 'pl-PL-ZofiaNeural' } = settings
+  const { speechRate = 1.0, pauseDuration = 3, sentencePause = 4, repeatAffirmation = false, repeatDelay = 5 } = settings
+  
+  // Get appropriate voice for current language
+  const voiceId = getAppropriateVoiceId(settings)
   
   await speak(currentAffirmation.value.text, { 
     rate: speechRate, 
