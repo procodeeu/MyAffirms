@@ -45,9 +45,23 @@
               v-for="(affirmation, index) in project.affirmations"
               :key="affirmation.id"
               class="bg-pastel-dun border-2 border-pastel-cinereous rounded-lg p-4 flex items-center justify-between"
+              :class="{ 'opacity-60': affirmation.isActive === false }"
             >
-              <div class="flex-1">
-                <p class="text-gray-800">{{ affirmation.text }}</p>
+              <div class="flex items-center gap-3 flex-1">
+                <input
+                  type="checkbox"
+                  :checked="affirmation.isActive !== false"
+                  @change="toggleAffirmationActive(affirmation.id)"
+                  class="text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 focus:ring-2 flex-shrink-0"
+                  style="width: 20px; height: 20px; min-width: 20px; min-height: 20px;"
+                  :title="affirmation.isActive !== false ? $t('common.active') : $t('common.inactive')"
+                />
+                <p 
+                  class="text-gray-800"
+                  :class="{ 'line-through': affirmation.isActive === false }"
+                >
+                  {{ affirmation.text }}
+                </p>
               </div>
               <div class="flex items-center gap-2 ml-4">
                 <button
@@ -150,6 +164,24 @@
                 class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
               />
             </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                {{ $t('project.session_settings.voice_selection') }}
+              </label>
+              <select
+                v-model="sessionSettings.voiceId"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pastel-violet"
+              >
+                <option 
+                  v-for="voice in availableVoices" 
+                  :key="voice.id" 
+                  :value="voice.id"
+                >
+                  {{ voice.name }} ({{ voice.gender === 'female' ? '♀' : '♂' }}) - {{ voice.description }}
+                </option>
+              </select>
+            </div>
           </div>
 
           <div class="mt-8">
@@ -211,8 +243,9 @@ import { ArrowLeft, Pencil, Trash2, MessageSquare, Play } from 'lucide-vue-next'
 import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 
 const { user, logout: authLogout } = useAuth()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { getUserProjects, updateProject, subscribeToUserProjects } = useFirestore()
+const { getAvailableAiVoices, getLanguageMapping } = useTextToSpeech()
 
 const route = useRoute()
 const router = useRouter()
@@ -228,7 +261,24 @@ const sessionSettings = ref({
   pauseDuration: 3,
   sentencePause: 4,
   repeatAffirmation: false,
-  repeatDelay: 5
+  repeatDelay: 5,
+  voiceId: 'pl-PL-ZofiaNeural'
+})
+
+const availableVoices = computed(() => {
+  const ttsLanguage = getLanguageMapping(locale.value)
+  return getAvailableAiVoices(ttsLanguage)
+})
+
+// Watch for language changes and update voice selection
+watch(locale, (newLocale) => {
+  const ttsLanguage = getLanguageMapping(newLocale)
+  const voices = getAvailableAiVoices(ttsLanguage)
+  if (voices.length > 0) {
+    // Set default voice (first female voice or first available)
+    const defaultVoice = voices.find(v => v.gender === 'female') || voices[0]
+    sessionSettings.value.voiceId = defaultVoice.id
+  }
 })
 
 let unsubscribe = null
@@ -310,6 +360,16 @@ onMounted(() => {
   // Jeśli użytkownik już jest załadowany, załaduj projekt od razu
   if (user.value) {
     loadProject()
+  }
+  
+  // Initialize default voice for current language
+  const ttsLanguage = getLanguageMapping(locale.value)
+  const voices = getAvailableAiVoices(ttsLanguage)
+  if (voices.length > 0) {
+    const defaultVoice = voices.find(v => v.gender === 'female') || voices[0]
+    if (!sessionSettings.value.voiceId || !voices.find(v => v.id === sessionSettings.value.voiceId)) {
+      sessionSettings.value.voiceId = defaultVoice.id
+    }
   }
 })
 
@@ -424,6 +484,22 @@ const deleteAffirmation = async (affirmationId) => {
     saveProjectToLocalStorage(project.value)
   } catch (error) {
     alert(t('project.alerts.delete_affirmation_failed'))
+  }
+}
+
+const toggleAffirmationActive = async (affirmationId) => {
+  const updatedAffirmations = project.value.affirmations.map(aff => 
+    aff.id === affirmationId 
+      ? { ...aff, isActive: aff.isActive === false ? true : false }
+      : aff
+  )
+  
+  try {
+    await updateProject(projectId, { affirmations: updatedAffirmations })
+    project.value.affirmations = updatedAffirmations
+    saveProjectToLocalStorage(project.value)
+  } catch (error) {
+    console.error('Error toggling affirmation active state:', error)
   }
 }
 

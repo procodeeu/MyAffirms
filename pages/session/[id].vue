@@ -224,11 +224,12 @@ const playCurrentAffirmation = async () => {
   currentAffirmation.value = activeAffirmations.value[currentIndex.value]
   
   const settings = project.value?.sessionSettings || {}
-  const { speechRate = 1.0, pauseDuration = 3, sentencePause = 4, repeatAffirmation = false, repeatDelay = 5 } = settings
+  const { speechRate = 1.0, pauseDuration = 3, sentencePause = 4, repeatAffirmation = false, repeatDelay = 5, voiceId = 'pl-PL-ZofiaNeural' } = settings
   
   await speak(currentAffirmation.value.text, { 
     rate: speechRate, 
-    sentencePause: sentencePause 
+    sentencePause: sentencePause,
+    voiceId: voiceId
   })
   
   if (repeatAffirmation && isPlaying.value) {
@@ -236,7 +237,8 @@ const playCurrentAffirmation = async () => {
       if (isPlaying.value) {
         await speak(currentAffirmation.value.text, { 
           rate: speechRate, 
-          sentencePause: sentencePause 
+          sentencePause: sentencePause,
+          voiceId: voiceId
         })
         scheduleNextAffirmation(pauseDuration)
       }

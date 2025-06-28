@@ -5,21 +5,47 @@ export default defineEventHandler(async (event) => {
   const GOOGLE_TTS_API = 'https://texttospeech.googleapis.com/v1/text:synthesize'
   
   const voiceMapping = {
-    'pl-PL-ZofiaNeural': {
-      languageCode: 'pl-PL',
-      name: 'pl-PL-Wavenet-A',
-      ssmlGender: 'FEMALE'
-    },
-    'pl-PL-MarekNeural': {
-      languageCode: 'pl-PL', 
-      name: 'pl-PL-Wavenet-B',
-      ssmlGender: 'MALE'
-    },
-    'pl-PL-AgnieszkaNeural': {
-      languageCode: 'pl-PL',
-      name: 'pl-PL-Wavenet-C',
-      ssmlGender: 'FEMALE'
-    }
+    // Polish voices
+    'pl-PL-ZofiaNeural': { languageCode: 'pl-PL', name: 'pl-PL-Wavenet-A', ssmlGender: 'FEMALE' },
+    'pl-PL-MarekNeural': { languageCode: 'pl-PL', name: 'pl-PL-Wavenet-B', ssmlGender: 'MALE' },
+    'pl-PL-AgnieszkaNeural': { languageCode: 'pl-PL', name: 'pl-PL-Wavenet-C', ssmlGender: 'FEMALE' },
+    
+    // English voices
+    'en-US-JennyNeural': { languageCode: 'en-US', name: 'en-US-Wavenet-F', ssmlGender: 'FEMALE' },
+    'en-US-GuyNeural': { languageCode: 'en-US', name: 'en-US-Wavenet-D', ssmlGender: 'MALE' },
+    'en-US-AriaNeural': { languageCode: 'en-US', name: 'en-US-Wavenet-G', ssmlGender: 'FEMALE' },
+    
+    // German voices
+    'de-DE-KatjaNeural': { languageCode: 'de-DE', name: 'de-DE-Wavenet-A', ssmlGender: 'FEMALE' },
+    'de-DE-ConradNeural': { languageCode: 'de-DE', name: 'de-DE-Wavenet-B', ssmlGender: 'MALE' },
+    
+    // French voices
+    'fr-FR-DeniseNeural': { languageCode: 'fr-FR', name: 'fr-FR-Wavenet-A', ssmlGender: 'FEMALE' },
+    'fr-FR-HenriNeural': { languageCode: 'fr-FR', name: 'fr-FR-Wavenet-B', ssmlGender: 'MALE' },
+    
+    // Spanish voices
+    'es-ES-ElviraNeural': { languageCode: 'es-ES', name: 'es-ES-Wavenet-A', ssmlGender: 'FEMALE' },
+    'es-ES-AlvaroNeural': { languageCode: 'es-ES', name: 'es-ES-Wavenet-B', ssmlGender: 'MALE' },
+    
+    // Italian voices
+    'it-IT-ElsaNeural': { languageCode: 'it-IT', name: 'it-IT-Wavenet-A', ssmlGender: 'FEMALE' },
+    'it-IT-DiegoNeural': { languageCode: 'it-IT', name: 'it-IT-Wavenet-C', ssmlGender: 'MALE' },
+    
+    // Dutch voices
+    'nl-NL-ColetteNeural': { languageCode: 'nl-NL', name: 'nl-NL-Wavenet-A', ssmlGender: 'FEMALE' },
+    'nl-NL-MaartenNeural': { languageCode: 'nl-NL', name: 'nl-NL-Wavenet-B', ssmlGender: 'MALE' },
+    
+    // Portuguese voices
+    'pt-PT-RaquelNeural': { languageCode: 'pt-PT', name: 'pt-PT-Wavenet-A', ssmlGender: 'FEMALE' },
+    'pt-PT-DuarteNeural': { languageCode: 'pt-PT', name: 'pt-PT-Wavenet-B', ssmlGender: 'MALE' },
+    
+    // Swedish voices
+    'sv-SE-SofieNeural': { languageCode: 'sv-SE', name: 'sv-SE-Wavenet-A', ssmlGender: 'FEMALE' },
+    'sv-SE-MattiasNeural': { languageCode: 'sv-SE', name: 'sv-SE-Wavenet-B', ssmlGender: 'MALE' },
+    
+    // Czech voices
+    'cs-CZ-VlastaNeural': { languageCode: 'cs-CZ', name: 'cs-CZ-Wavenet-A', ssmlGender: 'FEMALE' },
+    'cs-CZ-AntoninNeural': { languageCode: 'cs-CZ', name: 'cs-CZ-Wavenet-B', ssmlGender: 'MALE' }
   }
 
   const selectedVoice = voiceMapping[voiceId] || voiceMapping['pl-PL-ZofiaNeural']

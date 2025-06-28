@@ -1,0 +1,113 @@
+{
+  "auth": {
+    "login": "Se connecter",
+    "logout": "Se déconnecter",
+    "register": "S'inscrire",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "confirm_password": "Confirmer le mot de passe",
+    "login_title": "Connectez-vous à votre compte",
+    "register_title": "Créer un nouveau compte",
+    "forgot_password": "Mot de passe oublié ?",
+    "no_account": "Pas encore de compte ?",
+    "already_have_account": "Vous avez déjà un compte ?",
+    "login_error": "Erreur de connexion",
+    "register_error": "Erreur d'inscription",
+    "logout_error": "Erreur de déconnexion"
+  },
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "close": "Fermer",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "sort": "Trier",
+    "clear": "Effacer",
+    "select": "Sélectionner",
+    "upload": "Télécharger",
+    "download": "Télécharger",
+    "copy": "Copier",
+    "share": "Partager",
+    "print": "Imprimer",
+    "export": "Exporter",
+    "import": "Importer",
+    "refresh": "Actualiser",
+    "settings": "Paramètres",
+    "help": "Aide",
+    "about": "À propos",
+    "contact": "Contact",
+    "privacy": "Confidentialité",
+    "terms": "Conditions d'utilisation",
+    "yes": "Oui",
+    "no": "Non",
+    "ok": "OK",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "stop": "Arrêter"
+  },
+  "app": {
+    "tagline": "Des affirmations qui révèlent, pas seulement qui guérissent",
+    "welcome": "Bienvenue,",
+    "user_placeholder": "Utilisateur",
+    "page_title": "Mes projets - My affirms",
+    "projects": {
+      "title": "Vos projets",
+      "description": "Organisez les affirmations en collections thématiques",
+      "new_project": "Nouveau projet",
+      "new_group": "Nouveau groupe",
+      "projects_in_group": "{count} projets dans le groupe",
+      "group_settings": "Paramètres du groupe",
+      "start_group_session": "Démarrer une session de groupe",
+      "start_session": "Démarrer la session",
+      "affirmations_count": "{count} affirmations"
+    }
+  },
+  "project": {
+    "affirmations_list_title": "Liste des affirmations",
+    "affirmations_list_description": "Gérez vos affirmations",
+    "add_affirmation": "Ajouter une affirmation",
+    "no_affirmations_title": "Aucune affirmation",
+    "no_affirmations_description": "Ajoutez votre première affirmation pour commencer",
+    "session_settings_title": "Paramètres de session",
+    "session_settings": {
+      "speech_rate": "Vitesse de parole : {rate}x",
+      "pause_duration": "Pause entre les affirmations : {duration}s",
+      "sentence_pause": "Pause entre les phrases : {pause}s",
+      "repeat_affirmation": "Répéter chaque affirmation une seconde fois",
+      "repeat_delay": "Délai avant répétition : {delay}s",
+      "voice_selection": "Sélection de la voix"
+    },
+    "modals": {
+      "edit_affirmation": "Modifier l'affirmation",
+      "new_affirmation": "Nouvelle affirmation",
+      "affirmation_placeholder": "Saisir le texte de l'affirmation..."
+    },
+    "alerts": {
+      "save_affirmation_failed": "Impossible d'enregistrer l'affirmation",
+      "delete_affirmation_failed": "Impossible de supprimer l'affirmation",
+      "confirm_delete_affirmation": "Êtes-vous sûr de vouloir supprimer cette affirmation ?"
+    },
+    "page_title": "{name} - My affirms"
+  },
+  "session": {
+    "title": "Session",
+    "ready_to_start": "Prêt à commencer",
+    "session_contains_affirmations": "Cette session contient {count} affirmations",
+    "start": "Démarrer",
+    "finished_title": "Session terminée",
+    "finished_description": "Excellent ! Vous avez terminé votre session d'affirmation.",
+    "finish": "Terminer",
+    "progress": "Progrès : {current} sur {total}",
+    "page_title": "Session : {name} - My affirms"
+  }
+}

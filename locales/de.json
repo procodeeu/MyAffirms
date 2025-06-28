@@ -1,0 +1,241 @@
+{
+  "auth": {
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "login_to_continue": "Anmelden um fortzufahren",
+    "email": "E-Mail",
+    "email_placeholder": "ihre@email.com",
+    "password": "Passwort",
+    "password_placeholder": "••••••••",
+    "logging_in": "Anmelden...",
+    "login_button": "Anmelden",
+    "register_button": "Registrieren",
+    "registering": "Registrieren...",
+    "continue_with_google": "Mit Google fortfahren",
+    "demo_login": "🧪 Demo-Anmeldung (Emulator)",
+    "no_account_register": "Noch kein Konto? Registrieren",
+    "have_account_login": "Schon ein Konto? Anmelden",
+    "page_title": "Anmelden - My affirms",
+    "provider_google": "Google",
+    "provider_email": "E-Mail/Passwort"
+  },
+  "common": {
+    "loading": "Lädt...",
+    "creating": "Erstellen...",
+    "activating": "Aktivieren...",
+    "deactivating": "Deaktivieren...",
+    "or": "oder",
+    "cancel": "Abbrechen",
+    "create": "Erstellen",
+    "save": "Speichern",
+    "add": "Hinzufügen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "stop": "Stoppen",
+    "next": "Weiter",
+    "admin": "Admin",
+    "instructions": "Anweisungen",
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "more": "mehr",
+    "close": "✕"
+  },
+  "premium": {
+    "premium": "Premium",
+    "free": "Kostenlos",
+    "free_plan": "kostenlos",
+    "premium_tag": "PREMIUM"
+  },
+  "pwa": {
+    "install_title": "My Affirms installieren",
+    "install_description": "Zum Startbildschirm hinzufügen für einfachen Zugriff",
+    "install_button": "Installieren"
+  },
+  "admin": {
+    "title": "Admin-Panel",
+    "description": "Premium-Benutzer verwalten",
+    "auth_required": "Sie müssen angemeldet sein, um auf das Admin-Panel zuzugreifen.",
+    "no_admin_privileges": "Sie haben keine Administrator-Berechtigung.",
+    "premium_status": {
+      "title": "Ihr Premium-Status",
+      "status": "Status",
+      "days_until_expiry": "{count} Tage bis zum Ablauf",
+      "plan": "Plan",
+      "premium_features": "Premium-Funktionen"
+    },
+    "premium_management": {
+      "title": "Premium-Verwaltung",
+      "activate_premium": "Premium aktivieren",
+      "premium_monthly": "Premium monatlich",
+      "premium_yearly": "Premium jährlich",
+      "deactivate_premium": "Premium deaktivieren",
+      "remove_premium": "Premium entfernen"
+    },
+    "account_management": {
+      "title": "Kontoverwaltung",
+      "your_accounts": "Ihre Konten",
+      "instruction1": "• Sie können zwischen Konten im Authentifizierungsbereich wechseln",
+      "instruction2": "• Premium-Status ist einem bestimmten Konto (UID) zugeordnet",
+      "instruction3": "• Jedes Konto kann einen separaten Premium-Status haben"
+    },
+    "dev_tools": {
+      "title": "Entwicklertools",
+      "technical_info": "Technische Informationen",
+      "firestore_status": "Firestore-Status",
+      "firestore_status_desc1": "Premium-Daten werden in der 'premium_users' Sammlung gespeichert",
+      "firestore_status_desc2": "Jeder Benutzer hat ein Dokument mit einer ID gleich ihrer UID"
+    },
+    "alerts": {
+      "premium_yearly_activated": "Premium für 12 Monate aktiviert!",
+      "premium_monthly_activated": "Premium für 1 Monat aktiviert!",
+      "premium_activation_error": "Fehler beim Aktivieren von Premium",
+      "confirm_deactivate_premium": "Sind Sie sicher, dass Sie Premium deaktivieren möchten?",
+      "premium_deactivated": "Premium wurde deaktiviert",
+      "premium_deactivation_error": "Fehler beim Deaktivieren von Premium"
+    }
+  },
+  "app": {
+    "tagline": "Affirmationen, die enthüllen, nicht nur heilen",
+    "welcome": "Willkommen,",
+    "user_placeholder": "Benutzer",
+    "page_title": "Meine Projekte - My affirms",
+    "projects": {
+      "title": "Ihre Projekte",
+      "description": "Organisieren Sie Affirmationen in thematische Sammlungen",
+      "new_project": "Neues Projekt",
+      "new_group": "Neue Gruppe",
+      "projects_in_group": "{count} Projekte in der Gruppe",
+      "group_settings": "Gruppeneinstellungen",
+      "start_group_session": "Gruppensitzung starten",
+      "affirmations_count": "{count} Affirmationen",
+      "project_settings": "Projekteinstellungen",
+      "start_session": "Sitzung starten",
+      "no_projects_title": "Keine Projekte",
+      "no_projects_description": "Erstellen Sie Ihr erstes Affirmationsprojekt",
+      "create_project_button": "Projekt erstellen",
+      "unnamed": "Unbenannt {count}",
+      "copy_suffix": "(Kopie)"
+    },
+    "modals": {
+      "project_name": "Projektname",
+      "project_name_placeholder": "Projektname eingeben...",
+      "save_name": "Name speichern",
+      "copy_project": "Projekt kopieren",
+      "delete_project": "Projekt löschen",
+      "delete_project_title": "Projekt löschen",
+      "delete_project_confirm": "Sind Sie sicher, dass Sie das Projekt löschen möchten?",
+      "delete_project_warning": "Diese Operation ist unumkehrbar. Alle Affirmationen werden gelöscht.",
+      "create_new_group": "Neue Gruppe erstellen",
+      "group_name": "Gruppenname",
+      "group_name_placeholder": "Gruppenname eingeben...",
+      "select_projects": "Projekte auswählen",
+      "create_group_button": "Gruppe erstellen",
+      "group_settings_title": "Gruppeneinstellungen",
+      "delete_group": "Gruppe löschen",
+      "delete_group_title": "Gruppe löschen",
+      "delete_group_confirm": "Sind Sie sicher, dass Sie die Gruppe löschen möchten?",
+      "projects_count": "{count} Projekte",
+      "delete_group_warning": "Diese Operation ist unumkehrbar. Die Projekte bleiben intakt."
+    },
+    "alerts": {
+      "auth_required_for_project": "Authentifizierung erforderlich zum Erstellen eines Projekts",
+      "create_project_failed": "Projekt erstellen fehlgeschlagen",
+      "save_project_name_failed": "Projektname speichern fehlgeschlagen",
+      "delete_project_failed": "Projekt löschen fehlgeschlagen",
+      "project_copied": "Projekt \"{name}\" kopiert als \"{newName}\"",
+      "copy_project_failed": "Projekt kopieren fehlgeschlagen",
+      "create_group_failed": "Gruppe erstellen fehlgeschlagen",
+      "update_group_failed": "Gruppe aktualisieren fehlgeschlagen",
+      "delete_group_failed": "Gruppe löschen fehlgeschlagen"
+    }
+  },
+  "landing": {
+    "demo_title": "Affirmations-Demo",
+    "select_category": "Wählen Sie eine Affirmationskategorie",
+    "demo": {
+      "relations_title": "Beziehungen",
+      "relations_1": "Ich bin der Liebe und des Respekts würdig",
+      "relations_2": "Ich baue gesunde und harmonische Beziehungen auf",
+      "relations_3": "Ich kommuniziere klar und verständnisvoll",
+      "relations_4": "Ich ziehe positive Menschen in mein Leben",
+      "health_title": "Gesundheit und Wohlbefinden",
+      "health_1": "Mein Körper ist stark und gesund",
+      "health_2": "Ich fühle mich jeden Tag besser",
+      "health_3": "Ich kümmere mich mit Liebe und Fürsorge um mich",
+      "health_4": "Ich habe Energie für alles, was wichtig ist",
+      "finance_title": "Finanzen und Erfolg",
+      "finance_1": "Geld fließt leicht zu mir",
+      "finance_2": "Ich bin offen für neue Verdienstmöglichkeiten",
+      "finance_3": "Ich verdiene finanzielle Stabilität",
+      "finance_4": "Meine Finanzen wachsen jeden Tag"
+    },
+    "session": {
+      "in_progress": "Sitzung läuft",
+      "ready_to_start": "Bereit zum Start",
+      "progress": "Fortschritt:"
+    },
+    "cta": {
+      "like_it": "Gefällt es Ihnen?",
+      "create_account": "Erstellen Sie ein Konto und erstellen Sie Ihre eigenen Affirmationen!",
+      "start_free": "Kostenlos starten"
+    },
+    "page_title": "My affirms - Affirmations-Demo",
+    "meta_description": "Probieren Sie Affirmationen in der Praxis aus. Wählen Sie eine Kategorie und starten Sie Ihre erste Affirmationssitzung."
+  },
+  "group": {
+    "projects_in_group": "{count} Projekte in der Gruppe",
+    "title": "Projekte in der Gruppe",
+    "description": "Verwalten Sie Projekte in dieser Gruppe",
+    "add_project": "Projekt hinzufügen",
+    "remove_from_group": "Aus Gruppe entfernen",
+    "no_projects_title": "Keine Projekte in der Gruppe",
+    "no_projects_description": "Fügen Sie Projekte hinzu, um zu beginnen",
+    "add_projects_to_group": "Projekte zur Gruppe hinzufügen",
+    "select_projects_to_add": "Projekte zum Hinzufügen auswählen",
+    "add_selected": "Ausgewählte hinzufügen",
+    "page_title": "{name} - My affirms",
+    "alerts": {
+      "add_projects_failed": "Projekte zur Gruppe hinzufügen fehlgeschlagen",
+      "confirm_remove_project": "Sind Sie sicher, dass Sie dieses Projekt aus der Gruppe entfernen möchten?",
+      "remove_project_failed": "Projekt aus Gruppe entfernen fehlgeschlagen"
+    }
+  },
+  "project": {
+    "affirmations_list_title": "Affirmationsliste",
+    "affirmations_list_description": "Fügen Sie Affirmationen hinzu, bearbeiten und verwalten Sie sie",
+    "add_affirmation": "Affirmation hinzufügen",
+    "no_affirmations_title": "Keine Affirmationen",
+    "no_affirmations_description": "Fügen Sie Ihre erste Affirmation hinzu, um zu beginnen",
+    "session_settings_title": "Sitzungseinstellungen",
+    "session_settings": {
+      "speech_rate": "Sprechgeschwindigkeit: {rate}x",
+      "pause_duration": "Pause zwischen Affirmationen: {duration}s",
+      "sentence_pause": "Pause zwischen Sätzen: {pause}s",
+      "repeat_affirmation": "Jede Affirmation ein zweites Mal wiederholen",
+      "repeat_delay": "Verzögerung vor Wiederholung: {delay}s",
+      "voice_selection": "Stimmauswahl"
+    },
+    "modals": {
+      "edit_affirmation": "Affirmation bearbeiten",
+      "new_affirmation": "Neue Affirmation",
+      "affirmation_placeholder": "Affirmationstext eingeben..."
+    },
+    "alerts": {
+      "save_affirmation_failed": "Affirmation speichern fehlgeschlagen",
+      "confirm_delete_affirmation": "Sind Sie sicher, dass Sie diese Affirmation löschen möchten?",
+      "delete_affirmation_failed": "Affirmation löschen fehlgeschlagen"
+    },
+    "page_title": "{name} - My affirms"
+  },
+  "session": {
+    "title": "Affirmationssitzung",
+    "ready_to_start": "Bereit zum Start?",
+    "session_contains_affirmations": "Ihre Sitzung enthält {count} Affirmationen.",
+    "start": "Starten",
+    "finished_title": "Sitzung beendet!",
+    "finished_description": "Gut gemacht. Kommen Sie morgen für eine weitere Dosis positiver Energie zurück.",
+    "finish": "Beenden",
+    "progress": "Fortschritt: {current} / {total}",
+    "page_title": "Sitzung: {name} - My affirms"
+  }
+}

@@ -2,6 +2,10 @@ export const useTextToSpeech = () => {
   const { isFeatureEnabled } = usePremium()
   
   const isAiTtsEnabled = computed(() => isFeatureEnabled('aiTts'))
+  
+  // Track active audio elements for proper cleanup
+  let activeAudioElements = []
+  let isStopped = false
   const createWebSpeechUtterance = (text, options = {}) => {
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.rate = options.rate || 0.8
@@ -116,14 +120,39 @@ export const useTextToSpeech = () => {
         
         const audio = new Audio(audioUrl)
         
+        // Add to active audio elements for tracking
+        activeAudioElements.push(audio)
+        
         audio.onended = () => {
           URL.revokeObjectURL(audioUrl)
+          // Remove from active elements
+          const index = activeAudioElements.indexOf(audio)
+          if (index > -1) {
+            activeAudioElements.splice(index, 1)
+          }
           resolve()
         }
         
         audio.onerror = (error) => {
           URL.revokeObjectURL(audioUrl)
+          // Remove from active elements
+          const index = activeAudioElements.indexOf(audio)
+          if (index > -1) {
+            activeAudioElements.splice(index, 1)
+          }
           reject(error)
+        }
+        
+        // Handle manual stop during playback
+        audio.onpause = () => {
+          if (isStopped) {
+            URL.revokeObjectURL(audioUrl)
+            // Remove from active elements
+            const index = activeAudioElements.indexOf(audio)
+            if (index > -1) {
+              activeAudioElements.splice(index, 1)
+            }
+          }
         }
         
         audio.play()
@@ -145,10 +174,18 @@ export const useTextToSpeech = () => {
       return Promise.resolve()
     }
 
+    // Reset stopped flag when starting new speech
+    isStopped = false
     const sentences = splitIntoSentences(text)
     const sentencePause = options.sentencePause || 4 // Default 4 seconds
     
     for (let i = 0; i < sentences.length; i++) {
+      // Check if speech was stopped
+      if (isStopped) {
+        console.log('Speech stopped, interrupting sentence loop')
+        break
+      }
+      
       const sentence = sentences[i].trim()
       if (sentence) {
         // Speak the sentence
@@ -158,9 +195,28 @@ export const useTextToSpeech = () => {
           await speakWithWebSpeech(sentence, options)
         }
         
+        // Check again if speech was stopped during speaking
+        if (isStopped) {
+          console.log('Speech stopped during sentence, interrupting')
+          break
+        }
+        
         // Add pause between sentences (except after the last one)
         if (i < sentences.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, sentencePause * 1000))
+          // Use shorter intervals to check for interruption during pause
+          const pauseMs = sentencePause * 1000
+          const checkInterval = 100 // Check every 100ms
+          let elapsed = 0
+          
+          while (elapsed < pauseMs && !isStopped) {
+            await new Promise(resolve => setTimeout(resolve, Math.min(checkInterval, pauseMs - elapsed)))
+            elapsed += checkInterval
+          }
+          
+          if (isStopped) {
+            console.log('Speech stopped during pause, interrupting')
+            break
+          }
         }
       }
     }
@@ -170,6 +226,9 @@ export const useTextToSpeech = () => {
     if (!text || !text.trim()) {
       return Promise.resolve()
     }
+    
+    // Reset stopped flag when starting new speech
+    isStopped = false
     
     // If sentence pause is enabled and text has multiple sentences
     if (options.sentencePause && options.sentencePause > 0) {
@@ -192,9 +251,28 @@ export const useTextToSpeech = () => {
   }
   
   const stop = () => {
+    // Set stopped flag to interrupt ongoing speech loops
+    isStopped = true
+    
+    // Stop Web Speech API
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel()
     }
+    
+    // Stop all active HTML5 Audio elements (from AI TTS)
+    activeAudioElements.forEach(audio => {
+      try {
+        audio.pause()
+        audio.currentTime = 0
+      } catch (error) {
+        console.warn('Error stopping audio element:', error)
+      }
+    })
+    
+    // Clear the active audio elements array
+    activeAudioElements = []
+    
+    console.log('All TTS stopped and audio elements cleared')
   }
   
   const isAvailable = () => {
@@ -290,33 +368,237 @@ export const useTextToSpeech = () => {
     }
   }
   
-  const getAvailableAiVoices = () => {
-    return [
-      {
-        id: 'pl-PL-ZofiaNeural',
-        name: 'Zofia (Wavenet-A)',
-        gender: 'female',
-        language: 'pl-PL',
-        description: 'Naturalny głos kobiecy AI - Wavenet',
-        provider: 'Google Cloud'
-      },
-      {
-        id: 'pl-PL-MarekNeural', 
-        name: 'Marek (Wavenet-B)',
-        gender: 'male',
-        language: 'pl-PL',
-        description: 'Ciepły głos męski AI - Wavenet',
-        provider: 'Google Cloud'
-      },
-      {
-        id: 'pl-PL-AgnieszkaNeural',
-        name: 'Agnieszka (Wavenet-C)',
-        gender: 'female', 
-        language: 'pl-PL',
-        description: 'Wyrazisty głos kobiecy AI - Wavenet',
-        provider: 'Google Cloud'
-      }
-    ]
+  const getLanguageMapping = (appLocale) => {
+    const mapping = {
+      'pl': 'pl-PL',
+      'en': 'en-US', 
+      'de': 'de-DE',
+      'fr': 'fr-FR',
+      'es': 'es-ES',
+      'it': 'it-IT',
+      'nl': 'nl-NL',
+      'pt': 'pt-PT',
+      'sv': 'sv-SE',
+      'cs': 'cs-CZ',
+      'da': 'da-DK',
+      'no': 'nb-NO',
+      'fi': 'fi-FI',
+      'sk': 'sk-SK',
+      'hu': 'hu-HU',
+      'ro': 'ro-RO',
+      'bg': 'bg-BG',
+      'hr': 'hr-HR',
+      'sl': 'sl-SI',
+      'et': 'et-EE',
+      'lv': 'lv-LV',
+      'lt': 'lt-LT',
+      'el': 'el-GR',
+      'mt': 'mt-MT'
+    }
+    return mapping[appLocale] || 'en-US'
+  }
+
+  const getAvailableAiVoices = (languageCode = 'pl-PL') => {
+    const voicesByLanguage = {
+      'pl-PL': [
+        {
+          id: 'pl-PL-ZofiaNeural',
+          name: 'Zofia',
+          gender: 'female',
+          language: 'pl-PL',
+          description: 'Naturalny głos kobiecy',
+          provider: 'Google Cloud'
+        },
+        {
+          id: 'pl-PL-MarekNeural', 
+          name: 'Marek',
+          gender: 'male',
+          language: 'pl-PL',
+          description: 'Ciepły głos męski',
+          provider: 'Google Cloud'
+        },
+        {
+          id: 'pl-PL-AgnieszkaNeural',
+          name: 'Agnieszka',
+          gender: 'female', 
+          language: 'pl-PL',
+          description: 'Wyrazisty głos kobiecy',
+          provider: 'Google Cloud'
+        }
+      ],
+      'en-US': [
+        {
+          id: 'en-US-JennyNeural',
+          name: 'Jenny',
+          gender: 'female',
+          language: 'en-US',
+          description: 'Natural female voice',
+          provider: 'Google Cloud'
+        },
+        {
+          id: 'en-US-GuyNeural',
+          name: 'Guy',
+          gender: 'male',
+          language: 'en-US',
+          description: 'Clear male voice',
+          provider: 'Google Cloud'
+        },
+        {
+          id: 'en-US-AriaNeural',
+          name: 'Aria',
+          gender: 'female',
+          language: 'en-US',
+          description: 'Expressive female voice',
+          provider: 'Google Cloud'
+        }
+      ],
+      'de-DE': [
+        {
+          id: 'de-DE-KatjaNeural',
+          name: 'Katja',
+          gender: 'female',
+          language: 'de-DE',
+          description: 'Natürliche weibliche Stimme',
+          provider: 'Google Cloud'
+        },
+        {
+          id: 'de-DE-ConradNeural',
+          name: 'Conrad',
+          gender: 'male',
+          language: 'de-DE',
+          description: 'Klare männliche Stimme',
+          provider: 'Google Cloud'
+        }
+      ],
+      'fr-FR': [
+        {
+          id: 'fr-FR-DeniseNeural',
+          name: 'Denise',
+          gender: 'female',
+          language: 'fr-FR',
+          description: 'Voix féminine naturelle',
+          provider: 'Google Cloud'
+        },
+        {
+          id: 'fr-FR-HenriNeural',
+          name: 'Henri',
+          gender: 'male',
+          language: 'fr-FR',
+          description: 'Voix masculine claire',
+          provider: 'Google Cloud'
+        }
+      ],
+      'es-ES': [
+        {
+          id: 'es-ES-ElviraNeural',
+          name: 'Elvira',
+          gender: 'female',
+          language: 'es-ES',
+          description: 'Voz femenina natural',
+          provider: 'Google Cloud'
+        },
+        {
+          id: 'es-ES-AlvaroNeural',
+          name: 'Álvaro',
+          gender: 'male',
+          language: 'es-ES',
+          description: 'Voz masculina clara',
+          provider: 'Google Cloud'
+        }
+      ],
+      'it-IT': [
+        {
+          id: 'it-IT-ElsaNeural',
+          name: 'Elsa',
+          gender: 'female',
+          language: 'it-IT',
+          description: 'Voce femminile naturale',
+          provider: 'Google Cloud'
+        },
+        {
+          id: 'it-IT-DiegoNeural',
+          name: 'Diego',
+          gender: 'male',
+          language: 'it-IT',
+          description: 'Voce maschile chiara',
+          provider: 'Google Cloud'
+        }
+      ],
+      'nl-NL': [
+        {
+          id: 'nl-NL-ColetteNeural',
+          name: 'Colette',
+          gender: 'female',
+          language: 'nl-NL',
+          description: 'Natuurlijke vrouwelijke stem',
+          provider: 'Google Cloud'
+        },
+        {
+          id: 'nl-NL-MaartenNeural',
+          name: 'Maarten',
+          gender: 'male',
+          language: 'nl-NL',
+          description: 'Heldere mannelijke stem',
+          provider: 'Google Cloud'
+        }
+      ],
+      'pt-PT': [
+        {
+          id: 'pt-PT-RaquelNeural',
+          name: 'Raquel',
+          gender: 'female',
+          language: 'pt-PT',
+          description: 'Voz feminina natural',
+          provider: 'Google Cloud'
+        },
+        {
+          id: 'pt-PT-DuarteNeural',
+          name: 'Duarte',
+          gender: 'male',
+          language: 'pt-PT',
+          description: 'Voz masculina clara',
+          provider: 'Google Cloud'
+        }
+      ],
+      'sv-SE': [
+        {
+          id: 'sv-SE-SofieNeural',
+          name: 'Sofie',
+          gender: 'female',
+          language: 'sv-SE',
+          description: 'Naturlig kvinnlig röst',
+          provider: 'Google Cloud'
+        },
+        {
+          id: 'sv-SE-MattiasNeural',
+          name: 'Mattias',
+          gender: 'male',
+          language: 'sv-SE',
+          description: 'Klar manlig röst',
+          provider: 'Google Cloud'
+        }
+      ],
+      'cs-CZ': [
+        {
+          id: 'cs-CZ-VlastaNeural',
+          name: 'Vlasta',
+          gender: 'female',
+          language: 'cs-CZ',
+          description: 'Přirozený ženský hlas',
+          provider: 'Google Cloud'
+        },
+        {
+          id: 'cs-CZ-AntoninNeural',
+          name: 'Antonín',
+          gender: 'male',
+          language: 'cs-CZ',
+          description: 'Jasný mužský hlas',
+          provider: 'Google Cloud'
+        }
+      ]
+    }
+    
+    return voicesByLanguage[languageCode] || voicesByLanguage['en-US']
   }
 
   const testVoice = async (voiceId, sampleText = "To jest test głosu premium. Czy podoba Ci się jego brzmienie?") => {
@@ -354,6 +636,7 @@ export const useTextToSpeech = () => {
     getTtsInfo,
     loadVoices,
     getAvailableAiVoices,
+    getLanguageMapping,
     testVoice,
     getCacheInfo,
     clearCache,
