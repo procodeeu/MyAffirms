@@ -209,6 +209,7 @@
     "session_settings": {
       "speech_rate": "Speech rate: {rate}x",
       "pause_duration": "Pause between affirmations: {duration}s",
+      "sentence_pause": "Pause between sentences: {pause}s",
       "repeat_affirmation": "Repeat each affirmation a second time",
       "repeat_delay": "Delay before repetition: {delay}s"
     },

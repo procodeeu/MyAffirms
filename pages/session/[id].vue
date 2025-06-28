@@ -224,14 +224,20 @@ const playCurrentAffirmation = async () => {
   currentAffirmation.value = activeAffirmations.value[currentIndex.value]
   
   const settings = project.value?.sessionSettings || {}
-  const { speechRate = 1.0, pauseDuration = 3, repeatAffirmation = false, repeatDelay = 5 } = settings
+  const { speechRate = 1.0, pauseDuration = 3, sentencePause = 4, repeatAffirmation = false, repeatDelay = 5 } = settings
   
-  await speak(currentAffirmation.value.text, speechRate)
+  await speak(currentAffirmation.value.text, { 
+    rate: speechRate, 
+    sentencePause: sentencePause 
+  })
   
   if (repeatAffirmation && isPlaying.value) {
     sessionTimeout.value = setTimeout(async () => {
       if (isPlaying.value) {
-        await speak(currentAffirmation.value.text, speechRate)
+        await speak(currentAffirmation.value.text, { 
+          rate: speechRate, 
+          sentencePause: sentencePause 
+        })
         scheduleNextAffirmation(pauseDuration)
       }
     }, repeatDelay * 1000)

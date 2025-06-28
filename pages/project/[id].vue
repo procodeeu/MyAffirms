@@ -114,6 +114,20 @@
               />
             </div>
             
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                {{ $t('project.session_settings.sentence_pause', { pause: sessionSettings.sentencePause }) }}
+              </label>
+              <input
+                v-model.number="sessionSettings.sentencePause"
+                type="range"
+                min="1"
+                max="10"
+                step="0.5"
+                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+              />
+            </div>
+            
             <label class="flex items-center">
               <input
                 v-model="sessionSettings.repeatAffirmation"
@@ -212,6 +226,7 @@ const affirmationText = ref('')
 const sessionSettings = ref({
   speechRate: 1.0,
   pauseDuration: 3,
+  sentencePause: 4,
   repeatAffirmation: false,
   repeatDelay: 5
 })

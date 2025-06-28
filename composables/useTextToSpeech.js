@@ -134,9 +134,49 @@ export const useTextToSpeech = () => {
     })
   }
   
+  const splitIntoSentences = (text) => {
+    // Podziel tekst na zdania używając różnych zakończeń zdań
+    const sentences = text.split(/(?<=[.!?])\s+/).filter(sentence => sentence.trim().length > 0)
+    return sentences
+  }
+
+  const speakWithSentencePause = async (text, options = {}) => {
+    if (!text || !text.trim()) {
+      return Promise.resolve()
+    }
+
+    const sentences = splitIntoSentences(text)
+    const sentencePause = options.sentencePause || 4 // Default 4 seconds
+    
+    for (let i = 0; i < sentences.length; i++) {
+      const sentence = sentences[i].trim()
+      if (sentence) {
+        // Speak the sentence
+        if (isAiTtsEnabled.value && options.useAi !== false) {
+          await speakWithAiTts(sentence, options)
+        } else {
+          await speakWithWebSpeech(sentence, options)
+        }
+        
+        // Add pause between sentences (except after the last one)
+        if (i < sentences.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, sentencePause * 1000))
+        }
+      }
+    }
+  }
+
   const speak = async (text, options = {}) => {
     if (!text || !text.trim()) {
       return Promise.resolve()
+    }
+    
+    // If sentence pause is enabled and text has multiple sentences
+    if (options.sentencePause && options.sentencePause > 0) {
+      const sentences = splitIntoSentences(text)
+      if (sentences.length > 1) {
+        return await speakWithSentencePause(text, options)
+      }
     }
     
     try {
