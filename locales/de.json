@@ -4,7 +4,7 @@
     "logout": "Abmelden",
     "login_to_continue": "Anmelden um fortzufahren",
     "email": "E-Mail",
-    "email_placeholder": "ihre@email.com",
+    "email_placeholder": "ihre{'@'}email.com",
     "password": "Passwort",
     "password_placeholder": "••••••••",
     "logging_in": "Anmelden...",

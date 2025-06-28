@@ -4,7 +4,7 @@
     "logout": "Wyloguj",
     "login_to_continue": "Zaloguj się aby kontynuować",
     "email": "Email",
-    "email_placeholder": "twoj@email.com",
+    "email_placeholder": "twoj{'@'}email.com",
     "password": "Hasło",
     "password_placeholder": "••••••••",
     "logging_in": "Logowanie...",

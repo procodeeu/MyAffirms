@@ -4,7 +4,7 @@
     "logout": "Logout",
     "login_to_continue": "Login to continue",
     "email": "Email",
-    "email_placeholder": "your@email.com",
+    "email_placeholder": "your{'@'}email.com",
     "password": "Password",
     "password_placeholder": "••••••••",
     "logging_in": "Logging in...",
