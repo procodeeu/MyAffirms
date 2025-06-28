@@ -39,7 +39,7 @@
 <script setup>
 import { ChevronDown } from 'lucide-vue-next'
 
-const { locale, setLocale, locales, $i18n } = useI18n()
+const { locale, setLocale, locales, $i18n, t } = useI18n()
 const { updateLanguage, getUserLanguage } = useUserProfile()
 const { user } = useAuth()
 
@@ -106,6 +106,9 @@ const selectLocale = async (localeCode) => {
   setLocale(localeCode)
   isOpen.value = false
   
+  // Cache in localStorage immediately for instant loading
+  localStorage.setItem('user_language', localeCode)
+  
   if (user.value) {
     try {
       await updateLanguage(localeCode)
@@ -125,7 +128,6 @@ watch(locale, (newLocale, oldLocale) => {
   
   // Test specific keys to see if German translations are loaded
   nextTick(() => {
-    const { t } = useI18n()
     console.log('Testing translations:')
     console.log('  app.welcome:', t('app.welcome'))
     console.log('  app.projects.title:', t('app.projects.title'))

@@ -164,6 +164,12 @@
 <script setup>
 const { user } = useAuth()
 const { t } = useI18n()
+
+// Sync language from user profile
+const { ensureLanguageSync } = useI18nInit()
+onMounted(() => {
+  ensureLanguageSync()
+})
 const { 
   premiumStatus, 
   loading: premiumLoading, 

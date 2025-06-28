@@ -182,6 +182,12 @@ import { Play, Square, SkipForward } from 'lucide-vue-next'
 import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 import { BUILD_VERSION } from '~/utils/version.js'
 
+// Sync language from user profile
+const { ensureLanguageSync } = useI18nInit()
+onMounted(() => {
+  ensureLanguageSync()
+})
+
 const demoProjects = ref([
   {
     id: 'relacje',

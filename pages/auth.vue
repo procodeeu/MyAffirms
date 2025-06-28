@@ -133,6 +133,12 @@ const {
   user
 } = useAuth()
 
+// Sync language from user profile
+const { ensureLanguageSync } = useI18nInit()
+onMounted(() => {
+  ensureLanguageSync()
+})
+
 const email = ref('')
 const password = ref('')
 const isRegistering = ref(false)

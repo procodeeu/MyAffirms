@@ -357,6 +357,10 @@ watch(user, (newUser) => {
 }, { immediate: true })
 
 onMounted(() => {
+  // Sync language from user profile
+  const { ensureLanguageSync } = useI18nInit()
+  ensureLanguageSync()
+  
   // Jeśli użytkownik już jest załadowany, załaduj projekt od razu
   if (user.value) {
     loadProject()
