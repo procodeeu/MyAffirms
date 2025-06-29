@@ -1,6 +1,17 @@
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const { text, voiceId, rate, pitch } = body
+  
+  console.log('TTS API Request:', { text: text?.substring(0, 50) + '...', voiceId, rate, pitch, textLength: text?.length })
+
+  // Walidacja danych wejściowych
+  if (!text || text.trim().length === 0) {
+    return {
+      success: false,
+      error: 'Text is required and cannot be empty',
+      textProvided: text
+    }
+  }
 
   const GOOGLE_TTS_API = 'https://texttospeech.googleapis.com/v1/text:synthesize'
   
@@ -54,6 +65,12 @@ export default defineEventHandler(async (event) => {
   }
 
   const selectedVoice = voiceMapping[voiceId] || voiceMapping['pl-PL-ZofiaNeural']
+  console.log('Voice mapping:', { 
+    requestedVoiceId: voiceId, 
+    mappedTo: selectedVoice.name, 
+    gender: selectedVoice.ssmlGender,
+    language: selectedVoice.languageCode 
+  })
 
   try {
     const requestBody = {
@@ -73,7 +90,14 @@ export default defineEventHandler(async (event) => {
 
     const API_KEY = process.env.GOOGLE_CLOUD_API_KEY || 'YOUR_API_KEY_HERE'
     
-    if (API_KEY === 'YOUR_API_KEY_HERE') {
+    console.log('API Key status:', { 
+      hasKey: !!API_KEY, 
+      keyLength: API_KEY?.length, 
+      isDefault: API_KEY === 'YOUR_API_KEY_HERE',
+      keyPrefix: API_KEY?.substring(0, 10) + '...'
+    })
+    
+    if (API_KEY === 'YOUR_API_KEY_HERE' || !API_KEY) {
       console.log('Google Cloud API key not configured, using mock response')
       
       await new Promise(resolve => setTimeout(resolve, 1000))
@@ -95,7 +119,14 @@ export default defineEventHandler(async (event) => {
     })
 
     if (!response.ok) {
-      throw new Error(`Google TTS API error: ${response.status}`)
+      const errorText = await response.text()
+      console.error('Google TTS API Error Details:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText,
+        requestBody: JSON.stringify(requestBody, null, 2)
+      })
+      throw new Error(`Google TTS API error: ${response.status} - ${errorText}`)
     }
 
     const data = await response.json()

@@ -202,7 +202,6 @@ export const useBackgroundMusic = () => {
   }
   
   const play = async (volume = 0.15, soundType = 'birds') => {
-    console.log('🎵 Starting background music at volume:', volume, 'type:', soundType)
     
     try {
       let ambientSystem = null
@@ -210,16 +209,12 @@ export const useBackgroundMusic = () => {
       // Check if it's a real audio file first
       const audioUrl = musicTracks[soundType]
       if (audioUrl) {
-        console.log('🎵 Attempting to load audio file:', audioUrl)
         ambientSystem = await createAudioFilePlayer(audioUrl)
         
         if (ambientSystem) {
           ambientSystem.fadeIn(volume, 3000)
           audioElement = ambientSystem
-          console.log(`🎵 ${soundType} audio file started`)
           return true
-        } else {
-          console.log('🎵 Could not load audio file, falling back to generated sounds')
         }
       }
       
@@ -250,11 +245,9 @@ export const useBackgroundMusic = () => {
         // Store reference for stopping
         audioElement = ambientSystem
         
-        console.log(`🎵 ${soundType} background sound started (generated)`)
         return true
       }
       
-      console.log('🎵 Could not create any background sound')
       return false
     } catch (error) {
       console.error('Background music error:', error)
@@ -263,7 +256,6 @@ export const useBackgroundMusic = () => {
   }
   
   const stop = () => {
-    console.log('🎵 Stopping background music')
     
     if (audioElement) {
       // Handle audio file players
@@ -310,8 +302,6 @@ export const useBackgroundMusic = () => {
   
   const fadeOut = (duration = 2000) => {
     if (!audioElement) return
-    
-    console.log('🎵 Fading out background music')
     
     // Handle audio file players
     if (audioElement.type === 'file' && audioElement.fadeOut) {

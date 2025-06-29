@@ -8,12 +8,6 @@ import {
   where, 
   getDocs 
 } from 'firebase/firestore'
-import { 
-  ref as storageRef, 
-  uploadBytes, 
-  getDownloadURL, 
-  deleteObject 
-} from 'firebase/storage'
 
 export const useAffirmationAudio = () => {
   const { $firebase } = useNuxtApp()
@@ -58,44 +52,42 @@ export const useAffirmationAudio = () => {
         throw new Error('Failed to generate audio from TTS')
       }
       
-      // Konwertuj base64 do blob
-      const audioBuffer = Uint8Array.from(atob(response.audioContent), c => c.charCodeAt(0))
-      const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' })
+      // Upload przez server-side endpoint (unika CORS problemy)
+      const uploadResponse = await $fetch('/api/audio/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          affirmationId: affirmationId,
+          audioContent: response.audioContent,
+          userId: user.value.uid,
+          voiceId: voiceId,
+          characterCount: text.length
+        })
+      })
       
-      // Zapisz do Firebase Storage
-      const filename = `${affirmationId}_${Date.now()}.mp3`
-      const audioRef = storageRef($firebase.storage, `audio/${user.value.uid}/${filename}`)
-      
-      const uploadResult = await uploadBytes(audioRef, audioBlob)
-      const downloadURL = await getDownloadURL(uploadResult.ref)
-      
-      // Zapisz metadane w Firestore
-      const isPremiumVoice = voiceId.includes('Neural') || voiceId.includes('Premium')
-      const voiceType = isPremiumVoice ? 'premium' : 'standard'
-      const characterCount = text.length
-      
-      const audioDoc = {
-        affirmation_id: affirmationId,
-        user_id: user.value.uid,
-        filename: filename,
-        download_url: downloadURL,
-        voice_id: voiceId,
-        voice_type: voiceType,
-        character_count: characterCount,
-        created_at: new Date()
+      if (!uploadResponse.success) {
+        throw new Error('Failed to upload audio to storage')
       }
       
-      await setDoc(doc($firebase.db, 'affirmation_audio', affirmationId), audioDoc)
+      const { filename, downloadURL, voiceType, characterCount } = uploadResponse
       
       // Śledź użycie
       await trackUsage(characterCount, voiceType)
       
-      console.log('Audio generated successfully:', { filename, voiceType, characterCount })
       return { filename, voiceType, characterCount, downloadURL }
       
     } catch (err) {
       error.value = err.message
       console.error('Error generating audio:', err)
+      
+      // Check if it's a CORS/Storage error
+      if (err.message.includes('CORS') || err.message.includes('Access to XMLHttpRequest')) {
+        console.error('Firebase Storage CORS error - check Storage rules and configuration')
+        error.value = 'Firebase Storage CORS error - audio will be generated on-demand during sessions'
+      }
+      
       throw err
     } finally {
       isGenerating.value = false
@@ -103,17 +95,27 @@ export const useAffirmationAudio = () => {
   }
   
   // Pobierz URL audio dla afirmacji
-  const getAudioUrl = async (affirmationId) => {
-    if (!user.value || !$firebase.db) return null
+  const getAudioUrl = async (affirmationId, userOverride = null) => {
+    const activeUser = userOverride || user.value
+    
+    if (!activeUser || !$firebase.db) {
+      console.error('Missing user or firebase for audio lookup')
+      return null
+    }
     
     try {
       const audioDoc = await getDoc(doc($firebase.db, 'affirmation_audio', affirmationId))
       
       if (audioDoc.exists()) {
         const data = audioDoc.data()
-        if (data.user_id === user.value.uid) {
+        
+        if (data.user_id === activeUser.uid) {
           return data.download_url
+        } else {
+          console.error('User ID mismatch in audio doc')
         }
+      } else {
+        console.error('No audio document found for affirmation:', affirmationId)
       }
       
       return null
@@ -130,10 +132,11 @@ export const useAffirmationAudio = () => {
   }
   
   // Odtwórz audio afirmacji
-  const playAudio = async (affirmationId, options = {}) => {
-    const audioUrl = await getAudioUrl(affirmationId)
+  const playAudio = async (affirmationId, options = {}, userOverride = null) => {
+    const audioUrl = await getAudioUrl(affirmationId, userOverride)
     
     if (!audioUrl) {
+      console.error('No audio URL found for affirmation:', affirmationId)
       throw new Error('No audio available for this affirmation')
     }
     
@@ -167,8 +170,9 @@ export const useAffirmationAudio = () => {
         audio.playbackRate = Math.max(0.25, Math.min(4, options.playbackRate))
       }
       
-      // Załaduj i odtwórz
-      audio.src = audioUrl
+      // Załaduj i odtwórz - dodaj timestamp żeby uniknąć cache
+      const urlWithTimestamp = audioUrl + '?t=' + Date.now()
+      audio.src = urlWithTimestamp
       audio.load()
       
       audio.play().catch(reject)
@@ -213,7 +217,10 @@ export const useAffirmationAudio = () => {
   
   // Auto-generuj audio gdy afirmacja się zmienia
   const autoGenerateAudio = async (affirmationId, text, voiceId, oldText = null) => {
-    if (!user.value) return
+    
+    if (!user.value) {
+      return
+    }
     
     // Jeśli tekst się nie zmienił, nie generuj ponownie
     if (oldText && text.trim() === oldText.trim()) {

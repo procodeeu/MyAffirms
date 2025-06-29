@@ -23,16 +23,13 @@ export const useTextToSpeech = () => {
       )
       
       if (femaleVoice) {
-        console.log('🎤 Found female voice for', language, ':', femaleVoice.name)
         return femaleVoice
       }
       
       // Fallback to first voice of this language
-      console.log('🎤 Using first voice for', language, ':', languageVoices[0].name)
       return languageVoices[0]
     }
     
-    console.log('🎤 No voice found for', language, 'using default')
     return null
   }
 
@@ -71,23 +68,18 @@ export const useTextToSpeech = () => {
   }
   
   const speakWithAiTts = async (text, options = {}) => {
-    console.log('[Premium TTS] AI TTS requested for:', text.substring(0, 50) + '...', 'Voice:', options.voiceId)
     
     try {
-      if (!hasActiveSubscription.value) {
-        throw new Error('No active subscription')
-      }
-      
-      // Sprawdź typ głosu i dostępność
+      // Allow both free and premium users - check limits instead of subscription
       const voiceId = options.voiceId || 'pl-PL-ZofiaStandard'
       const isPremiumVoice = voiceId.includes('Neural') || voiceId.includes('Premium')
-      const isStandardVoice = voiceId.includes('Standard')
       
+      // Check usage limits instead of subscription status
       if (isPremiumVoice && !canUsePremiumVoices.value) {
         throw new Error('Premium voice limit exceeded')
       }
       
-      if (isStandardVoice && !canUseStandardVoices.value) {
+      if (!isPremiumVoice && !canUseStandardVoices.value) {
         throw new Error('Standard voice limit exceeded')
       }
       
@@ -110,7 +102,6 @@ export const useTextToSpeech = () => {
       const result = await response.json()
       
       if (result.success && result.audioContent) {
-        console.log('[Premium TTS] Successfully got audio from Google Cloud API via server')
         
         // Śledź użycie po pomyślnym wygenerowaniu audio
         const voiceType = isPremiumVoice ? 'premium' : 'standard'
@@ -118,7 +109,6 @@ export const useTextToSpeech = () => {
         
         return await playBase64Audio(result.audioContent)
       } else if (result.error === 'API_KEY_NOT_CONFIGURED') {
-          console.log('[Premium TTS] API key not configured - using enhanced Web Speech with voice simulation')
           
           let voiceOptions = { ...options }
           
@@ -126,19 +116,16 @@ export const useTextToSpeech = () => {
             case 'pl-PL-MarekNeural':
               voiceOptions.rate = (options.rate || 1.0) * 0.85
               voiceOptions.pitch = (options.pitch || 1.0) * 0.8
-              console.log('[Premium TTS] Simulating Marek voice - lower pitch, slower rate')
               break
               
             case 'pl-PL-AgnieszkaNeural':
               voiceOptions.rate = (options.rate || 1.0) * 1.1
               voiceOptions.pitch = (options.pitch || 1.0) * 1.2
-              console.log('[Premium TTS] Simulating Agnieszka voice - higher pitch, faster rate')
               break
               
             default:
               voiceOptions.rate = (options.rate || 1.0) * 0.9
               voiceOptions.pitch = (options.pitch || 1.0) * 1.0
-              console.log('[Premium TTS] Simulating Zofia voice - natural settings')
               break
           }
           
@@ -232,7 +219,6 @@ export const useTextToSpeech = () => {
     for (let i = 0; i < sentences.length; i++) {
       // Check if speech was stopped
       if (isStopped) {
-        console.log('Speech stopped, interrupting sentence loop')
         break
       }
       
@@ -247,7 +233,6 @@ export const useTextToSpeech = () => {
         
         // Check again if speech was stopped during speaking
         if (isStopped) {
-          console.log('Speech stopped during sentence, interrupting')
           break
         }
         
@@ -264,7 +249,6 @@ export const useTextToSpeech = () => {
           }
           
           if (isStopped) {
-            console.log('Speech stopped during pause, interrupting')
             break
           }
         }
@@ -289,11 +273,8 @@ export const useTextToSpeech = () => {
     }
     
     try {
-      if (hasActiveSubscription.value) {
-        return await speakWithAiTts(text, options)
-      } else {
-        throw new Error('Premium subscription required for text-to-speech')
-      }
+      // Allow TTS for both free and premium users
+      return await speakWithAiTts(text, options)
     } catch (error) {
       console.error('TTS Error:', error)
       throw error
@@ -316,8 +297,6 @@ export const useTextToSpeech = () => {
     
     // Clear the active audio elements array
     activeAudioElements = []
-    
-    console.log('All TTS stopped and audio elements cleared')
   }
   
   const isAvailable = () => {
@@ -692,7 +671,7 @@ export const useTextToSpeech = () => {
   }
 
   const clearCache = () => {
-    console.log('[TTS] Cache cleared (mock)')
+    // Cache cleared (mock)
   }
 
   return {

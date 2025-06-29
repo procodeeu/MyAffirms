@@ -123,41 +123,30 @@ const progress = computed(() => {
 })
 
 const loadProject = async () => {
-  console.log('🔍 Session loading project:', projectId, 'user:', user.value?.uid)
   
   if (!user.value?.uid) {
-    console.log('⏳ Session waiting for user authentication...')
     return
   }
   
   // Najpierw spróbuj z localStorage (tam są zmergowane dane z app.vue)
   const savedProject = getProjectFromLocalStorage(projectId)
-  console.log('📱 Session localStorage project:', savedProject)
-  console.log('📱 Session affirmations from localStorage:', savedProject?.affirmations?.length || 0)
   
   if (savedProject) {
     project.value = savedProject
-    console.log('✅ Session project loaded from localStorage with', savedProject.affirmations?.length || 0, 'affirmations')
   } else {
-    console.log('🔄 Session not found in localStorage, trying Firestore...')
     try {
       const projects = await getUserProjects()
-      console.log('🔥 Session all Firestore projects:', projects.length)
       const firestoreProject = projects.find(p => p.id === projectId)
-      console.log('🔥 Session found Firestore project:', firestoreProject)
       
       if (firestoreProject) {
         project.value = firestoreProject
-        console.log('🔥 Session using Firestore project with affirmations:', firestoreProject.affirmations?.length || 0)
       } else {
-        console.log('❌ Session project not found anywhere!')
       }
     } catch (error) {
-      console.error('❌ Session error loading project from Firestore:', error)
+      console.error('Session error loading project from Firestore:', error)
     }
   }
   
-  console.log('✅ Session final activeAffirmations:', activeAffirmations.value.length)
 }
 
 // Załaduj projekt gdy użytkownik jest dostępny
@@ -182,7 +171,6 @@ onUnmounted(() => {
   stop()
   
   // Stop background music when component unmounts
-  console.log('🎵 Component unmounting, stopping background music')
   stopBackgroundMusic()
   
   if (sessionTimeout.value) {
@@ -191,30 +179,24 @@ onUnmounted(() => {
 })
 
 const getProjectFromLocalStorage = (id) => {
-  console.log('🔍 Session getProjectFromLocalStorage - user:', user.value?.uid, 'looking for ID:', id)
   if (!user.value?.uid) {
-    console.log('❌ Session no user UID')
     return null
   }
   
   const key = `projects_${user.value.uid}`
   const saved = localStorage.getItem(key)
-  console.log('📱 Session localStorage key:', key, 'data exists:', !!saved)
   
   if (saved) {
     try {
       const projects = JSON.parse(saved)
-      console.log('📱 Session found', projects.length, 'projects in localStorage')
       
       const found = projects.find(p => p.id === id)
-      console.log('📱 Session project found:', !!found, found ? `with ${found.affirmations?.length || 0} affirmations` : '')
       return found
     } catch (e) {
-      console.error('❌ Session error parsing localStorage projects:', e)
+      console.error('Session error parsing localStorage projects:', e)
       return null
     }
   }
-  console.log('📱 Session no localStorage data')
   return null
 }
 
@@ -230,7 +212,6 @@ const startSession = async () => {
   if (settings.backgroundMusic) {
     const musicVolume = settings.musicVolume || 0.15
     const musicType = settings.musicType || 'birds'
-    console.log('🎵 Starting background music for session, volume:', musicVolume, 'type:', musicType)
     
     // Use async/await for audio file loading
     try {
@@ -250,25 +231,21 @@ const getAppropriateVoiceId = (sessionSettings = {}) => {
   // Check if saved voice is for current language
   const savedVoiceId = sessionSettings.voiceId
   if (savedVoiceId && savedVoiceId.startsWith(currentLanguage)) {
-    console.log('🎤 Using saved voice for current language:', savedVoiceId)
     return savedVoiceId
   }
   
   // Check if we have a saved voice for current language in voicesByLanguage
   const savedByLanguage = sessionSettings.voicesByLanguage?.[currentLanguage]
   if (savedByLanguage && voices.find(v => v.id === savedByLanguage)) {
-    console.log('🎤 Using voice from voicesByLanguage for', currentLanguage, ':', savedByLanguage)
     return savedByLanguage
   }
   
   // Fallback to default voice for current language
   if (voices.length > 0) {
     const defaultVoice = voices.find(v => v.gender === 'female') || voices[0]
-    console.log('🎤 Using default voice for', currentLanguage, ':', defaultVoice.id)
     return defaultVoice.id
   }
   
-  console.log('🎤 No voice found, using fallback')
   return 'pl-PL-ZofiaNeural'
 }
 
@@ -281,13 +258,31 @@ const playCurrentAffirmation = async () => {
   const { speechRate = 1.0, pauseDuration = 3, sentencePause = 4, repeatAffirmation = false, repeatDelay = 5 } = settings
   
   try {
+    // Poczekaj na załadowanie user jeśli nie jest jeszcze dostępny
+    if (!user.value) {
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          unwatch()
+          reject(new Error('User loading timeout'))
+        }, 5000) // 5s timeout
+        
+        const unwatch = watch(user, (newUser) => {
+          if (newUser) {
+            clearTimeout(timeout)
+            unwatch()
+            resolve()
+          }
+        })
+      })
+    }
+    
     // Użyj pre-generowanych plików audio
     const { playAudio } = useAffirmationAudio()
     
     await playAudio(currentAffirmation.value.id, {
       playbackRate: speechRate,
       volume: 1.0
-    })
+    }, user.value)
     
     if (repeatAffirmation && isPlaying.value) {
       sessionTimeout.value = setTimeout(async () => {
@@ -295,7 +290,7 @@ const playCurrentAffirmation = async () => {
           await playAudio(currentAffirmation.value.id, {
             playbackRate: speechRate,
             volume: 1.0
-          })
+          }, user.value)
           scheduleNextAffirmation(pauseDuration)
         }
       }, repeatDelay * 1000)
@@ -353,7 +348,6 @@ const stopSession = () => {
   stop()
   
   // Stop background music with fade out
-  console.log('🎵 Stopping background music on session end')
   fadeOutBackgroundMusic()
   
   if (sessionTimeout.value) {
@@ -375,7 +369,6 @@ const nextAffirmation = () => {
     isFinished.value = true
     
     // Stop background music when session finishes naturally
-    console.log('🎵 Session finished naturally, stopping background music')
     fadeOutBackgroundMusic()
   }
 }

@@ -655,12 +655,25 @@ const saveAffirmation = async () => {
     const { autoGenerateAudio } = useAffirmationAudio()
     const currentVoiceId = sessionSettings.value.voiceId || 'pl-PL-ZofiaStandard'
     
-    // Generuj audio w tle (nie blokuj UI)
-    autoGenerateAudio(affirmationId, affirmationText.value.trim(), currentVoiceId, oldText)
-      .catch(error => {
-        console.error('Audio generation failed:', error)
-        // Opcjonalnie pokaż toast/notification o błędzie
-      })
+    console.log('🎵 Starting audio generation for affirmation:', { 
+      affirmationId, 
+      text: affirmationText.value.trim(), 
+      voiceId: currentVoiceId,
+      oldText 
+    })
+    
+    // Generuj audio w tle (nie blokuj UI) - z opóźnieniem aby user był dostępny
+    const textToGenerate = affirmationText.value.trim() // Zachowaj tekst przed zamknięciem modala
+    setTimeout(() => {
+      autoGenerateAudio(affirmationId, textToGenerate, currentVoiceId, oldText)
+        .then(() => {
+          console.log('✅ Audio generation completed successfully for:', affirmationId)
+        })
+        .catch(error => {
+          console.error('❌ Audio generation failed:', error)
+          // Opcjonalnie pokaż toast/notification o błędzie
+        })
+    }, 100)
     
     closeAffirmationModal()
   } catch (error) {

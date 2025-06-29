@@ -261,5 +261,8 @@
     "finish": "Zakończ",
     "progress": "Postęp: {current} / {total}",
     "page_title": "Sesja: {name} - My affirms"
+  },
+  "subscription": {
+    "usage_resets": "Resetuje się użycie"
   }
 }

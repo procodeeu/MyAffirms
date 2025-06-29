@@ -237,5 +237,8 @@
     "finish": "Finish",
     "progress": "Progress: {current} / {total}",
     "page_title": "Session: {name} - My affirms"
+  },
+  "subscription": {
+    "usage_resets": "Usage resets"
   }
 }
