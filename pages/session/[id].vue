@@ -99,6 +99,7 @@ const { user, logout: authLogout } = useAuth()
 const { t, locale } = useI18n()
 const { getUserProjects } = useFirestore()
 const { speak, stop, isSpeaking, getLanguageMapping, getAvailableAiVoices } = useTextToSpeech()
+const { play: playBackgroundMusic, stop: stopBackgroundMusic, fadeOut: fadeOutBackgroundMusic, setVolume: setMusicVolume } = useBackgroundMusic()
 
 const route = useRoute()
 const router = useRouter()
@@ -179,6 +180,11 @@ onMounted(() => {
 
 onUnmounted(() => {
   stop()
+  
+  // Stop background music when component unmounts
+  console.log('🎵 Component unmounting, stopping background music')
+  stopBackgroundMusic()
+  
   if (sessionTimeout.value) {
     clearTimeout(sessionTimeout.value)
   }
@@ -218,6 +224,15 @@ const startSession = async () => {
   isFinished.value = false
   isPlaying.value = true
   currentIndex.value = 0
+  
+  // Start background music if enabled
+  const settings = project.value?.sessionSettings || {}
+  if (settings.backgroundMusic) {
+    const musicVolume = settings.musicVolume || 0.15
+    const musicType = settings.musicType || 'birds'
+    console.log('🎵 Starting background music for session, volume:', musicVolume, 'type:', musicType)
+    playBackgroundMusic(musicVolume, musicType)
+  }
   
   playCurrentAffirmation()
 }
@@ -298,6 +313,11 @@ const stopSession = () => {
   isPlaying.value = false
   isFinished.value = true
   stop()
+  
+  // Stop background music with fade out
+  console.log('🎵 Stopping background music on session end')
+  fadeOutBackgroundMusic()
+  
   if (sessionTimeout.value) {
     clearTimeout(sessionTimeout.value)
   }
@@ -315,6 +335,10 @@ const nextAffirmation = () => {
   } else {
     isPlaying.value = false
     isFinished.value = true
+    
+    // Stop background music when session finishes naturally
+    console.log('🎵 Session finished naturally, stopping background music')
+    fadeOutBackgroundMusic()
   }
 }
 

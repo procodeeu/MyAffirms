@@ -182,6 +182,47 @@
                 </option>
               </select>
             </div>
+
+            <!-- Background Music Settings -->
+            <div class="mt-4">
+              <label class="flex items-center">
+                <input
+                  type="checkbox"
+                  v-model="sessionSettings.backgroundMusic"
+                  class="mr-2"
+                />
+                Delikatna muzyka relaksacyjna w tle
+              </label>
+              
+              <div v-if="sessionSettings.backgroundMusic" class="mt-2 space-y-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Rodzaj dźwięków
+                  </label>
+                  <select
+                    v-model="sessionSettings.musicType"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pastel-violet"
+                  >
+                    <option value="birds">🐦 Śpiew ptaków o poranku</option>
+                    <option value="ocean">🌊 Szum morza</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Głośność muzyki: {{ Math.round(sessionSettings.musicVolume * 100) }}%
+                  </label>
+                  <input
+                    type="range"
+                    v-model.number="sessionSettings.musicVolume"
+                    min="0.05"
+                    max="0.4"
+                    step="0.05"
+                    class="w-full"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="mt-8">
@@ -263,7 +304,10 @@ const sessionSettings = ref({
   repeatAffirmation: false,
   repeatDelay: 5,
   voiceId: 'pl-PL-ZofiaNeural',
-  voicesByLanguage: {} // Store selected voices per language
+  voicesByLanguage: {}, // Store selected voices per language
+  backgroundMusic: false, // Background relaxing music
+  musicVolume: 0.15, // Low volume for background music
+  musicType: 'birds' // Type of background music: birds, ocean
 })
 
 const availableVoices = computed(() => {
