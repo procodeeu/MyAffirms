@@ -2,11 +2,20 @@ export const useBackgroundMusic = () => {
   let audioElement = null
   let fadeInterval = null
   
-  // Nature sounds - free URLs that work cross-origin
+  // Audio files - place your music files in /public/audio/ directory
   const musicTracks = {
-    'birds': 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // Placeholder - will be replaced with nature sounds generator
-    'ocean': 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav', // Placeholder - will be replaced with nature sounds generator
-    'rain': 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav' // Placeholder - will be replaced with nature sounds generator
+    // Generated nature sounds (Web Audio API)
+    'birds_generated': null,
+    'ocean_generated': null,
+    
+    // Real audio files (place in /public/audio/)
+    'deeper_meaning': '/audio/DeeperMeaning.mp3',
+    'relaxing_music': '/audio/relaxing_music.mp3',
+    'meditation_music': '/audio/meditation_music.mp3',
+    'nature_sounds': '/audio/nature_sounds.mp3',
+    'rain_sounds': '/audio/rain_sounds.mp3',
+    'forest_ambience': '/audio/forest_ambience.mp3',
+    'spa_music': '/audio/spa_music.mp3'
   }
   
   const createBirdsSound = () => {
@@ -117,25 +126,121 @@ export const useBackgroundMusic = () => {
     }
   }
   
-  const play = (volume = 0.15, soundType = 'birds') => {
+  const createAudioFilePlayer = async (audioUrl) => {
+    // Play real audio files
+    if (typeof window === 'undefined') return null
+    
+    try {
+      const audio = new Audio(audioUrl)
+      audio.loop = true
+      audio.volume = 0
+      audio.crossOrigin = 'anonymous' // For CORS
+      
+      // Test if file exists and can be loaded
+      await new Promise((resolve, reject) => {
+        audio.addEventListener('canplaythrough', resolve, { once: true })
+        audio.addEventListener('error', reject, { once: true })
+        audio.load()
+      })
+      
+      return {
+        audioElement: audio,
+        type: 'file',
+        play: () => audio.play(),
+        stop: () => {
+          audio.pause()
+          audio.currentTime = 0
+        },
+        setVolume: (vol) => {
+          audio.volume = vol
+        },
+        fadeIn: (targetVolume, duration = 3000) => {
+          audio.volume = 0
+          audio.play()
+          
+          const steps = 50
+          const stepDuration = duration / steps
+          const volumeStep = targetVolume / steps
+          let currentStep = 0
+          
+          const fadeInterval = setInterval(() => {
+            currentStep++
+            audio.volume = Math.min(targetVolume, currentStep * volumeStep)
+            
+            if (currentStep >= steps) {
+              clearInterval(fadeInterval)
+            }
+          }, stepDuration)
+          
+          return fadeInterval
+        },
+        fadeOut: (duration = 2000) => {
+          const startVolume = audio.volume
+          const steps = 50
+          const stepDuration = duration / steps
+          const volumeStep = startVolume / steps
+          let currentStep = 0
+          
+          const fadeInterval = setInterval(() => {
+            currentStep++
+            audio.volume = Math.max(0, startVolume - (currentStep * volumeStep))
+            
+            if (currentStep >= steps) {
+              clearInterval(fadeInterval)
+              audio.pause()
+              audio.currentTime = 0
+            }
+          }, stepDuration)
+          
+          return fadeInterval
+        }
+      }
+    } catch (error) {
+      console.error('Could not load audio file:', audioUrl, error)
+      return null
+    }
+  }
+  
+  const play = async (volume = 0.15, soundType = 'birds') => {
     console.log('🎵 Starting background music at volume:', volume, 'type:', soundType)
     
     try {
       let ambientSystem = null
       
-      // Create appropriate nature sound based on type
+      // Check if it's a real audio file first
+      const audioUrl = musicTracks[soundType]
+      if (audioUrl) {
+        console.log('🎵 Attempting to load audio file:', audioUrl)
+        ambientSystem = await createAudioFilePlayer(audioUrl)
+        
+        if (ambientSystem) {
+          ambientSystem.fadeIn(volume, 3000)
+          audioElement = ambientSystem
+          console.log(`🎵 ${soundType} audio file started`)
+          return true
+        } else {
+          console.log('🎵 Could not load audio file, falling back to generated sounds')
+        }
+      }
+      
+      // Fallback to generated sounds
       switch (soundType) {
         case 'birds':
+        case 'birds_generated':
           ambientSystem = createBirdsSound()
           break
         case 'ocean':
+        case 'ocean_generated':
           ambientSystem = createOceanSound()
           break
         default:
-          ambientSystem = createBirdsSound() // Default to birds
+          // Try as audio file first, then fallback to birds
+          if (!audioUrl) {
+            ambientSystem = createBirdsSound()
+          }
       }
       
-      if (ambientSystem) {
+      if (ambientSystem && ambientSystem.gainNode) {
         const { audioContext, gainNode } = ambientSystem
         
         // Slowly fade in the ambient sound
@@ -145,11 +250,11 @@ export const useBackgroundMusic = () => {
         // Store reference for stopping
         audioElement = ambientSystem
         
-        console.log(`🎵 ${soundType} background sound started`)
+        console.log(`🎵 ${soundType} background sound started (generated)`)
         return true
       }
       
-      console.log('🎵 Could not create nature sounds, no fallback available')
+      console.log('🎵 Could not create any background sound')
       return false
     } catch (error) {
       console.error('Background music error:', error)
@@ -161,7 +266,12 @@ export const useBackgroundMusic = () => {
     console.log('🎵 Stopping background music')
     
     if (audioElement) {
-      if (audioElement.audioContext) {
+      // Handle audio file players
+      if (audioElement.type === 'file' && audioElement.stop) {
+        audioElement.stop()
+      }
+      // Handle Web Audio API
+      else if (audioElement.audioContext) {
         try {
           // Stop birds timeouts if it's birds sound
           if (audioElement.stop) {
@@ -182,8 +292,9 @@ export const useBackgroundMusic = () => {
         } catch (error) {
           console.log('Audio context already stopped')
         }
-      } else if (audioElement.pause) {
-        // Stop HTML5 audio
+      }
+      // Handle direct HTML5 audio elements
+      else if (audioElement.pause) {
         audioElement.pause()
         audioElement.currentTime = 0
       }
@@ -202,7 +313,15 @@ export const useBackgroundMusic = () => {
     
     console.log('🎵 Fading out background music')
     
-    if (audioElement.gainNode) {
+    // Handle audio file players
+    if (audioElement.type === 'file' && audioElement.fadeOut) {
+      audioElement.fadeOut(duration)
+      setTimeout(() => {
+        audioElement = null
+      }, duration)
+    }
+    // Handle Web Audio API
+    else if (audioElement.gainNode) {
       // Stop birds timeouts if it's birds sound
       if (audioElement.stop) {
         audioElement.stop()
@@ -213,8 +332,9 @@ export const useBackgroundMusic = () => {
       gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration / 1000)
       
       setTimeout(() => stop(), duration)
-    } else if (audioElement.volume !== undefined) {
-      // Fade out HTML5 audio
+    }
+    // Handle direct HTML5 audio elements
+    else if (audioElement.volume !== undefined) {
       const startVolume = audioElement.volume
       const fadeStep = startVolume / (duration / 100)
       
@@ -231,11 +351,18 @@ export const useBackgroundMusic = () => {
   const setVolume = (volume) => {
     if (!audioElement) return
     
-    if (audioElement.gainNode) {
+    // Handle audio file players
+    if (audioElement.type === 'file' && audioElement.setVolume) {
+      audioElement.setVolume(volume)
+    }
+    // Handle Web Audio API
+    else if (audioElement.gainNode) {
       // For birds, use higher multiplier since chirps are short
       const multiplier = audioElement.type === 'birds' ? 0.8 : 0.3
       audioElement.gainNode.gain.setValueAtTime(volume * multiplier, audioElement.audioContext.currentTime)
-    } else if (audioElement.volume !== undefined) {
+    }
+    // Handle direct HTML5 audio elements
+    else if (audioElement.volume !== undefined) {
       audioElement.volume = volume
     }
   }

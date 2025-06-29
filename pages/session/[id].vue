@@ -231,7 +231,13 @@ const startSession = async () => {
     const musicVolume = settings.musicVolume || 0.15
     const musicType = settings.musicType || 'birds'
     console.log('🎵 Starting background music for session, volume:', musicVolume, 'type:', musicType)
-    playBackgroundMusic(musicVolume, musicType)
+    
+    // Use async/await for audio file loading
+    try {
+      await playBackgroundMusic(musicVolume, musicType)
+    } catch (error) {
+      console.error('Failed to start background music:', error)
+    }
   }
   
   playCurrentAffirmation()

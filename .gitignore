@@ -50,3 +50,10 @@ playwright-report/
 test-results/
 .branding/
 README.md
+
+# Audio files (exclude actual music files, keep placeholders)
+public/audio/*.mp3
+public/audio/*.wav
+public/audio/*.ogg
+public/audio/*.m4a
+!public/audio/*.example

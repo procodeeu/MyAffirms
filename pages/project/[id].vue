@@ -203,8 +203,21 @@
                     v-model="sessionSettings.musicType"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pastel-violet"
                   >
-                    <option value="birds">🐦 Śpiew ptaków o poranku</option>
-                    <option value="ocean">🌊 Szum morza</option>
+                    <optgroup label="Dźwięki generowane">
+                      <option value="birds">🐦 Śpiew ptaków o poranku</option>
+                      <option value="ocean">🌊 Szum morza</option>
+                    </optgroup>
+                    <optgroup label="Muzyka relaksacyjna">
+                      <option value="DeeperMeaning">🎵 Głębszy sens</option>
+                      <option value="relaxing_music">🎵 Muzyka relaksacyjna</option>
+                      <option value="meditation_music">🧘 Muzyka medytacyjna</option>
+                      <option value="spa_music">🌸 Muzyka spa</option>
+                    </optgroup>
+                    <optgroup label="Dźwięki natury">
+                      <option value="nature_sounds">🌿 Dźwięki natury</option>
+                      <option value="rain_sounds">🌧️ Dźwięki deszczu</option>
+                      <option value="forest_ambience">🌲 Atmosfera lasu</option>
+                    </optgroup>
                   </select>
                 </div>
                 
