@@ -41,46 +41,82 @@
             </button>
           </div>
 
-          <div v-if="project?.affirmations?.length > 0" class="space-y-4">
-            <div
-              v-for="(affirmation, index) in project.affirmations"
-              :key="affirmation.id"
-              class="bg-pastel-dun border-2 border-pastel-cinereous rounded-lg p-4 flex items-center justify-between"
-              :class="{ 'opacity-60': affirmation.isActive === false }"
-            >
-              <div class="flex items-center gap-3 flex-1">
-                <input
-                  type="checkbox"
-                  :checked="affirmation.isActive !== false"
-                  @change="toggleAffirmationActive(affirmation.id)"
-                  class="text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 focus:ring-2 flex-shrink-0"
-                  style="width: 20px; height: 20px; min-width: 20px; min-height: 20px;"
-                  :title="affirmation.isActive !== false ? $t('common.active') : $t('common.inactive')"
-                />
-                <p 
-                  class="text-gray-800"
-                  :class="{ 'line-through': affirmation.isActive === false }"
-                >
-                  {{ affirmation.text }}
-                </p>
+          <div v-if="project?.affirmations?.length > 0" class="space-y-2">
+            <template v-for="(affirmation, index) in project.affirmations" :key="affirmation.id">
+              <!-- Drop indicator line - always present, invisible when not needed -->
+              <div 
+                class="h-1 rounded-full mx-4 transition-all duration-200 ease-out"
+                :class="dragOver === index && dragging !== affirmation.id ? 
+                  'bg-blue-500 shadow-lg' : 'bg-transparent'"
+                style="background: linear-gradient(90deg, #3b82f6, #60a5fa);"
+                :style="dragOver === index && dragging !== affirmation.id ? 
+                  'background: linear-gradient(90deg, #3b82f6, #60a5fa);' : 
+                  'background: transparent;'"
+              ></div>
+              
+              <div
+                class="affirmation-item bg-pastel-dun border-2 border-pastel-cinereous rounded-lg p-4 flex items-center justify-between cursor-move transition-all duration-300 ease-out"
+                :class="{ 
+                  'opacity-60': affirmation.isActive === false,
+                  'dragging scale-105 shadow-xl bg-blue-50 border-blue-300': dragging === affirmation.id,
+                  'hover:shadow-md hover:-translate-y-0.5': dragging !== affirmation.id
+                }"
+                draggable="true"
+                @dragstart="handleDragStart($event, affirmation, index)"
+                @dragend="handleDragEnd"
+                @dragover.prevent="handleDragOver($event, index)"
+                @dragleave="handleDragLeave"
+                @drop.prevent="handleDrop($event, index)"
+              >
+                <div class="flex items-center gap-3 flex-1">
+                  <!-- Drag handle -->
+                  <div class="cursor-move text-gray-400 hover:text-gray-600 mr-1">
+                    <GripVertical class="w-4 h-4" />
+                  </div>
+                  <input
+                    type="checkbox"
+                    :checked="affirmation.isActive !== false"
+                    @change="toggleAffirmationActive(affirmation.id)"
+                    class="text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 focus:ring-2 flex-shrink-0"
+                    style="width: 20px; height: 20px; min-width: 20px; min-height: 20px;"
+                    :title="affirmation.isActive !== false ? $t('common.active') : $t('common.inactive')"
+                  />
+                  <p 
+                    class="text-gray-800"
+                    :class="{ 'line-through': affirmation.isActive === false }"
+                  >
+                    {{ affirmation.text }}
+                  </p>
+                </div>
+                <div class="flex items-center gap-2 ml-4">
+                  <button
+                    @click="editAffirmation(affirmation)"
+                    class="text-gray-500 hover:text-gray-700 p-1"
+                    :title="$t('common.edit')"
+                  >
+                    <Pencil class="w-5 h-5" />
+                  </button>
+                  <button
+                    @click="deleteAffirmation(affirmation.id)"
+                    class="text-red-500 hover:text-red-700 p-1"
+                    :title="$t('common.delete')"
+                  >
+                    <Trash2 class="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-              <div class="flex items-center gap-2 ml-4">
-                <button
-                  @click="editAffirmation(affirmation)"
-                  class="text-gray-500 hover:text-gray-700 p-1"
-                  :title="$t('common.edit')"
-                >
-                  <Pencil class="w-5 h-5" />
-                </button>
-                <button
-                  @click="deleteAffirmation(affirmation.id)"
-                  class="text-red-500 hover:text-red-700 p-1"
-                  :title="$t('common.delete')"
-                >
-                  <Trash2 class="w-5 h-5" />
-                </button>
-              </div>
-            </div>
+              
+              <!-- Drop indicator at the end - always present, invisible when not needed -->
+              <div 
+                v-if="index === project.affirmations.length - 1"
+                class="h-1 rounded-full mx-4 transition-all duration-200 ease-out"
+                :class="dragOver === project.affirmations.length ? 
+                  'bg-blue-500 shadow-lg' : 'bg-transparent'"
+                :style="dragOver === project.affirmations.length ? 
+                  'background: linear-gradient(90deg, #3b82f6, #60a5fa);' : 
+                  'background: transparent;'"
+              ></div>
+            </template>
           </div>
           
           <div v-else class="text-center py-12">
@@ -294,7 +330,7 @@
 </template>
 
 <script setup>
-import { ArrowLeft, Pencil, Trash2, MessageSquare, Play } from 'lucide-vue-next'
+import { ArrowLeft, Pencil, Trash2, MessageSquare, Play, GripVertical } from 'lucide-vue-next'
 import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 
 const { user, logout: authLogout } = useAuth()
@@ -310,6 +346,12 @@ const project = ref(null)
 const showNewAffirmationModal = ref(false)
 const editingAffirmation = ref(null)
 const affirmationText = ref('')
+
+// Drag and drop state
+const dragging = ref(null)
+const dragOver = ref(null)
+const draggedItem = ref(null)
+const draggedIndex = ref(null)
 
 const sessionSettings = ref({
   speechRate: 1.0,
@@ -341,12 +383,10 @@ watch(locale, (newLocale) => {
     
     if (savedVoiceExists) {
       // Use saved voice for this language
-      console.log('🎤 Restoring saved voice for', ttsLanguage, ':', savedVoiceId)
       sessionSettings.value.voiceId = savedVoiceId
     } else {
       // Set default voice and save it
       const defaultVoice = voices.find(v => v.gender === 'female') || voices[0]
-      console.log('🎤 Setting default voice for', ttsLanguage, ':', defaultVoice.id)
       sessionSettings.value.voiceId = defaultVoice.id
       sessionSettings.value.voicesByLanguage[ttsLanguage] = defaultVoice.id
     }
@@ -357,7 +397,6 @@ watch(locale, (newLocale) => {
 watch(() => sessionSettings.value.voiceId, (newVoiceId) => {
   if (newVoiceId) {
     const ttsLanguage = getLanguageMapping(locale.value)
-    console.log('🎤 Saving voice choice for', ttsLanguage, ':', newVoiceId)
     sessionSettings.value.voicesByLanguage[ttsLanguage] = newVoiceId
   }
 })
@@ -365,20 +404,15 @@ watch(() => sessionSettings.value.voiceId, (newVoiceId) => {
 let unsubscribe = null
 
 const loadProject = async () => {
-  console.log('🔍 Loading project:', projectId, 'user:', user.value?.uid)
-  
   if (!user.value?.uid) {
-    console.log('⏳ Waiting for user authentication...')
     return
   }
   
   // Najpierw spróbuj z localStorage (tam są zmergowane dane z app.vue)
   const loadProjectFromData = () => {
     const savedProject = getProjectFromLocalStorage(projectId)
-    console.log('📱 localStorage project:', savedProject)
     if (savedProject) {
       project.value = savedProject
-      console.log('📱 Project affirmations from localStorage:', savedProject.affirmations?.length || 0)
       if (savedProject.sessionSettings) {
         // Merge saved settings with default structure to preserve new properties
         sessionSettings.value = {
@@ -397,32 +431,24 @@ const loadProject = async () => {
   
   // Jeśli nie ma w localStorage, spróbuj Firestore jako fallback
   if (!foundInLocalStorage) {
-    console.log('🔄 Not found in localStorage, trying Firestore...')
     try {
       const projects = await getUserProjects()
-      console.log('🔥 All Firestore projects:', projects.length)
       const firestoreProject = projects.find(p => p.id === projectId)
-      console.log('🔥 Found Firestore project:', firestoreProject)
       
       if (firestoreProject) {
         project.value = firestoreProject
-        console.log('🔥 Using Firestore project with affirmations:', firestoreProject.affirmations?.length || 0)
         saveProjectToLocalStorage(project.value)
-      } else {
-        console.log('❌ Project not found anywhere!')
       }
     } catch (error) {
-      console.error('❌ Error loading project from Firestore:', error)
+      console.error('Error loading project from Firestore:', error)
     }
   }
 
   // Subskrybuj aktualizacje z Firestore
   if (unsubscribe) unsubscribe()
   unsubscribe = subscribeToUserProjects((projects) => {
-    console.log('🔔 Real-time update received, projects:', projects.length)
     const updatedProject = projects.find(p => p.id === projectId)
     if (updatedProject) {
-      console.log('🔔 Updated project affirmations:', updatedProject.affirmations?.length || 0)
       project.value = {
         ...updatedProject,
         sessionSettings: project.value?.sessionSettings || updatedProject.sessionSettings
@@ -431,8 +457,6 @@ const loadProject = async () => {
       saveProjectToLocalStorage(project.value)
     }
   })
-  
-  console.log('✅ Final project loaded:', !!project.value, 'with', project.value?.affirmations?.length || 0, 'affirmations')
 }
 
 // Załaduj projekt gdy użytkownik jest dostępny
@@ -471,33 +495,22 @@ watch(sessionSettings, (newSettings) => {
 }, { deep: true })
 
 const getProjectFromLocalStorage = (id) => {
-  console.log('🔍 getProjectFromLocalStorage - user:', user.value?.uid, 'looking for ID:', id)
   if (!user.value?.uid) {
-    console.log('❌ No user UID')
     return null
   }
   
   const key = `projects_${user.value.uid}`
   const saved = localStorage.getItem(key)
-  console.log('📱 localStorage key:', key, 'data exists:', !!saved)
   
   if (saved) {
     try {
       const projects = JSON.parse(saved)
-      console.log('📱 Found', projects.length, 'projects in localStorage')
-      projects.forEach((p, i) => {
-        console.log(`📱 Project ${i}: ID=${p.id}, name=${p.name}, affirmations=${p.affirmations?.length || 0}`)
-      })
-      
-      const found = projects.find(p => p.id === id)
-      console.log('📱 Project found:', !!found, found ? `with ${found.affirmations?.length || 0} affirmations` : '')
-      return found
+      return projects.find(p => p.id === id)
     } catch (e) {
-      console.error('❌ Error parsing localStorage projects:', e)
+      console.error('Error parsing localStorage projects:', e)
       return null
     }
   }
-  console.log('📱 No localStorage data')
   return null
 }
 
@@ -511,6 +524,87 @@ const saveProjectToLocalStorage = (proj) => {
       projects[index] = proj
       localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(projects))
     }
+  }
+}
+
+// Drag and drop handlers
+const handleDragStart = (event, affirmation, index) => {
+  dragging.value = affirmation.id
+  draggedItem.value = affirmation
+  draggedIndex.value = index
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData('text/html', event.target.outerHTML)
+  
+  // Add a semi-transparent effect
+  setTimeout(() => {
+    event.target.style.opacity = '0.5'
+  }, 0)
+}
+
+const handleDragEnd = (event) => {
+  event.target.style.opacity = '1'
+  dragging.value = null
+  dragOver.value = null
+  draggedItem.value = null
+  draggedIndex.value = null
+}
+
+const handleDragOver = (event, index) => {
+  event.preventDefault()
+  event.dataTransfer.dropEffect = 'move'
+  
+  if (draggedIndex.value !== null) {
+    // Support dropping at the end of the list
+    const rect = event.currentTarget.getBoundingClientRect()
+    const midpoint = rect.top + rect.height / 2
+    
+    if (event.clientY > midpoint && index === project.value.affirmations.length - 1) {
+      dragOver.value = project.value.affirmations.length
+    } else if (draggedIndex.value !== index) {
+      dragOver.value = index
+    }
+  }
+}
+
+const handleDragLeave = () => {
+  dragOver.value = null
+}
+
+const handleDrop = async (event, dropIndex) => {
+  event.preventDefault()
+  dragOver.value = null
+  
+  // Handle dropping at end of list
+  const finalDropIndex = dragOver.value === project.value.affirmations.length ? 
+    project.value.affirmations.length - 1 : dropIndex
+  
+  if (draggedIndex.value === null || draggedIndex.value === finalDropIndex) {
+    return
+  }
+  
+  // Reorder affirmations array
+  const affirmations = [...project.value.affirmations]
+  const draggedAffirmation = affirmations[draggedIndex.value]
+  
+  // Remove from old position
+  affirmations.splice(draggedIndex.value, 1)
+  
+  // Insert at new position  
+  const newIndex = dragOver.value === project.value.affirmations.length + 1 ? 
+    affirmations.length : 
+    (finalDropIndex > draggedIndex.value ? finalDropIndex : finalDropIndex)
+  affirmations.splice(newIndex, 0, draggedAffirmation)
+  
+  try {
+    // Update in Firestore
+    await updateProject(projectId, { affirmations })
+    
+    // Update local state
+    project.value.affirmations = affirmations
+    saveProjectToLocalStorage(project.value)
+  } catch (error) {
+    console.error('Error reordering affirmations:', error)
+    // Optionally show error message to user
   }
 }
 

@@ -64,8 +64,6 @@ const localeMetadata = {
 }
 
 const availableLocales = computed(() => {
-  console.log('Raw locales:', locales.value)
-  
   // Handle both string array and object array formats
   const localesList = locales.value.map(locale => {
     if (typeof locale === 'string') {
@@ -74,8 +72,6 @@ const availableLocales = computed(() => {
       return locale.code || locale
     }
   })
-  
-  console.log('Processed locales list:', localesList)
   
   return localesList.map(localeCode => ({
     code: localeCode,
@@ -102,7 +98,6 @@ const selectLocale = async (localeCode) => {
     return
   }
   
-  console.log('Switching to locale:', localeCode)
   setLocale(localeCode)
   isOpen.value = false
   
@@ -112,7 +107,6 @@ const selectLocale = async (localeCode) => {
   if (user.value) {
     try {
       await updateLanguage(localeCode)
-      console.log('Language preference saved:', localeCode)
     } catch (error) {
       console.error('Error saving language preference:', error)
     }
@@ -122,23 +116,9 @@ const selectLocale = async (localeCode) => {
   await nextTick()
 }
 
-// Debug watch for locale changes
-watch(locale, (newLocale, oldLocale) => {
-  console.log('LanguageSwitcher: Locale changed from', oldLocale, 'to', newLocale)
-  
-  // Test specific keys to see if German translations are loaded
-  nextTick(() => {
-    console.log('Testing translations:')
-    console.log('  app.welcome:', t('app.welcome'))
-    console.log('  app.projects.title:', t('app.projects.title'))
-    console.log('  common.save:', t('common.save'))
-  })
-}, { immediate: true })
 
 // Close dropdown when clicking outside
 onMounted(() => {
-  console.log('LanguageSwitcher mounted with locale:', locale.value)
-  
   const handleClickOutside = (event) => {
     // Check if click is outside both the button and dropdown
     const clickedButton = buttonRef.value && buttonRef.value.contains(event.target)
