@@ -14,6 +14,7 @@
           </div>
         </div>
         <div class="flex items-center gap-4">
+          <CharacterUsageCounter />
           <span class="text-gray-700 opacity-90">{{ $t('app.welcome') }} {{ user?.email || $t('app.user_placeholder') }}</span>
           <LanguageSwitcher />
           <button @click="logout" class="text-gray-700 hover:text-gray-900">{{ $t('auth.logout') }}</button>
@@ -532,14 +533,19 @@ const saveAffirmation = async () => {
   if (!affirmationText.value.trim()) return
   
   let updatedAffirmations
+  let affirmationId
+  let oldText = null
   
   if (editingAffirmation.value) {
+    oldText = editingAffirmation.value.text
+    affirmationId = editingAffirmation.value.id
     updatedAffirmations = project.value.affirmations.map(aff => 
       aff.id === editingAffirmation.value.id ? { ...aff, text: affirmationText.value.trim() } : aff
     )
   } else {
+    affirmationId = Date.now().toString()
     const newAffirmation = {
-      id: Date.now().toString(),
+      id: affirmationId,
       text: affirmationText.value.trim(),
       createdAt: new Date().toISOString()
     }
@@ -550,6 +556,18 @@ const saveAffirmation = async () => {
     await updateProject(projectId, { affirmations: updatedAffirmations })
     project.value.affirmations = updatedAffirmations
     saveProjectToLocalStorage(project.value)
+    
+    // Auto-generuj audio dla afirmacji
+    const { autoGenerateAudio } = useAffirmationAudio()
+    const currentVoiceId = sessionSettings.value.voiceId || 'pl-PL-ZofiaStandard'
+    
+    // Generuj audio w tle (nie blokuj UI)
+    autoGenerateAudio(affirmationId, affirmationText.value.trim(), currentVoiceId, oldText)
+      .catch(error => {
+        console.error('Audio generation failed:', error)
+        // Opcjonalnie pokaż toast/notification o błędzie
+      })
+    
     closeAffirmationModal()
   } catch (error) {
     alert(t('project.alerts.save_affirmation_failed'))
@@ -568,6 +586,10 @@ const deleteAffirmation = async (affirmationId) => {
   const updatedAffirmations = project.value.affirmations.filter(aff => aff.id !== affirmationId)
   
   try {
+    // Usuń audio dla afirmacji
+    const { deleteAudio } = useAffirmationAudio()
+    await deleteAudio(affirmationId)
+    
     await updateProject(projectId, { affirmations: updatedAffirmations })
     project.value.affirmations = updatedAffirmations
     saveProjectToLocalStorage(project.value)

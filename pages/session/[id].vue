@@ -280,28 +280,60 @@ const playCurrentAffirmation = async () => {
   const settings = project.value?.sessionSettings || {}
   const { speechRate = 1.0, pauseDuration = 3, sentencePause = 4, repeatAffirmation = false, repeatDelay = 5 } = settings
   
-  // Get appropriate voice for current language
-  const voiceId = getAppropriateVoiceId(settings)
-  
-  await speak(currentAffirmation.value.text, { 
-    rate: speechRate, 
-    sentencePause: sentencePause,
-    voiceId: voiceId
-  })
-  
-  if (repeatAffirmation && isPlaying.value) {
-    sessionTimeout.value = setTimeout(async () => {
-      if (isPlaying.value) {
-        await speak(currentAffirmation.value.text, { 
-          rate: speechRate, 
-          sentencePause: sentencePause,
-          voiceId: voiceId
-        })
+  try {
+    // Użyj pre-generowanych plików audio
+    const { playAudio } = useAffirmationAudio()
+    
+    await playAudio(currentAffirmation.value.id, {
+      playbackRate: speechRate,
+      volume: 1.0
+    })
+    
+    if (repeatAffirmation && isPlaying.value) {
+      sessionTimeout.value = setTimeout(async () => {
+        if (isPlaying.value) {
+          await playAudio(currentAffirmation.value.id, {
+            playbackRate: speechRate,
+            volume: 1.0
+          })
+          scheduleNextAffirmation(pauseDuration)
+        }
+      }, repeatDelay * 1000)
+    } else {
+      scheduleNextAffirmation(pauseDuration)
+    }
+  } catch (error) {
+    console.error('Audio playback failed:', error)
+    
+    // Fallback do generowania na żywo (jeśli audio nie istnieje)
+    const voiceId = getAppropriateVoiceId(settings)
+    
+    try {
+      await speak(currentAffirmation.value.text, { 
+        rate: speechRate, 
+        sentencePause: sentencePause,
+        voiceId: voiceId
+      })
+      
+      if (repeatAffirmation && isPlaying.value) {
+        sessionTimeout.value = setTimeout(async () => {
+          if (isPlaying.value) {
+            await speak(currentAffirmation.value.text, { 
+              rate: speechRate, 
+              sentencePause: sentencePause,
+              voiceId: voiceId
+            })
+            scheduleNextAffirmation(pauseDuration)
+          }
+        }, repeatDelay * 1000)
+      } else {
         scheduleNextAffirmation(pauseDuration)
       }
-    }, repeatDelay * 1000)
-  } else {
-    scheduleNextAffirmation(pauseDuration)
+    } catch (fallbackError) {
+      console.error('Fallback TTS also failed:', fallbackError)
+      // Przejdź do następnej afirmacji
+      scheduleNextAffirmation(pauseDuration)
+    }
   }
 }
 

@@ -57,3 +57,7 @@ public/audio/*.wav
 public/audio/*.ogg
 public/audio/*.m4a
 !public/audio/*.example
+
+# Generated TTS audio files
+storage/audio/*.mp3
+storage/audio/*.wav

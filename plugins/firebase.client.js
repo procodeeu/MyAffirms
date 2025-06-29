@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, connectAuthEmulator } from 'firebase/auth'
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
+import { getStorage } from 'firebase/storage'
 import { getAnalytics } from 'firebase/analytics'
 
 const firebaseConfig = {
@@ -30,6 +31,7 @@ export default defineNuxtPlugin(async () => {
           app: null,
           auth: null,
           db: null,
+          storage: null,
           analytics: null
         }
       }
@@ -43,6 +45,7 @@ export default defineNuxtPlugin(async () => {
           app: null,
           auth: null,
           db: null,
+          storage: null,
           analytics: null
         }
       }
@@ -58,6 +61,7 @@ export default defineNuxtPlugin(async () => {
     const app = initializeApp(firebaseConfig)
     const auth = getAuth(app)
     const db = getFirestore(app)
+    const storage = getStorage(app)
     let analytics = null
     try {
       const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -74,6 +78,7 @@ export default defineNuxtPlugin(async () => {
           app,
           auth,
           db,
+          storage,
           analytics
         }
       }
@@ -85,6 +90,7 @@ export default defineNuxtPlugin(async () => {
           app: null,
           auth: null,
           db: null,
+          storage: null,
           analytics: null
         }
       }

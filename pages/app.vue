@@ -35,6 +35,7 @@
           <p class="text-sm text-gray-700 font-crimson italic opacity-90">{{ $t('app.tagline') }}</p>
         </div>
         <div class="flex items-center gap-4">
+          <CharacterUsageCounter />
           <div v-if="isPremiumActive" class="flex items-center gap-2">
             <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
             <span class="text-xs text-yellow-700 font-medium">{{ $t('premium.premium_tag') }}</span>
