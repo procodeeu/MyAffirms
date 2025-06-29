@@ -5,10 +5,15 @@ export default defineEventHandler(async (event) => {
   const GOOGLE_TTS_API = 'https://texttospeech.googleapis.com/v1/text:synthesize'
   
   const voiceMapping = {
-    // Polish voices
+    // Polish voices - Premium (WaveNet)
     'pl-PL-ZofiaNeural': { languageCode: 'pl-PL', name: 'pl-PL-Wavenet-A', ssmlGender: 'FEMALE' },
     'pl-PL-MarekNeural': { languageCode: 'pl-PL', name: 'pl-PL-Wavenet-B', ssmlGender: 'MALE' },
     'pl-PL-AgnieszkaNeural': { languageCode: 'pl-PL', name: 'pl-PL-Wavenet-C', ssmlGender: 'FEMALE' },
+    
+    // Polish voices - Standard
+    'pl-PL-ZofiaStandard': { languageCode: 'pl-PL', name: 'pl-PL-Standard-A', ssmlGender: 'FEMALE' },
+    'pl-PL-MarekStandard': { languageCode: 'pl-PL', name: 'pl-PL-Standard-B', ssmlGender: 'MALE' },
+    'pl-PL-AgnieszkaStandard': { languageCode: 'pl-PL', name: 'pl-PL-Standard-C', ssmlGender: 'FEMALE' },
     
     // English voices
     'en-US-JennyNeural': { languageCode: 'en-US', name: 'en-US-Wavenet-F', ssmlGender: 'FEMALE' },

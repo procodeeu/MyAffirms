@@ -441,26 +441,50 @@ export const useTextToSpeech = () => {
       'pl-PL': [
         {
           id: 'pl-PL-ZofiaNeural',
-          name: 'Zofia',
+          name: 'Zofia (Premium)',
           gender: 'female',
           language: 'pl-PL',
-          description: 'Naturalny głos kobiecy',
+          description: 'Naturalny głos kobiecy - jakość AI',
           provider: 'Google Cloud'
         },
         {
           id: 'pl-PL-MarekNeural', 
-          name: 'Marek',
+          name: 'Marek (Premium)',
           gender: 'male',
           language: 'pl-PL',
-          description: 'Ciepły głos męski',
+          description: 'Ciepły głos męski - jakość AI',
           provider: 'Google Cloud'
         },
         {
           id: 'pl-PL-AgnieszkaNeural',
-          name: 'Agnieszka',
+          name: 'Agnieszka (Premium)',
           gender: 'female', 
           language: 'pl-PL',
-          description: 'Wyrazisty głos kobiecy',
+          description: 'Wyrazisty głos kobiecy - jakość AI',
+          provider: 'Google Cloud'
+        },
+        {
+          id: 'pl-PL-ZofiaStandard',
+          name: 'Zofia (Standard)',
+          gender: 'female',
+          language: 'pl-PL',
+          description: 'Standardowy głos kobiecy',
+          provider: 'Google Cloud'
+        },
+        {
+          id: 'pl-PL-MarekStandard',
+          name: 'Marek (Standard)',
+          gender: 'male',
+          language: 'pl-PL',
+          description: 'Standardowy głos męski',
+          provider: 'Google Cloud'
+        },
+        {
+          id: 'pl-PL-AgnieszkaStandard',
+          name: 'Agnieszka (Standard)',
+          gender: 'female',
+          language: 'pl-PL',
+          description: 'Standardowy głos kobiecy',
           provider: 'Google Cloud'
         }
       ],
