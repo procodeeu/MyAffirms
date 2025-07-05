@@ -10,9 +10,6 @@ export default defineNuxtConfig({
   devServer: {
     port: 3000
   },
-  experimental: {
-    payloadExtraction: false
-  },
   routeRules: {},
   
   app: {

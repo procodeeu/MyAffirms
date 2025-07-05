@@ -65,6 +65,14 @@ const localeMetadata = {
 
 const availableLocales = computed(() => {
   // Handle both string array and object array formats
+  if (!locales.value || !Array.isArray(locales.value)) {
+    // Fallback to default locales if not available
+    return Object.keys(localeMetadata).map(localeCode => ({
+      code: localeCode,
+      ...localeMetadata[localeCode]
+    }))
+  }
+  
   const localesList = locales.value.map(locale => {
     if (typeof locale === 'string') {
       return locale

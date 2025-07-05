@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "prebuild": "node build-version.js",
-    "build": "nuxt build",
+    "build": "nuxt build && node generate-spa-html.js",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
@@ -14,7 +14,8 @@
     "emulators": "firebase emulators:start",
     "dev:emulators": "firebase emulators:start --only auth,firestore",
     "dev:full": "concurrently \"npm run dev:emulators\" \"npm run dev\"",
-    "dev:bg": "nohup npm run dev > dev.log 2>&1 &"
+    "dev:bg": "nohup npm run dev > dev.log 2>&1 &",
+    "dev:port": "npm run dev:emulators & npm run dev -- --port 3060"
   },
   "devDependencies": {
     "@playwright/test": "^1.53.1",
