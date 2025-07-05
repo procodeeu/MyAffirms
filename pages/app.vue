@@ -84,6 +84,14 @@
               <Group class="w-4 h-4" />
               {{ $t('app.projects.new_group') }}
             </button>
+            <button
+              @click="showImportJsonModal = true"
+              :disabled="!user"
+              class="bg-pastel-rose hover:bg-pastel-purple disabled:bg-gray-400 disabled:cursor-not-allowed text-gray-900 px-6 py-3 rounded-full font-medium flex items-center gap-2  border-2 border-pastel-rose hover:border-gray-900 transition-colors duration-200"
+            >
+              <Upload class="w-4 h-4" />
+              Import JSON
+            </button>
           </div>
         </div>
 
@@ -497,12 +505,56 @@
       </div>
     </div>
 
+    <!-- Import JSON Modal -->
+    <div v-if="showImportJsonModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div class="bg-pastel-khaki rounded-4xl p-8 w-full max-w-2xl border-2 border-pastel-cinereous">
+        <h3 class="text-lg font-medium mb-4 font-crimson">Import afirmacji z JSON</h3>
+        
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Dane JSON
+          </label>
+          <textarea
+            v-model="importJsonText"
+            class="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pastel-violet h-64 font-mono text-sm"
+            placeholder="Wklej tutaj dane JSON..."
+          ></textarea>
+          <div v-if="jsonValidationError" class="text-red-600 text-sm mt-1">
+            {{ jsonValidationError }}
+          </div>
+        </div>
+
+        <div class="mb-6">
+          <h4 class="text-sm font-medium text-gray-700 mb-2">Przyklad formatu:</h4>
+          <div class="bg-gray-100 rounded-md p-3 text-xs font-mono overflow-x-auto">
+            <pre>{{ jsonExample }}</pre>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <button
+            @click="importFromJson"
+            :disabled="!importJsonText.trim() || !!jsonValidationError"
+            class="flex-1 bg-pastel-purple hover:bg-pastel-purple-2 disabled:bg-gray-300 disabled:cursor-not-allowed text-gray-900 py-3 rounded-full font-medium"
+          >
+            Importuj
+          </button>
+          <button
+            @click="closeImportJsonModal"
+            class="flex-1 border-2 border-gray-300 hover:bg-pastel-khaki-2 text-gray-700 py-3 rounded-full font-medium"
+          >
+            Anuluj
+          </button>
+        </div>
+      </div>
+    </div>
+
     <PWAInstallPrompt />
   </div>
 </template>
 
 <script setup>
-import { Settings, Folder, Clipboard, Play, Group, Plus } from 'lucide-vue-next'
+import { Settings, Folder, Clipboard, Play, Group, Plus, Upload } from 'lucide-vue-next'
 import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 
 const { user, logout: authLogout } = useAuth()
@@ -582,6 +634,30 @@ const editingProjectName = ref('')
 const showNewGroupModal = ref(false)
 const showGroupSettingsModal = ref(false)
 const showDeleteGroupConfirm = ref(false)
+const showImportJsonModal = ref(false)
+
+// Import JSON state
+const importJsonText = ref('')
+const jsonValidationError = ref('')
+
+const jsonExample = `{
+  "projectName": "Moj nowy projekt",
+  "affirmations": [
+    {
+      "text": "Jestem spokojny i pewny siebie",
+      "isActive": true
+    },
+    {
+      "text": "Mam w sobie sile do dzialania", 
+      "isActive": true
+    },
+    {
+      "text": "Zasluguje na sukces i szczescie",
+      "isActive": false
+    }
+  ]
+}`
+
 const selectedGroup = ref(null)
 const newGroupName = ref('')
 const editingGroupName = ref('')
@@ -942,6 +1018,103 @@ const logout = async () => {
 
 const goToAdmin = () => {
   navigateTo('/admin')
+}
+
+// JSON Import functionality
+watch(importJsonText, (newValue) => {
+  if (!newValue.trim()) {
+    jsonValidationError.value = ''
+    return
+  }
+  
+  try {
+    const parsed = JSON.parse(newValue)
+    
+    // Validate structure
+    if (!parsed.projectName || typeof parsed.projectName !== 'string') {
+      jsonValidationError.value = 'Brak wymaganego pola "projectName" lub nieprawidlowy typ'
+      return
+    }
+    
+    if (!Array.isArray(parsed.affirmations)) {
+      jsonValidationError.value = 'Pole "affirmations" musi byc tablica'
+      return
+    }
+    
+    for (let i = 0; i < parsed.affirmations.length; i++) {
+      const aff = parsed.affirmations[i]
+      if (!aff.text || typeof aff.text !== 'string') {
+        jsonValidationError.value = `Afirmacja ${i + 1}: brak pola "text" lub nieprawidlowy typ`
+        return
+      }
+      if (aff.isActive !== undefined && typeof aff.isActive !== 'boolean') {
+        jsonValidationError.value = `Afirmacja ${i + 1}: pole "isActive" musi byc boolean`
+        return
+      }
+    }
+    
+    jsonValidationError.value = ''
+  } catch (error) {
+    jsonValidationError.value = 'Nieprawidlowy format JSON: ' + error.message
+  }
+})
+
+const closeImportJsonModal = () => {
+  showImportJsonModal.value = false
+  importJsonText.value = ''
+  jsonValidationError.value = ''
+}
+
+const importFromJson = async () => {
+  if (!importJsonText.value.trim() || jsonValidationError.value) return
+  
+  try {
+    const parsed = JSON.parse(importJsonText.value)
+    
+    // Create new project with imported data
+    const newProject = {
+      id: Date.now().toString(),
+      name: parsed.projectName,
+      affirmations: parsed.affirmations.map((aff, index) => ({
+        id: Date.now().toString() + '_' + index,
+        text: aff.text,
+        isActive: aff.isActive !== undefined ? aff.isActive : true,
+        createdAt: new Date().toISOString()
+      })),
+      userId: user.value.uid,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+    
+    try {
+      // Try to save to Firestore
+      const projectId = await firestoreCreateProject({
+        name: newProject.name,
+        affirmations: newProject.affirmations
+      })
+      newProject.id = projectId
+    } catch (error) {
+      console.error('Error saving to Firestore:', error)
+      // Continue with local storage only
+    }
+    
+    // Add to local projects
+    projects.value.push(newProject)
+    
+    // Save to localStorage
+    localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(projects.value))
+    
+    closeImportJsonModal()
+    
+    // Show success message and navigate to project
+    setTimeout(() => {
+      alert(`Projekt "${newProject.name}" zostal zaimportowany z ${newProject.affirmations.length} afirmacjami!`)
+      navigateTo(`/project/${newProject.id}`)
+    }, 100)
+    
+  } catch (error) {
+    jsonValidationError.value = 'Blad podczas importu: ' + error.message
+  }
 }
 
 definePageMeta({
