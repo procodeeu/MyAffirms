@@ -508,7 +508,7 @@
     <!-- Import JSON Modal -->
     <div v-if="showImportJsonModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div class="bg-pastel-khaki rounded-4xl p-8 w-full max-w-2xl border-2 border-pastel-cinereous">
-        <h3 class="text-lg font-medium mb-4 font-crimson">Import afirmacji z JSON</h3>
+        <h3 class="text-lg font-medium mb-4 font-crimson">Import projektow i afirmacji z JSON</h3>
         
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -640,7 +640,8 @@ const showImportJsonModal = ref(false)
 const importJsonText = ref('')
 const jsonValidationError = ref('')
 
-const jsonExample = `{
+const jsonExample = `// Pojedynczy projekt:
+{
   "projectName": "Moj nowy projekt",
   "affirmations": [
     {
@@ -650,10 +651,30 @@ const jsonExample = `{
     {
       "text": "Mam w sobie sile do dzialania", 
       "isActive": true
+    }
+  ]
+}
+
+// Lub wiele projektow:
+{
+  "projects": [
+    {
+      "projectName": "Projekt 1",
+      "affirmations": [
+        {
+          "text": "Pierwsza afirmacja",
+          "isActive": true
+        }
+      ]
     },
     {
-      "text": "Zasluguje na sukces i szczescie",
-      "isActive": false
+      "projectName": "Projekt 2", 
+      "affirmations": [
+        {
+          "text": "Druga afirmacja",
+          "isActive": true
+        }
+      ]
     }
   ]
 }`
@@ -1030,26 +1051,55 @@ watch(importJsonText, (newValue) => {
   try {
     const parsed = JSON.parse(newValue)
     
-    // Validate structure
-    if (!parsed.projectName || typeof parsed.projectName !== 'string') {
-      jsonValidationError.value = 'Brak wymaganego pola "projectName" lub nieprawidlowy typ'
-      return
-    }
-    
-    if (!Array.isArray(parsed.affirmations)) {
-      jsonValidationError.value = 'Pole "affirmations" musi byc tablica'
-      return
-    }
-    
-    for (let i = 0; i < parsed.affirmations.length; i++) {
-      const aff = parsed.affirmations[i]
-      if (!aff.text || typeof aff.text !== 'string') {
-        jsonValidationError.value = `Afirmacja ${i + 1}: brak pola "text" lub nieprawidlowy typ`
+    // Check if it's multiple projects format
+    if (parsed.projects && Array.isArray(parsed.projects)) {
+      // Validate multiple projects format
+      for (let i = 0; i < parsed.projects.length; i++) {
+        const project = parsed.projects[i]
+        if (!project.projectName || typeof project.projectName !== 'string') {
+          jsonValidationError.value = `Projekt ${i + 1}: brak pola "projectName" lub nieprawidlowy typ`
+          return
+        }
+        
+        if (!Array.isArray(project.affirmations)) {
+          jsonValidationError.value = `Projekt ${i + 1}: pole "affirmations" musi byc tablica`
+          return
+        }
+        
+        for (let j = 0; j < project.affirmations.length; j++) {
+          const aff = project.affirmations[j]
+          if (!aff.text || typeof aff.text !== 'string') {
+            jsonValidationError.value = `Projekt ${i + 1}, afirmacja ${j + 1}: brak pola "text"`
+            return
+          }
+          if (aff.isActive !== undefined && typeof aff.isActive !== 'boolean') {
+            jsonValidationError.value = `Projekt ${i + 1}, afirmacja ${j + 1}: pole "isActive" musi byc boolean`
+            return
+          }
+        }
+      }
+    } else {
+      // Validate single project format
+      if (!parsed.projectName || typeof parsed.projectName !== 'string') {
+        jsonValidationError.value = 'Brak wymaganego pola "projectName" lub nieprawidlowy typ'
         return
       }
-      if (aff.isActive !== undefined && typeof aff.isActive !== 'boolean') {
-        jsonValidationError.value = `Afirmacja ${i + 1}: pole "isActive" musi byc boolean`
+      
+      if (!Array.isArray(parsed.affirmations)) {
+        jsonValidationError.value = 'Pole "affirmations" musi byc tablica'
         return
+      }
+      
+      for (let i = 0; i < parsed.affirmations.length; i++) {
+        const aff = parsed.affirmations[i]
+        if (!aff.text || typeof aff.text !== 'string') {
+          jsonValidationError.value = `Afirmacja ${i + 1}: brak pola "text" lub nieprawidlowy typ`
+          return
+        }
+        if (aff.isActive !== undefined && typeof aff.isActive !== 'boolean') {
+          jsonValidationError.value = `Afirmacja ${i + 1}: pole "isActive" musi byc boolean`
+          return
+        }
       }
     }
     
@@ -1070,46 +1120,89 @@ const importFromJson = async () => {
   
   try {
     const parsed = JSON.parse(importJsonText.value)
+    const newProjects = []
     
-    // Create new project with imported data
-    const newProject = {
-      id: Date.now().toString(),
-      name: parsed.projectName,
-      affirmations: parsed.affirmations.map((aff, index) => ({
-        id: Date.now().toString() + '_' + index,
-        text: aff.text,
-        isActive: aff.isActive !== undefined ? aff.isActive : true,
-        createdAt: new Date().toISOString()
-      })),
-      userId: user.value.uid,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+    // Check if it's multiple projects format
+    if (parsed.projects && Array.isArray(parsed.projects)) {
+      // Handle multiple projects
+      for (let i = 0; i < parsed.projects.length; i++) {
+        const projectData = parsed.projects[i]
+        const newProject = {
+          id: Date.now().toString() + '_' + i,
+          name: projectData.projectName,
+          affirmations: projectData.affirmations.map((aff, index) => ({
+            id: Date.now().toString() + '_' + i + '_' + index,
+            text: aff.text,
+            isActive: aff.isActive !== undefined ? aff.isActive : true,
+            createdAt: new Date().toISOString()
+          })),
+          userId: user.value.uid,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+        
+        try {
+          // Try to save to Firestore
+          const projectId = await firestoreCreateProject({
+            name: newProject.name,
+            affirmations: newProject.affirmations
+          })
+          newProject.id = projectId
+        } catch (error) {
+          console.error('Error saving project to Firestore:', error)
+          // Continue with local storage only
+        }
+        
+        newProjects.push(newProject)
+      }
+    } else {
+      // Handle single project format
+      const newProject = {
+        id: Date.now().toString(),
+        name: parsed.projectName,
+        affirmations: parsed.affirmations.map((aff, index) => ({
+          id: Date.now().toString() + '_' + index,
+          text: aff.text,
+          isActive: aff.isActive !== undefined ? aff.isActive : true,
+          createdAt: new Date().toISOString()
+        })),
+        userId: user.value.uid,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+      
+      try {
+        // Try to save to Firestore
+        const projectId = await firestoreCreateProject({
+          name: newProject.name,
+          affirmations: newProject.affirmations
+        })
+        newProject.id = projectId
+      } catch (error) {
+        console.error('Error saving to Firestore:', error)
+        // Continue with local storage only
+      }
+      
+      newProjects.push(newProject)
     }
     
-    try {
-      // Try to save to Firestore
-      const projectId = await firestoreCreateProject({
-        name: newProject.name,
-        affirmations: newProject.affirmations
-      })
-      newProject.id = projectId
-    } catch (error) {
-      console.error('Error saving to Firestore:', error)
-      // Continue with local storage only
-    }
-    
-    // Add to local projects
-    projects.value.push(newProject)
+    // Add all new projects to local projects
+    projects.value.push(...newProjects)
     
     // Save to localStorage
     localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(projects.value))
     
     closeImportJsonModal()
     
-    // Show success message and navigate to project
+    // Show success message
     setTimeout(() => {
-      alert(`Projekt "${newProject.name}" zostal zaimportowany z ${newProject.affirmations.length} afirmacjami!`)
-      navigateTo(`/project/${newProject.id}`)
+      if (newProjects.length === 1) {
+        alert(`Projekt "${newProjects[0].name}" zostal zaimportowany z ${newProjects[0].affirmations.length} afirmacjami!`)
+        navigateTo(`/project/${newProjects[0].id}`)
+      } else {
+        const totalAffirmations = newProjects.reduce((sum, p) => sum + p.affirmations.length, 0)
+        alert(`Zaimportowano ${newProjects.length} projektow z laczna liczba ${totalAffirmations} afirmacji!`)
+      }
     }, 100)
     
   } catch (error) {
