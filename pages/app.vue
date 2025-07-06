@@ -560,6 +560,7 @@ import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 const { user, logout: authLogout } = useAuth()
 const { isPremiumActive } = usePremium()
 const { subscribeToLanguageChanges } = useI18nInit()
+const { autoGenerateAudio } = useAffirmationAudio()
 
 // Calculate bubble positions based on user ID
 const bubblePositions = computed(() => {
@@ -1115,6 +1116,29 @@ const closeImportJsonModal = () => {
   jsonValidationError.value = ''
 }
 
+// Function to generate audio for all affirmations in a project
+const generateAudioForProject = async (project) => {
+  if (!project.affirmations || project.affirmations.length === 0) return
+  
+  console.log(`Starting audio generation for project: ${project.name} with ${project.affirmations.length} affirmations`)
+  
+  for (const affirmation of project.affirmations) {
+    try {
+      console.log(`Generating audio for affirmation: ${affirmation.id} - "${affirmation.text}"`)
+      await autoGenerateAudio(affirmation.id, affirmation.text, 'pl-PL-ZofiaNeural')
+      console.log(`Audio generated successfully for: ${affirmation.id}`)
+      
+      // Add small delay between generations to avoid overwhelming the system
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    } catch (error) {
+      console.error(`Failed to generate audio for affirmation ${affirmation.id}:`, error)
+      // Continue with next affirmation even if one fails
+    }
+  }
+  
+  console.log(`Audio generation completed for project: ${project.name}`)
+}
+
 const importFromJson = async () => {
   if (!importJsonText.value.trim() || jsonValidationError.value) return
   
@@ -1194,14 +1218,23 @@ const importFromJson = async () => {
     
     closeImportJsonModal()
     
+    // Generate audio for all imported affirmations
+    setTimeout(async () => {
+      console.log('Starting audio generation for imported projects...')
+      for (const project of newProjects) {
+        await generateAudioForProject(project)
+      }
+      console.log('Audio generation completed for all imported projects')
+    }, 500)
+    
     // Show success message
     setTimeout(() => {
       if (newProjects.length === 1) {
-        alert(`Projekt "${newProjects[0].name}" zostal zaimportowany z ${newProjects[0].affirmations.length} afirmacjami!`)
+        alert(`Projekt "${newProjects[0].name}" zostal zaimportowany z ${newProjects[0].affirmations.length} afirmacjami! Audio jest generowane w tle.`)
         navigateTo(`/project/${newProjects[0].id}`)
       } else {
         const totalAffirmations = newProjects.reduce((sum, p) => sum + p.affirmations.length, 0)
-        alert(`Zaimportowano ${newProjects.length} projektow z laczna liczba ${totalAffirmations} afirmacji!`)
+        alert(`Zaimportowano ${newProjects.length} projektow z laczna liczba ${totalAffirmations} afirmacji! Audio jest generowane w tle.`)
       }
     }, 100)
     
