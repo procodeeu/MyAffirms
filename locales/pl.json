@@ -245,6 +245,7 @@
       "affirmation_placeholder": "Wpisz treść afirmacji..."
     },
     "generating_audio": "Generowanie audio...",
+    "please_wait": "Proszę czekać...",
     "affirmation_status": "Status afirmacji",
     "audio_info": "Informacje o nagraniu",
     "voice_used": "Użyty głos",

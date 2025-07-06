@@ -641,7 +641,7 @@ const showImportJsonModal = ref(false)
 const importJsonText = ref('')
 const jsonValidationError = ref('')
 
-const jsonExample = `// Pojedynczy projekt:
+const jsonExample = `
 {
   "projectName": "Moj nowy projekt",
   "affirmations": [
@@ -656,7 +656,6 @@ const jsonExample = `// Pojedynczy projekt:
   ]
 }
 
-// Lub wiele projektow:
 {
   "projects": [
     {
@@ -1210,11 +1209,8 @@ const importFromJson = async () => {
       newProjects.push(newProject)
     }
     
-    // Add all new projects to local projects
-    projects.value.push(...newProjects)
-    
-    // Save to localStorage
-    localStorage.setItem(`projects_${user.value.uid}`, JSON.stringify(projects.value))
+    // Don't add to projects.value here - Firestore subscription will handle it
+    // This prevents duplicate entries
     
     closeImportJsonModal()
     

@@ -172,11 +172,28 @@
                 <!-- Preloader overlay -->
                 <div 
                   v-if="generatingAudioIds.has(affirmation.id)"
-                  class="absolute inset-0 bg-white bg-opacity-80 rounded-lg flex items-center justify-center z-10"
+                  class="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 bg-opacity-95 rounded-lg flex items-center justify-center z-10 backdrop-blur-sm border-2 border-blue-200"
                 >
-                  <div class="flex items-center gap-3">
-                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
-                    <span class="text-sm text-gray-700 font-medium">{{ $t('project.generating_audio') }}</span>
+                  <div class="flex flex-col items-center gap-4 p-4">
+                    <!-- Animated spinner with multiple rings -->
+                    <div class="relative">
+                      <div class="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent"></div>
+                      <div class="absolute inset-0 animate-spin rounded-full h-10 w-10 border-4 border-purple-400 border-t-transparent" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
+                      <div class="absolute inset-2 animate-pulse rounded-full h-6 w-6 bg-gradient-to-r from-blue-400 to-purple-400 opacity-60"></div>
+                    </div>
+                    
+                    <!-- Text and progress indicator -->
+                    <div class="text-center">
+                      <div class="text-sm font-semibold text-blue-800 mb-1">🎵 {{ $t('project.generating_audio') }}</div>
+                      <div class="text-xs text-blue-600">{{ $t('project.please_wait') }}</div>
+                    </div>
+                    
+                    <!-- Animated dots -->
+                    <div class="flex space-x-1">
+                      <div class="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                      <div class="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                      <div class="w-2 h-2 bg-pink-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -544,6 +561,57 @@ const loadProject = async () => {
       saveProjectToLocalStorage(project.value)
     }
   })
+
+  // Auto-generuj audio dla afirmacji które go nie mają
+  if (project.value?.affirmations?.length > 0) {
+    await generateMissingAudio()
+  }
+}
+
+// Funkcja do generowania brakującego audio
+const generateMissingAudio = async () => {
+  if (!project.value?.affirmations || !user.value) return
+  
+  const { getAudioMetadata, autoGenerateAudio } = useAffirmationAudio()
+  const currentVoiceId = sessionSettings.value.voiceId || 'pl-PL-ZofiaStandard'
+  
+  console.log(`🔍 Checking audio for ${project.value.affirmations.length} affirmations...`)
+  
+  for (const affirmation of project.value.affirmations) {
+    try {
+      // Sprawdź czy afirmacja ma już audio
+      const metadata = await getAudioMetadata(affirmation.id)
+      
+      if (!metadata) {
+        console.log(`🎵 Generating missing audio for: ${affirmation.id} - "${affirmation.text}"`)
+        
+        // Dodaj do listy generujących się audio (pokaż preloader)
+        generatingAudioIds.value.add(affirmation.id)
+        
+        // Generuj audio asynchronicznie
+        autoGenerateAudio(affirmation.id, affirmation.text, currentVoiceId)
+          .then(() => {
+            console.log(`✅ Audio generated successfully for: ${affirmation.id}`)
+          })
+          .catch(error => {
+            console.error(`❌ Audio generation failed for ${affirmation.id}:`, error)
+          })
+          .finally(() => {
+            // Usuń z listy generujących się audio (ukryj preloader)
+            generatingAudioIds.value.delete(affirmation.id)
+          })
+        
+        // Dodaj małe opóźnienie między generowaniem aby nie przeciążyć systemu
+        await new Promise(resolve => setTimeout(resolve, 500))
+      } else {
+        console.log(`✅ Audio already exists for: ${affirmation.id}`)
+      }
+    } catch (error) {
+      console.error(`❌ Error checking audio for ${affirmation.id}:`, error)
+    }
+  }
+  
+  console.log('🏁 Audio generation check completed')
 }
 
 // Załaduj projekt gdy użytkownik jest dostępny

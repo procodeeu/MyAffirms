@@ -221,6 +221,7 @@
       "affirmation_placeholder": "Enter affirmation text..."
     },
     "generating_audio": "Generating audio...",
+    "please_wait": "Please wait...",
     "affirmation_status": "Affirmation status",
     "audio_info": "Audio information",
     "voice_used": "Voice used",
