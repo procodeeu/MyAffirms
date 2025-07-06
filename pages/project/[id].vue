@@ -55,13 +55,14 @@
               ></div>
               
               <div
-                class="affirmation-item bg-pastel-dun border-2 border-pastel-cinereous rounded-lg p-4 flex items-center justify-between cursor-move transition-all duration-300 ease-out"
+                class="affirmation-item bg-pastel-dun border-2 border-pastel-cinereous rounded-lg p-4 flex items-center justify-between cursor-move transition-all duration-300 ease-out relative"
                 :class="{ 
                   'opacity-60': affirmation.isActive === false,
                   'dragging scale-105 shadow-xl bg-blue-50 border-blue-300': dragging === affirmation.id,
-                  'hover:shadow-md hover:-translate-y-0.5': dragging !== affirmation.id
+                  'hover:shadow-md hover:-translate-y-0.5': dragging !== affirmation.id && !generatingAudioIds.has(affirmation.id),
+                  'pointer-events-none': generatingAudioIds.has(affirmation.id)
                 }"
-                draggable="true"
+                :draggable="!generatingAudioIds.has(affirmation.id)"
                 @dragstart="handleDragStart($event, affirmation, index)"
                 @dragend="handleDragEnd"
                 @dragover.prevent="handleDragOver($event, index)"
@@ -80,6 +81,7 @@
                     class="text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 focus:ring-2 flex-shrink-0"
                     style="width: 20px; height: 20px; min-width: 20px; min-height: 20px;"
                     :title="affirmation.isActive !== false ? $t('common.active') : $t('common.inactive')"
+                    :disabled="generatingAudioIds.has(affirmation.id)"
                   />
                   <p 
                     class="text-gray-800"
@@ -93,6 +95,7 @@
                     @click="editAffirmation(affirmation)"
                     class="text-gray-500 hover:text-gray-700 p-1"
                     :title="$t('common.edit')"
+                    :disabled="generatingAudioIds.has(affirmation.id)"
                   >
                     <Pencil class="w-5 h-5" />
                   </button>
@@ -100,9 +103,21 @@
                     @click="deleteAffirmation(affirmation.id)"
                     class="text-red-500 hover:text-red-700 p-1"
                     :title="$t('common.delete')"
+                    :disabled="generatingAudioIds.has(affirmation.id)"
                   >
                     <Trash2 class="w-5 h-5" />
                   </button>
+                </div>
+                
+                <!-- Preloader overlay -->
+                <div 
+                  v-if="generatingAudioIds.has(affirmation.id)"
+                  class="absolute inset-0 bg-white bg-opacity-80 rounded-lg flex items-center justify-center z-10"
+                >
+                  <div class="flex items-center gap-3">
+                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+                    <span class="text-sm text-gray-700 font-medium">{{ $t('project.generating_audio') }}</span>
+                  </div>
                 </div>
               </div>
               
@@ -337,6 +352,9 @@ const { user, logout: authLogout } = useAuth()
 const { t, locale } = useI18n()
 const { getUserProjects, updateProject, subscribeToUserProjects } = useFirestore()
 const { getAvailableAiVoices, getLanguageMapping } = useTextToSpeech()
+
+// Stan generowania audio dla poszczególnych afirmacji
+const generatingAudioIds = ref(new Set())
 
 const route = useRoute()
 const router = useRouter()
@@ -662,6 +680,9 @@ const saveAffirmation = async () => {
       oldText 
     })
     
+    // Dodaj ID do listy generujących się audio
+    generatingAudioIds.value.add(affirmationId)
+    
     // Generuj audio w tle (nie blokuj UI) - z opóźnieniem aby user był dostępny
     const textToGenerate = affirmationText.value.trim() // Zachowaj tekst przed zamknięciem modala
     setTimeout(() => {
@@ -672,6 +693,10 @@ const saveAffirmation = async () => {
         .catch(error => {
           console.error('❌ Audio generation failed:', error)
           // Opcjonalnie pokaż toast/notification o błędzie
+        })
+        .finally(() => {
+          // Usuń ID z listy generujących się audio
+          generatingAudioIds.value.delete(affirmationId)
         })
     }, 100)
     

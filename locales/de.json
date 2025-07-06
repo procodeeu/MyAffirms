@@ -222,6 +222,7 @@
     },
     "alerts": {
       "save_affirmation_failed": "Affirmation speichern fehlgeschlagen",
+      "generating_audio": "Audio wird generiert...",
       "confirm_delete_affirmation": "Sind Sie sicher, dass Sie diese Affirmation löschen möchten?",
       "delete_affirmation_failed": "Affirmation löschen fehlgeschlagen"
     },

@@ -246,6 +246,7 @@
     },
     "alerts": {
       "save_affirmation_failed": "Nie udało się zapisać afirmacji",
+      "generating_audio": "Generowanie audio...",
       "confirm_delete_affirmation": "Czy na pewno chcesz usunąć tę afirmację?",
       "delete_affirmation_failed": "Nie udało się usunąć afirmacji"
     },

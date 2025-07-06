@@ -94,6 +94,7 @@
     },
     "alerts": {
       "save_affirmation_failed": "Impossibile salvare l'affermazione",
+      "generating_audio": "Generazione audio...",
       "delete_affirmation_failed": "Impossibile eliminare l'affermazione",
       "confirm_delete_affirmation": "Sei sicuro di voler eliminare questa affermazione?"
     },
