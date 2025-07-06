@@ -4,11 +4,21 @@ Uniwersalny skrypt do czyszczenia danych audio użytkowników z Firebase.
 
 ## 📋 Opis
 
-`clean-users-data.sh` to kompleksowy skrypt który:
+`clean-users-data.sh` to kompleksowy skrypt z dwoma trybami:
+
+### 🎵 **Tryb Audio (BEZPIECZNY)**
 - 🗑️ Usuwa kolekcję `affirmation_audio` z Firestore
 - 📦 Usuwa pliki MP3 z Firebase Storage
-- 🛡️ Zachowuje wszystkie projekty, grupy i dane użytkowników
+- 🛡️ **ZACHOWUJE** wszystkie projekty, grupy i dane użytkowników
 - 🔄 Umożliwia regenerację audio gdy będzie potrzebne
+
+### 📁 **Tryb Pełny (DESTRUKCYJNY)**
+- 🗑️ Usuwa **WSZYSTKIE** projekty użytkowników
+- 👥 Usuwa **WSZYSTKIE** grupy
+- 👤 Usuwa profile użytkowników
+- 📊 Usuwa dane tracking
+- 🎵 Usuwa audio (metadata + pliki MP3)
+- ⚠️ **WYMAGA** potwierdzenia "DELETE ALL PROJECTS"
 
 ## 🚀 Użycie
 
@@ -18,17 +28,33 @@ Uniwersalny skrypt do czyszczenia danych audio użytkowników z Firebase.
 
 ## 🎯 Co Robi
 
-### ✅ **Usuwa:**
-- 📄 Wszystkie dokumenty w kolekcji `affirmation_audio`
-- 🎵 Wszystkie pliki MP3 z folderu `audio/` w Storage
+### 🎵 **Tryb Audio (Opcja 1 - BEZPIECZNY):**
 
-### 🛡️ **Zachowuje:**
-- 📁 Wszystkie projekty użytkowników
-- 💬 Wszystkie afirmacje
-- 👥 Wszystkie grupy
+**✅ Usuwa:**
+- 📄 Kolekcję `affirmation_audio` z Firestore
+- 🎵 Pliki MP3 z folderu `audio/` w Storage
+
+**🛡️ Zachowuje:**
+- 📁 **WSZYSTKIE** projekty użytkowników
+- 💬 **WSZYSTKIE** afirmacje
+- 👥 **WSZYSTKIE** grupy
 - 👤 Profile użytkowników
 - 🔐 Dane uwierzytelniania
 - 📊 Dane tracking
+
+### 📁 **Tryb Pełny (Opcja 2 - DESTRUKCYJNY):**
+
+**❌ Usuwa:**
+- 📁 **WSZYSTKIE** projekty użytkowników
+- 💬 **WSZYSTKIE** afirmacje
+- 👥 **WSZYSTKIE** grupy
+- 👤 **WSZYSTKIE** profile użytkowników
+- 📊 **WSZYSTKIE** dane tracking
+- 📄 Kolekcję `affirmation_audio`
+- 🎵 Pliki MP3 z Storage
+
+**🛡️ Zachowuje:**
+- 🔐 Dane uwierzytelniania (użytkownicy mogą się logować)
 
 ## 🔧 Funkcje
 
@@ -53,19 +79,28 @@ Uniwersalny skrypt do czyszczenia danych audio użytkowników z Firebase.
 
 ## 📊 Przykład Działania
 
+### 🎵 **Tryb Audio (Bezpieczny):**
+
 ```bash
 ./clean-users-data.sh
 
 🧹 Universal User Data Cleanup
 🎯 Target Firebase Project: my-affirms
 ✅ gsutil found - can clean Storage with Google Cloud SDK
-✅ Firebase CLI storage commands available
 
 🗑️  Available cleanup options:
-  📄 Firestore: affirmation_audio collection
+  📄 Audio: affirmation_audio collection
+  📁 Projects: user projects collection
+  👥 Groups: user groups collection
   📦 Storage: MP3 files (via gsutil)
 
-Proceed with cleanup? (y/N): y
+⚠️  CHOOSE CLEANUP LEVEL:
+  1. 🎵 Audio only (SAFE - keeps projects and groups)
+  2. 📁 Projects + Groups + Audio (DESTRUCTIVE - removes user data)
+  3. ❌ Cancel
+
+Select option (1/2/3): 1
+✅ Selected: Audio cleanup only (SAFE)
 
 🚀 Starting cleanup...
 
@@ -80,14 +115,67 @@ Deleted 14 docs (Infinity docs/s)
 🗑️  Deleting files from: gs://my-affirms.firebasestorage.app/audio/
 ✅ MP3 files deleted from Storage
 
-🔍 Step 3: Verification...
+🔍 Final Step: Verification...
 ✅ Firestore collection is now empty
 
 🎉 Cleanup completed!
 
 📋 Summary:
-  ✅ Firestore: affirmation_audio collection cleaned
+  ✅ Audio: affirmation_audio collection cleaned
   ✅ Storage: MP3 files cleaned via gsutil
+
+📝 What's preserved:
+  ✅ User authentication data
+  ✅ Projects and affirmations
+  ✅ Groups and other user data
+```
+
+### 📁 **Tryb Pełny (Destrukcyjny):**
+
+```bash
+Select option (1/2/3): 2
+⚠️  Selected: Full cleanup (DESTRUCTIVE)
+
+🚨 WARNING: This will delete ALL user projects and groups!
+   Users will need to recreate all their data
+
+Type 'DELETE ALL PROJECTS' to confirm: DELETE ALL PROJECTS
+
+🚀 Starting cleanup...
+
+🗑️  Step 1: Cleaning user projects and groups...
+  📁 Deleting projects collection...
+  ✅ Projects deleted
+  👥 Deleting groups collection...
+  ✅ Groups deleted
+  👤 Deleting user profiles...
+  ✅ User profiles deleted
+  📊 Deleting usage tracking...
+  ✅ Usage tracking deleted
+
+🗑️  Step 2: Cleaning Firestore affirmation_audio collection...
+✅ Successfully deleted affirmation_audio collection from Firestore
+
+🗑️  Step 3: Cleaning Storage MP3 files...
+✅ MP3 files deleted from Storage
+
+🔍 Final Step: Verification...
+✅ Firestore collection is now empty
+
+🎉 Cleanup completed!
+
+📋 Summary:
+  ✅ Projects: All user projects deleted
+  ✅ Groups: All user groups deleted
+  ✅ Profiles: User profiles deleted
+  ✅ Tracking: Usage tracking deleted
+  ✅ Audio: affirmation_audio collection cleaned
+  ✅ Storage: MP3 files cleaned via gsutil
+
+📝 What's preserved:
+  ✅ User authentication data
+  ⚠️  Projects and groups: DELETED
+  ⚠️  User profiles: DELETED
 ```
 
 ## 🛠️ Wymagania

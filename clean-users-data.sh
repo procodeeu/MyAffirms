@@ -7,7 +7,7 @@
 set -e  # Exit on any error
 
 echo "🧹 Universal User Data Cleanup"
-echo "This script cleans affirmation audio data from both Firestore and Storage"
+echo "This script can clean audio data and/or user projects and groups"
 
 # Check if Firebase CLI is installed
 if ! command -v firebase &> /dev/null; then
@@ -61,7 +61,9 @@ fi
 
 echo ""
 echo "🗑️  Available cleanup options:"
-echo "  📄 Firestore: affirmation_audio collection"
+echo "  📄 Audio: affirmation_audio collection"
+echo "  📁 Projects: user projects collection"
+echo "  👥 Groups: user groups collection"
 if [ "$GSUTIL_AVAILABLE" = true ]; then
     echo "  📦 Storage: MP3 files (via gsutil)"
 elif [ "$FIREBASE_STORAGE_AVAILABLE" = true ]; then
@@ -71,24 +73,76 @@ else
 fi
 
 echo ""
-echo "💡 Cleanup methods:"
-echo "  1. 🔥 Firestore metadata (always available)"
-echo "  2. 📦 Storage files (gsutil preferred)"
-echo "  3. 🌐 Manual Storage cleanup (Firebase Console)"
+echo "⚠️  CHOOSE CLEANUP LEVEL:"
+echo "  1. 🎵 Audio only (SAFE - keeps projects and groups)"
+echo "  2. 📁 Projects + Groups + Audio (DESTRUCTIVE - removes user data)"
+echo "  3. ❌ Cancel"
+echo ""
 
-# Confirmation
-read -p "Proceed with cleanup? (y/N): " -n 1 -r
+read -p "Select option (1/2/3): " -n 1 -r
 echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "❌ Cancelled"
-    exit 0
-fi
+
+CLEANUP_LEVEL=""
+case $REPLY in
+    1)
+        CLEANUP_LEVEL="audio"
+        echo "✅ Selected: Audio cleanup only (SAFE)"
+        ;;
+    2)
+        CLEANUP_LEVEL="full"
+        echo "⚠️  Selected: Full cleanup (DESTRUCTIVE)"
+        echo ""
+        echo "🚨 WARNING: This will delete ALL user projects and groups!"
+        echo "   Users will need to recreate all their data"
+        echo ""
+        read -p "Type 'DELETE ALL PROJECTS' to confirm: " confirmation
+        if [ "$confirmation" != "DELETE ALL PROJECTS" ]; then
+            echo "❌ Full cleanup cancelled"
+            CLEANUP_LEVEL="audio"
+            echo "✅ Falling back to audio cleanup only"
+        fi
+        ;;
+    3)
+        echo "❌ Cancelled"
+        exit 0
+        ;;
+    *)
+        echo "❌ Invalid option, cancelling"
+        exit 0
+        ;;
+esac
 
 echo ""
 echo "🚀 Starting cleanup..."
 
-# 1. Clean Firestore collection
-echo "🗑️  Step 1: Cleaning Firestore affirmation_audio collection..."
+# Step counter
+STEP=1
+
+# 1. Clean Projects and Groups (if full cleanup)
+if [ "$CLEANUP_LEVEL" = "full" ]; then
+    echo "🗑️  Step $STEP: Cleaning user projects and groups..."
+    
+    # Delete projects collection
+    echo "  📁 Deleting projects collection..."
+    firebase firestore:delete --project "$PROJECT_ID" --recursive projects --force 2>/dev/null && echo "  ✅ Projects deleted" || echo "  ℹ️  Projects collection was empty"
+    
+    # Delete groups collection
+    echo "  👥 Deleting groups collection..."
+    firebase firestore:delete --project "$PROJECT_ID" --recursive groups --force 2>/dev/null && echo "  ✅ Groups deleted" || echo "  ℹ️  Groups collection was empty"
+    
+    # Delete user profiles (optional)
+    echo "  👤 Deleting user profiles..."
+    firebase firestore:delete --project "$PROJECT_ID" --recursive user_profiles --force 2>/dev/null && echo "  ✅ User profiles deleted" || echo "  ℹ️  User profiles collection was empty"
+    
+    # Delete usage tracking (optional)
+    echo "  📊 Deleting usage tracking..."
+    firebase firestore:delete --project "$PROJECT_ID" --recursive usage_tracking --force 2>/dev/null && echo "  ✅ Usage tracking deleted" || echo "  ℹ️  Usage tracking collection was empty"
+    
+    STEP=$((STEP + 1))
+fi
+
+# 2. Clean Firestore audio collection
+echo "🗑️  Step $STEP: Cleaning Firestore affirmation_audio collection..."
 
 firebase firestore:delete --project "$PROJECT_ID" --recursive affirmation_audio --force
 
@@ -99,9 +153,11 @@ else
     echo "ℹ️  Collection might be empty or not exist"
 fi
 
-# 2. Clean Storage files
+STEP=$((STEP + 1))
+
+# 3. Clean Storage files
 echo ""
-echo "🗑️  Step 2: Cleaning Storage MP3 files..."
+echo "🗑️  Step $STEP: Cleaning Storage MP3 files..."
 
 if [ "$GSUTIL_AVAILABLE" = true ]; then
     echo "🔍 Using gsutil to clean Storage..."
@@ -158,9 +214,9 @@ if [ "$GSUTIL_AVAILABLE" = false ]; then
     echo "   - Old files don't interfere with new audio generation"
 fi
 
-# 3. Verification
+# Final. Verification
 echo ""
-echo "🔍 Step 3: Verification..."
+echo "🔍 Final Step: Verification..."
 
 # Verify Firestore cleanup
 firebase firestore:delete --project "$PROJECT_ID" --shallow affirmation_audio --force 2>/dev/null || echo "✅ Firestore collection is now empty"
@@ -170,7 +226,15 @@ echo ""
 echo "🎉 Cleanup completed!"
 echo ""
 echo "📋 Summary:"
-echo "  ✅ Firestore: affirmation_audio collection cleaned"
+
+if [ "$CLEANUP_LEVEL" = "full" ]; then
+    echo "  ✅ Projects: All user projects deleted"
+    echo "  ✅ Groups: All user groups deleted"
+    echo "  ✅ Profiles: User profiles deleted"
+    echo "  ✅ Tracking: Usage tracking deleted"
+fi
+
+echo "  ✅ Audio: affirmation_audio collection cleaned"
 
 if [ "$GSUTIL_AVAILABLE" = true ] && [ "$BUCKET_FOUND" = true ]; then
     echo "  ✅ Storage: MP3 files cleaned via gsutil"
@@ -183,8 +247,14 @@ fi
 echo ""
 echo "📝 What's preserved:"
 echo "  ✅ User authentication data"
-echo "  ✅ Projects and affirmations"
-echo "  ✅ Groups and other user data"
+
+if [ "$CLEANUP_LEVEL" = "audio" ]; then
+    echo "  ✅ Projects and affirmations"
+    echo "  ✅ Groups and other user data"
+else
+    echo "  ⚠️  Projects and groups: DELETED"
+    echo "  ⚠️  User profiles: DELETED"
+fi
 echo ""
 echo "🔄 Next steps:"
 echo "  - Audio will be regenerated automatically when needed"
