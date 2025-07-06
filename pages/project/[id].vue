@@ -55,58 +55,118 @@
               ></div>
               
               <div
-                class="affirmation-item bg-pastel-dun border-2 border-pastel-cinereous rounded-lg p-4 flex items-center justify-between cursor-move transition-all duration-300 ease-out relative"
+                class="affirmation-item border-2 rounded-lg transition-all duration-300 ease-out relative"
                 :class="{ 
-                  'opacity-60': affirmation.isActive === false,
+                  'bg-gray-100 border-gray-300 opacity-70': affirmation.isActive === false,
+                  'bg-pastel-dun border-pastel-cinereous': affirmation.isActive !== false,
                   'dragging scale-105 shadow-xl bg-blue-50 border-blue-300': dragging === affirmation.id,
                   'hover:shadow-md hover:-translate-y-0.5': dragging !== affirmation.id && !generatingAudioIds.has(affirmation.id),
                   'pointer-events-none': generatingAudioIds.has(affirmation.id)
                 }"
-                :draggable="!generatingAudioIds.has(affirmation.id)"
-                @dragstart="handleDragStart($event, affirmation, index)"
-                @dragend="handleDragEnd"
-                @dragover.prevent="handleDragOver($event, index)"
-                @dragleave="handleDragLeave"
-                @drop.prevent="handleDrop($event, index)"
               >
-                <div class="flex items-center gap-3 flex-1">
-                  <!-- Drag handle -->
-                  <div class="cursor-move text-gray-400 hover:text-gray-600 mr-1">
-                    <GripVertical class="w-4 h-4" />
+                <!-- Main affirmation row -->
+                <div 
+                  class="p-4 flex items-center justify-between cursor-move"
+                  :draggable="!generatingAudioIds.has(affirmation.id)"
+                  @dragstart="handleDragStart($event, affirmation, index)"
+                  @dragend="handleDragEnd"
+                  @dragover.prevent="handleDragOver($event, index)"
+                  @dragleave="handleDragLeave"
+                  @drop.prevent="handleDrop($event, index)"
+                >
+                  <div class="flex items-center gap-3 flex-1">
+                    <!-- Menu toggle button -->
+                    <button
+                      @click.stop="toggleMenu(affirmation.id)"
+                      class="text-gray-400 hover:text-gray-600 p-1 transition-transform duration-200"
+                      :class="{ 'rotate-180': expandedMenus.has(affirmation.id) }"
+                      :disabled="generatingAudioIds.has(affirmation.id)"
+                    >
+                      <ChevronDown class="w-4 h-4" />
+                    </button>
+                    
+                    <!-- Drag handle -->
+                    <div class="cursor-move text-gray-400 hover:text-gray-600">
+                      <GripVertical class="w-4 h-4" />
+                    </div>
+                    
+                    <!-- Affirmation text -->
+                    <p 
+                      class="flex-1 transition-colors duration-200"
+                      :class="affirmation.isActive === false ? 'text-gray-400' : 'text-gray-800'"
+                    >
+                      {{ affirmation.text }}
+                    </p>
                   </div>
-                  <input
-                    type="checkbox"
-                    :checked="affirmation.isActive !== false"
-                    @change="toggleAffirmationActive(affirmation.id)"
-                    class="text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 focus:ring-2 flex-shrink-0"
-                    style="width: 20px; height: 20px; min-width: 20px; min-height: 20px;"
-                    :title="affirmation.isActive !== false ? $t('common.active') : $t('common.inactive')"
-                    :disabled="generatingAudioIds.has(affirmation.id)"
-                  />
-                  <p 
-                    class="text-gray-800"
-                    :class="{ 'line-through': affirmation.isActive === false }"
-                  >
-                    {{ affirmation.text }}
-                  </p>
                 </div>
-                <div class="flex items-center gap-2 ml-4">
-                  <button
-                    @click="editAffirmation(affirmation)"
-                    class="text-gray-500 hover:text-gray-700 p-1"
-                    :title="$t('common.edit')"
-                    :disabled="generatingAudioIds.has(affirmation.id)"
-                  >
-                    <Pencil class="w-5 h-5" />
-                  </button>
-                  <button
-                    @click="deleteAffirmation(affirmation.id)"
-                    class="text-red-500 hover:text-red-700 p-1"
-                    :title="$t('common.delete')"
-                    :disabled="generatingAudioIds.has(affirmation.id)"
-                  >
-                    <Trash2 class="w-5 h-5" />
-                  </button>
+
+                <!-- Expanded menu -->
+                <div 
+                  v-if="expandedMenus.has(affirmation.id)"
+                  class="border-t border-pastel-cinereous bg-pastel-khaki bg-opacity-30 p-4 space-y-3"
+                >
+                  <!-- Audio Info -->
+                  <div v-if="audioMetadata.has(affirmation.id)" class="bg-white bg-opacity-50 rounded-lg p-3 mb-3">
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-sm font-medium text-gray-700">{{ $t('project.audio_info') }}</span>
+                      <button
+                        @click="playAffirmationAudio(affirmation.id)"
+                        class="flex items-center gap-2 px-3 py-1 text-sm bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors"
+                        :disabled="playingAudio === affirmation.id || generatingAudioIds.has(affirmation.id)"
+                      >
+                        <Volume2 class="w-4 h-4" />
+                        {{ playingAudio === affirmation.id ? $t('project.playing') : $t('project.play_audio') }}
+                      </button>
+                    </div>
+                    <div class="text-xs text-gray-600">
+                      <div class="flex items-center justify-between">
+                        <span>{{ $t('project.voice_used') }}:</span>
+                        <span class="font-medium">{{ audioMetadata.get(affirmation.id)?.voiceName || audioMetadata.get(affirmation.id)?.voiceId }}</span>
+                      </div>
+                      <div class="flex items-center justify-between mt-1">
+                        <span>{{ $t('project.voice_type') }}:</span>
+                        <span class="font-medium capitalize">{{ audioMetadata.get(affirmation.id)?.voiceType }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Active/Inactive Switch -->
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700">{{ $t('project.affirmation_status') }}</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        :checked="affirmation.isActive !== false"
+                        @change="toggleAffirmationActive(affirmation.id)"
+                        class="sr-only peer"
+                        :disabled="generatingAudioIds.has(affirmation.id)"
+                      />
+                      <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                      <span class="ml-3 text-sm text-gray-700">
+                        {{ affirmation.isActive !== false ? $t('common.active') : $t('common.inactive') }}
+                      </span>
+                    </label>
+                  </div>
+
+                  <!-- Action buttons -->
+                  <div class="flex items-center gap-3">
+                    <button
+                      @click="editAffirmation(affirmation)"
+                      class="flex items-center gap-2 px-3 py-2 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors"
+                      :disabled="generatingAudioIds.has(affirmation.id)"
+                    >
+                      <Pencil class="w-4 h-4" />
+                      {{ $t('common.edit') }}
+                    </button>
+                    <button
+                      @click="deleteAffirmation(affirmation.id)"
+                      class="flex items-center gap-2 px-3 py-2 text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors"
+                      :disabled="generatingAudioIds.has(affirmation.id)"
+                    >
+                      <Trash2 class="w-4 h-4" />
+                      {{ $t('common.delete') }}
+                    </button>
+                  </div>
                 </div>
                 
                 <!-- Preloader overlay -->
@@ -345,7 +405,7 @@
 </template>
 
 <script setup>
-import { ArrowLeft, Pencil, Trash2, MessageSquare, Play, GripVertical } from 'lucide-vue-next'
+import { ArrowLeft, Pencil, Trash2, MessageSquare, Play, GripVertical, ChevronDown, Volume2 } from 'lucide-vue-next'
 import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 
 const { user, logout: authLogout } = useAuth()
@@ -355,6 +415,15 @@ const { getAvailableAiVoices, getLanguageMapping } = useTextToSpeech()
 
 // Stan generowania audio dla poszczególnych afirmacji
 const generatingAudioIds = ref(new Set())
+
+// Stan rozwijanego menu dla każdej afirmacji
+const expandedMenus = ref(new Set())
+
+// Stan metadanych audio dla afirmacji
+const audioMetadata = ref(new Map())
+
+// Stan odtwarzania audio
+const playingAudio = ref(null)
 
 const route = useRoute()
 const router = useRouter()
@@ -649,12 +718,15 @@ const saveAffirmation = async () => {
   let oldText = null
   
   if (editingAffirmation.value) {
+    // EDYCJA - zapisz stary tekst do usunięcia poprzedniego audio
     oldText = editingAffirmation.value.text
     affirmationId = editingAffirmation.value.id
     updatedAffirmations = project.value.affirmations.map(aff => 
       aff.id === editingAffirmation.value.id ? { ...aff, text: affirmationText.value.trim() } : aff
     )
+    console.log('📝 Editing affirmation:', { affirmationId, oldText, newText: affirmationText.value.trim() })
   } else {
+    // NOWA AFIRMACJA - oldText pozostaje null
     affirmationId = Date.now().toString()
     const newAffirmation = {
       id: affirmationId,
@@ -662,6 +734,7 @@ const saveAffirmation = async () => {
       createdAt: new Date().toISOString()
     }
     updatedAffirmations = [...(project.value.affirmations || []), newAffirmation]
+    console.log('➕ Adding new affirmation:', { affirmationId, text: affirmationText.value.trim() })
   }
   
   try {
@@ -727,6 +800,69 @@ const deleteAffirmation = async (affirmationId) => {
     saveProjectToLocalStorage(project.value)
   } catch (error) {
     alert(t('project.alerts.delete_affirmation_failed'))
+  }
+}
+
+const toggleMenu = async (affirmationId) => {
+  if (expandedMenus.value.has(affirmationId)) {
+    expandedMenus.value.delete(affirmationId)
+  } else {
+    expandedMenus.value.add(affirmationId)
+    
+    // Załaduj metadane audio gdy menu się otwiera
+    if (!audioMetadata.value.has(affirmationId)) {
+      await loadAudioMetadata(affirmationId)
+    }
+  }
+}
+
+const loadAudioMetadata = async (affirmationId) => {
+  try {
+    console.log('🔍 Loading audio metadata for affirmation:', affirmationId)
+    const { getAudioMetadata } = useAffirmationAudio()
+    const metadata = await getAudioMetadata(affirmationId)
+    
+    console.log('📊 Retrieved metadata:', metadata)
+    
+    if (metadata) {
+      audioMetadata.value.set(affirmationId, metadata)
+      console.log('✅ Metadata stored for affirmation:', affirmationId)
+    } else {
+      console.log('⚠️ No metadata found for affirmation:', affirmationId)
+    }
+  } catch (error) {
+    console.error('❌ Error loading audio metadata:', error)
+  }
+}
+
+const playAffirmationAudio = async (affirmationId) => {
+  try {
+    playingAudio.value = affirmationId
+    
+    // Użyj URL z metadanych zamiast getAudioUrl
+    const metadata = audioMetadata.value.get(affirmationId)
+    if (!metadata || !metadata.downloadUrl) {
+      throw new Error('No audio URL available in metadata')
+    }
+    
+    console.log('🎵 Playing audio from URL:', metadata.downloadUrl)
+    
+    // Odtwórz bezpośrednio z URL
+    const audio = new Audio(metadata.downloadUrl)
+    audio.volume = 0.8
+    audio.playbackRate = 1.0
+    
+    await new Promise((resolve, reject) => {
+      audio.onended = resolve
+      audio.onerror = reject
+      audio.play().catch(reject)
+    })
+    
+    playingAudio.value = null
+  } catch (error) {
+    console.error('Error playing audio:', error)
+    playingAudio.value = null
+    // Opcjonalnie pokaż komunikat o błędzie
   }
 }
 

@@ -8,6 +8,7 @@ import {
   where, 
   getDocs 
 } from 'firebase/firestore'
+import { ref as storageRef, deleteObject } from 'firebase/storage'
 
 export const useAffirmationAudio = () => {
   const { $firebase } = useNuxtApp()
@@ -31,8 +32,10 @@ export const useAffirmationAudio = () => {
     error.value = null
     
     try {
-      // Sprawdź czy audio już istnieje i usuń
+      // ZAWSZE usuń stare audio przed generowaniem nowego
+      console.log('🧹 Pre-generation cleanup for affirmation:', affirmationId)
       await deleteAudio(affirmationId)
+      console.log('✅ Pre-generation cleanup completed for:', affirmationId)
       
       // Generuj audio przez Google TTS
       const response = await $fetch('/api/tts', {
@@ -63,7 +66,8 @@ export const useAffirmationAudio = () => {
           audioContent: response.audioContent,
           userId: user.value.uid,
           voiceId: voiceId,
-          characterCount: text.length
+          characterCount: text.length,
+          affirmationText: text.trim() // Dodaj tekst afirmacji
         })
       })
       
@@ -130,13 +134,73 @@ export const useAffirmationAudio = () => {
     const url = await getAudioUrl(affirmationId)
     return !!url
   }
+
+  // Pobierz metadane audio (głos, tekst, etc.)
+  const getAudioMetadata = async (affirmationId, userOverride = null) => {
+    const activeUser = userOverride || user.value
+    
+    console.log('🔍 getAudioMetadata called for:', { affirmationId, userId: activeUser?.uid, hasUser: !!activeUser })
+    
+    // Poczekaj na user jeśli nie jest dostępny
+    if (!activeUser && !userOverride) {
+      console.log('⏳ Waiting for user to be available...')
+      await new Promise(resolve => setTimeout(resolve, 100))
+      const retryUser = user.value
+      if (!retryUser) {
+        console.log('❌ User still not available after retry')
+        return null
+      }
+      console.log('✅ User now available:', retryUser.uid)
+      return getAudioMetadata(affirmationId, retryUser)
+    }
+    
+    if (!activeUser || !$firebase.db) {
+      console.log('❌ Missing user or firebase:', { hasUser: !!activeUser, hasDb: !!$firebase.db })
+      return null
+    }
+    
+    try {
+      console.log('📡 Fetching audio document from Firestore...')
+      const audioDoc = await getDoc(doc($firebase.db, 'affirmation_audio', affirmationId))
+      
+      if (audioDoc.exists()) {
+        const data = audioDoc.data()
+        console.log('📄 Audio document found:', data)
+        
+        if (data.user_id === activeUser.uid) {
+          const metadata = {
+            voiceId: data.voice_id,
+            voiceName: data.voice_name,
+            voiceType: data.voice_type,
+            affirmationText: data.affirmation_text,
+            createdAt: data.created_at,
+            downloadUrl: data.download_url
+          }
+          console.log('✅ Returning metadata:', metadata)
+          return metadata
+        } else {
+          console.log('⚠️ User ID mismatch:', { docUserId: data.user_id, currentUserId: activeUser.uid })
+        }
+      } else {
+        console.log('⚠️ Audio document does not exist for affirmation:', affirmationId)
+      }
+      
+      return null
+    } catch (err) {
+      console.error('❌ Error getting audio metadata:', err)
+      return null
+    }
+  }
   
   // Odtwórz audio afirmacji
   const playAudio = async (affirmationId, options = {}, userOverride = null) => {
+    console.log('🎵 playAudio called for:', affirmationId)
     const audioUrl = await getAudioUrl(affirmationId, userOverride)
     
+    console.log('🔗 Audio URL retrieved:', audioUrl)
+    
     if (!audioUrl) {
-      console.error('No audio URL found for affirmation:', affirmationId)
+      console.error('❌ No audio URL found for affirmation:', affirmationId)
       throw new Error('No audio available for this affirmation')
     }
     
@@ -187,11 +251,14 @@ export const useAffirmationAudio = () => {
     if (!user.value || !$firebase.db || !$firebase.storage) return
     
     try {
-      // Pobierz informacje o audio
+      console.log('🗑️ Attempting to delete audio for affirmation:', affirmationId)
+      
+      // Pobierz informacje o audio z Firestore
       const audioDoc = await getDoc(doc($firebase.db, 'affirmation_audio', affirmationId))
       
       if (audioDoc.exists()) {
         const data = audioDoc.data()
+        console.log('📄 Found audio document:', { filename: data.filename, userId: data.user_id })
         
         // Sprawdź czy należy do użytkownika
         if (data.user_id === user.value.uid) {
@@ -199,18 +266,54 @@ export const useAffirmationAudio = () => {
           try {
             const audioRef = storageRef($firebase.storage, `audio/${user.value.uid}/${data.filename}`)
             await deleteObject(audioRef)
-            console.log('Deleted audio file from storage:', data.filename)
+            console.log('✅ Deleted audio file from storage:', data.filename)
           } catch (storageError) {
-            console.warn('Could not delete audio file from storage:', storageError)
+            console.warn('⚠️ Could not delete audio file from storage:', storageError.message)
+            // Kontynuuj mimo błędu storage - usuń przynajmniej metadata
           }
           
           // Usuń dokument z Firestore
           await deleteDoc(doc($firebase.db, 'affirmation_audio', affirmationId))
-          console.log('Deleted audio metadata for affirmation:', affirmationId)
+          console.log('✅ Deleted audio metadata for affirmation:', affirmationId)
+        } else {
+          console.warn('⚠️ User ID mismatch - cannot delete audio:', { 
+            docUserId: data.user_id, 
+            currentUserId: user.value.uid 
+          })
         }
+      } else {
+        console.log('ℹ️ No audio document found for affirmation:', affirmationId)
       }
+      
+      // DODATKOWE CZYSZCZENIE: Usuń wszystkie pliki z Storage które zaczynają się od affirmationId
+      // To pomoże usunąć stare pliki które mogły zostać w Storage
+      try {
+        console.log('🧹 Additional cleanup - checking for orphaned files for:', affirmationId)
+        
+        // Nie możemy listować plików z client-side Firebase Storage ze względów bezpieczeństwa
+        // Ale możemy spróbować usunąć typowe nazwy plików które mogły zostać
+        const possibleTimestamps = [
+          Date.now() - 86400000, // 24h temu
+          Date.now() - 3600000,  // 1h temu  
+          Date.now() - 600000,   // 10min temu
+        ]
+        
+        for (const timestamp of possibleTimestamps) {
+          try {
+            const possibleFilename = `${affirmationId}_${timestamp}.mp3`
+            const possibleRef = storageRef($firebase.storage, `audio/${user.value.uid}/${possibleFilename}`)
+            await deleteObject(possibleRef)
+            console.log('🧹 Deleted orphaned file:', possibleFilename)
+          } catch (e) {
+            // Ignoruj błędy - plik prawdopodobnie nie istnieje
+          }
+        }
+      } catch (cleanupError) {
+        console.warn('⚠️ Additional cleanup failed:', cleanupError.message)
+      }
+      
     } catch (err) {
-      console.error('Error deleting audio:', err)
+      console.error('❌ Error deleting audio:', err)
       // Nie rzucamy błędu, bo to może być wywoływane automatycznie
     }
   }
@@ -222,23 +325,38 @@ export const useAffirmationAudio = () => {
       return
     }
     
-    // Jeśli tekst się nie zmienił, nie generuj ponownie
-    if (oldText && text.trim() === oldText.trim()) {
-      return
-    }
-    
     try {
-      // Usuń stare audio jeśli istnieje
-      if (oldText && oldText.trim()) {
+      console.log('🔄 autoGenerateAudio started:', { 
+        affirmationId, 
+        textLength: text?.length, 
+        hasOldText: oldText !== null,
+        textChanged: oldText ? text.trim() !== oldText.trim() : 'new'
+      })
+      
+      // ZAWSZE usuń stare audio przy edycji (gdy oldText istnieje)
+      // lub gdy generujemy nowe audio dla istniejącej afirmacji
+      if (oldText !== null) {
+        console.log('🗑️ Pre-edit cleanup - deleting old audio for affirmation:', affirmationId)
         await deleteAudio(affirmationId)
+        console.log('✅ Pre-edit cleanup completed for:', affirmationId)
+        
+        // Dodaj małe opóźnienie aby upewnić się, że usunięcie zostało przetworzone
+        await new Promise(resolve => setTimeout(resolve, 500))
+        console.log('⏱️ Cleanup delay completed for:', affirmationId)
       }
       
-      // Generuj nowe audio
-      if (text && text.trim()) {
+      // Generuj nowe audio tylko jeśli tekst się zmienił lub to nowa afirmacja
+      if (text && text.trim() && (!oldText || text.trim() !== oldText.trim())) {
+        console.log('🎵 Generating new audio for affirmation:', affirmationId)
         await generateAudio(affirmationId, text, voiceId)
+        console.log('✅ New audio generation completed for:', affirmationId)
+      } else if (oldText && text.trim() === oldText.trim()) {
+        console.log('📝 Text unchanged, skipping audio generation for:', affirmationId)
       }
+      
+      console.log('🏁 autoGenerateAudio finished successfully for:', affirmationId)
     } catch (err) {
-      console.error('Auto-generate audio failed:', err)
+      console.error('❌ Auto-generate audio failed for:', affirmationId, err)
       // Nie blokujemy UI, tylko logujemy błąd
     }
   }
@@ -251,6 +369,7 @@ export const useAffirmationAudio = () => {
     // Methods
     generateAudio,
     getAudioUrl,
+    getAudioMetadata,
     hasAudio,
     playAudio,
     deleteAudio,

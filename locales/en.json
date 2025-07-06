@@ -220,9 +220,15 @@
       "new_affirmation": "New affirmation",
       "affirmation_placeholder": "Enter affirmation text..."
     },
+    "generating_audio": "Generating audio...",
+    "affirmation_status": "Affirmation status",
+    "audio_info": "Audio information",
+    "voice_used": "Voice used",
+    "voice_type": "Voice type",
+    "play_audio": "Play",
+    "playing": "Playing...",
     "alerts": {
       "save_affirmation_failed": "Failed to save affirmation",
-      "generating_audio": "Generating audio...",
       "confirm_delete_affirmation": "Are you sure you want to delete this affirmation?",
       "delete_affirmation_failed": "Failed to delete affirmation"
     },

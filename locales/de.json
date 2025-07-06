@@ -223,6 +223,12 @@
     "alerts": {
       "save_affirmation_failed": "Affirmation speichern fehlgeschlagen",
       "generating_audio": "Audio wird generiert...",
+      "affirmation_status": "Affirmation Status",
+      "audio_info": "Audio Informationen",
+      "voice_used": "Verwendete Stimme",
+      "voice_type": "Stimmentyp",
+      "play_audio": "Abspielen",
+      "playing": "Wird abgespielt...",
       "confirm_delete_affirmation": "Sind Sie sicher, dass Sie diese Affirmation löschen möchten?",
       "delete_affirmation_failed": "Affirmation löschen fehlgeschlagen"
     },

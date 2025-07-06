@@ -244,9 +244,15 @@
       "new_affirmation": "Nowa afirmacja",
       "affirmation_placeholder": "Wpisz treść afirmacji..."
     },
+    "generating_audio": "Generowanie audio...",
+    "affirmation_status": "Status afirmacji",
+    "audio_info": "Informacje o nagraniu",
+    "voice_used": "Użyty głos",
+    "voice_type": "Typ głosu",
+    "play_audio": "Odtwórz",
+    "playing": "Odtwarzanie...",
     "alerts": {
       "save_affirmation_failed": "Nie udało się zapisać afirmacji",
-      "generating_audio": "Generowanie audio...",
       "confirm_delete_affirmation": "Czy na pewno chcesz usunąć tę afirmację?",
       "delete_affirmation_failed": "Nie udało się usunąć afirmacji"
     },
