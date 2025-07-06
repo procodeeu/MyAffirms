@@ -247,8 +247,10 @@ export const useAffirmationAudio = () => {
   }
   
   // Usuń audio dla afirmacji (gdy text się zmienia)
-  const deleteAudio = async (affirmationId) => {
-    if (!user.value || !$firebase.db || !$firebase.storage) return
+  const deleteAudio = async (affirmationId, userOverride = null) => {
+    const activeUser = userOverride || user.value
+    
+    if (!activeUser || !$firebase.db || !$firebase.storage) return
     
     try {
       console.log('🗑️ Attempting to delete audio for affirmation:', affirmationId)
@@ -261,14 +263,18 @@ export const useAffirmationAudio = () => {
         console.log('📄 Found audio document:', { filename: data.filename, userId: data.user_id })
         
         // Sprawdź czy należy do użytkownika
-        if (data.user_id === user.value.uid) {
+        if (data.user_id === activeUser.uid) {
           // Usuń plik z Firebase Storage
           try {
-            const audioRef = storageRef($firebase.storage, `audio/${user.value.uid}/${data.filename}`)
+            const audioRef = storageRef($firebase.storage, `audio/${activeUser.uid}/${data.filename}`)
             await deleteObject(audioRef)
             console.log('✅ Deleted audio file from storage:', data.filename)
           } catch (storageError) {
-            console.warn('⚠️ Could not delete audio file from storage:', storageError.message)
+            if (storageError.code === 'storage/object-not-found') {
+              console.log('ℹ️ Audio file already deleted from storage:', data.filename)
+            } else {
+              console.warn('⚠️ Could not delete audio file from storage:', storageError.message)
+            }
             // Kontynuuj mimo błędu storage - usuń przynajmniej metadata
           }
           
@@ -278,39 +284,16 @@ export const useAffirmationAudio = () => {
         } else {
           console.warn('⚠️ User ID mismatch - cannot delete audio:', { 
             docUserId: data.user_id, 
-            currentUserId: user.value.uid 
+            currentUserId: activeUser.uid 
           })
         }
       } else {
         console.log('ℹ️ No audio document found for affirmation:', affirmationId)
       }
       
-      // DODATKOWE CZYSZCZENIE: Usuń wszystkie pliki z Storage które zaczynają się od affirmationId
-      // To pomoże usunąć stare pliki które mogły zostać w Storage
-      try {
-        console.log('🧹 Additional cleanup - checking for orphaned files for:', affirmationId)
-        
-        // Nie możemy listować plików z client-side Firebase Storage ze względów bezpieczeństwa
-        // Ale możemy spróbować usunąć typowe nazwy plików które mogły zostać
-        const possibleTimestamps = [
-          Date.now() - 86400000, // 24h temu
-          Date.now() - 3600000,  // 1h temu  
-          Date.now() - 600000,   // 10min temu
-        ]
-        
-        for (const timestamp of possibleTimestamps) {
-          try {
-            const possibleFilename = `${affirmationId}_${timestamp}.mp3`
-            const possibleRef = storageRef($firebase.storage, `audio/${user.value.uid}/${possibleFilename}`)
-            await deleteObject(possibleRef)
-            console.log('🧹 Deleted orphaned file:', possibleFilename)
-          } catch (e) {
-            // Ignoruj błędy - plik prawdopodobnie nie istnieje
-          }
-        }
-      } catch (cleanupError) {
-        console.warn('⚠️ Additional cleanup failed:', cleanupError.message)
-      }
+      // Note: Orphaned file cleanup removed to prevent unnecessary 404 errors
+      // The main deletion logic above should handle all cases properly
+      // If orphaned files become an issue, consider implementing server-side cleanup
       
     } catch (err) {
       console.error('❌ Error deleting audio:', err)
@@ -318,6 +301,47 @@ export const useAffirmationAudio = () => {
     }
   }
   
+  // Usuń wszystkie audio dla projektu (przy usuwaniu projektu)
+  const deleteAllProjectAudio = async (projectAffirmations, userOverride = null) => {
+    const activeUser = userOverride || user.value
+    
+    if (!activeUser || !$firebase.db || !$firebase.storage) {
+      console.log('⚠️ Missing user or firebase for project audio cleanup', {
+        hasUser: !!activeUser,
+        hasDb: !!$firebase.db,
+        hasStorage: !!$firebase.storage
+      })
+      return
+    }
+    
+    if (!projectAffirmations || projectAffirmations.length === 0) {
+      console.log('ℹ️ No affirmations to clean up')
+      return
+    }
+    
+    console.log('🧹 Starting cleanup of all project audio...', { count: projectAffirmations.length })
+    
+    let deletedCount = 0
+    let errorCount = 0
+    
+    for (const affirmation of projectAffirmations) {
+      try {
+        console.log(`🗑️ Deleting audio for affirmation: ${affirmation.id}`)
+        await deleteAudio(affirmation.id, activeUser)
+        deletedCount++
+      } catch (error) {
+        console.error(`❌ Failed to delete audio for affirmation ${affirmation.id}:`, error)
+        errorCount++
+      }
+    }
+    
+    console.log(`✅ Project audio cleanup completed:`, { 
+      total: projectAffirmations.length,
+      deleted: deletedCount, 
+      errors: errorCount 
+    })
+  }
+
   // Auto-generuj audio gdy afirmacja się zmienia
   const autoGenerateAudio = async (affirmationId, text, voiceId, oldText = null) => {
     
@@ -373,6 +397,7 @@ export const useAffirmationAudio = () => {
     hasAudio,
     playAudio,
     deleteAudio,
+    deleteAllProjectAudio,
     autoGenerateAudio
   }
 }

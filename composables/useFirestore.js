@@ -102,8 +102,31 @@ export const useFirestore = () => {
   const deleteProject = async (projectId) => {
     if (!user.value) throw new Error('User not authenticated')
     
-    const projectRef = doc($firebase.db, 'projects', projectId)
-    await deleteDoc(projectRef)
+    try {
+      console.log('Starting project deletion:', projectId)
+      
+      // Pobierz projekt aby uzyskac afirmacje
+      const projects = await getUserProjects()
+      const project = projects.find(p => p.id === projectId)
+      
+      if (project && project.affirmations && project.affirmations.length > 0) {
+        console.log(`Found ${project.affirmations.length} affirmations to clean up`)
+        
+        // Usun wszystkie audio zwiazane z projektem
+        // Przekaz user explicite aby uniknac problemow z dostepem
+        const { deleteAllProjectAudio } = useAffirmationAudio()
+        await deleteAllProjectAudio(project.affirmations, user.value)
+      }
+      
+      // Usun projekt z Firestore
+      const projectRef = doc($firebase.db, 'projects', projectId)
+      await deleteDoc(projectRef)
+      
+      console.log('Project deletion completed:', projectId)
+    } catch (error) {
+      console.error('Error during project deletion:', error)
+      throw error
+    }
   }
 
   const addAffirmationToProject = async (projectId, affirmation) => {
