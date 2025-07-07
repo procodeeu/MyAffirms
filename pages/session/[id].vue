@@ -336,39 +336,22 @@ const playCurrentAffirmation = async () => {
     const shouldUseSentencePause = sentencePause > 0 && hasMultipleSentences
     const voiceId = getAppropriateVoiceId(settings)
     
-    if (hasMultipleSentences) {
-      // Dla wielozdaniowych afirmacji - zawsze używaj audio zdań (z pauzami lub bez)
-      await playAffirmationWithSentencePauses(currentAffirmation.value, {
-        speechRate,
-        sentencePause: shouldUseSentencePause ? sentencePause : 0, // Pauza 0 = brak przerw
-        voiceId
-      })
-    } else {
-      // Dla pojedynczych zdań - użyj głównego audio
-      const { playAudio } = useAffirmationAudio()
-      await playAudio(currentAffirmation.value.id, {
-        playbackRate: speechRate,
-        volume: 1.0
-      }, user.value)
-    }
+    // Zawsze używaj audio zdań (dla konsystencji)
+    await playAffirmationWithSentencePauses(currentAffirmation.value, {
+      speechRate,
+      sentencePause: shouldUseSentencePause ? sentencePause : 0, // Pauza 0 = brak przerw
+      voiceId
+    })
     
     if (repeatAffirmation && isPlaying.value) {
       sessionTimeout.value = setTimeout(async () => {
         if (isPlaying.value) {
-          // Użyj tej samej logiki co przy pierwszym odtwarzaniu
-          if (hasMultipleSentences) {
-            await playAffirmationWithSentencePauses(currentAffirmation.value, {
-              speechRate,
-              sentencePause: shouldUseSentencePause ? sentencePause : 0,
-              voiceId
-            })
-          } else {
-            const { playAudio } = useAffirmationAudio()
-            await playAudio(currentAffirmation.value.id, {
-              playbackRate: speechRate,
-              volume: 1.0
-            }, user.value)
-          }
+          // Użyj tej samej logiki co przy pierwszym odtwarzaniu - zawsze audio zdań
+          await playAffirmationWithSentencePauses(currentAffirmation.value, {
+            speechRate,
+            sentencePause: shouldUseSentencePause ? sentencePause : 0,
+            voiceId
+          })
           scheduleNextAffirmation(pauseDuration)
         }
       }, repeatDelay * 1000)

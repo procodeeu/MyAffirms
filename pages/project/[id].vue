@@ -434,15 +434,10 @@ const { getAvailableAiVoices, getLanguageMapping } = useTextToSpeech()
 const generateSentenceAudio = async (affirmationId, text, voiceId) => {
   const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0)
   
-  // Generuj audio tylko jeśli afirmacja ma więcej niż jedno zdanie
-  if (sentences.length <= 1) {
-    console.log('ℹ️ Single sentence affirmation, skipping sentence audio generation')
-    return
-  }
-  
   console.log(`🎵 Generating audio for ${sentences.length} sentences of affirmation:`, affirmationId)
   
   const { autoGenerateAudio } = useAffirmationAudio()
+  const sentenceIds = []
   
   for (let i = 0; i < sentences.length; i++) {
     const sentence = sentences[i].trim()
@@ -454,6 +449,7 @@ const generateSentenceAudio = async (affirmationId, text, voiceId) => {
         console.log(`🎵 Generating audio for sentence ${i + 1}/${sentences.length}:`, sentenceText)
         await autoGenerateAudio(sentenceId, sentenceText, voiceId)
         console.log(`✅ Sentence ${i + 1} audio generated:`, sentenceId)
+        sentenceIds.push(sentenceId)
       } catch (error) {
         console.error(`❌ Failed to generate audio for sentence ${i + 1}:`, error)
         // Kontynuuj z następnym zdaniem mimo błędu
@@ -462,6 +458,7 @@ const generateSentenceAudio = async (affirmationId, text, voiceId) => {
   }
   
   console.log('🏁 All sentence audio generation completed for:', affirmationId)
+  return sentenceIds
 }
 
 // Stan generowania audio dla poszczególnych afirmacji
@@ -628,16 +625,22 @@ const generateMissingAudio = async () => {
             const sentences = affirmation.text.split(/[.!?]+/).filter(s => s.trim().length > 0)
             const hasMultipleSentences = sentences.length > 1
             
-            if (hasMultipleSentences) {
-              // Dla wielozdaniowych afirmacji - generuj tylko audio zdań
-              console.log(`🎵 Multi-sentence affirmation detected (${sentences.length} sentences) - generating sentence audio only`)
-              await generateSentenceAudio(affirmation.id, affirmation.text, currentVoiceId)
-              console.log('✅ Generated sentence audio for:', affirmation.id)
-            } else {
-              // Dla pojedynczych zdań - generuj główne audio
-              console.log('🎵 Single sentence affirmation - generating main audio')
-              await autoGenerateAudio(affirmation.id, affirmation.text, currentVoiceId)
-              console.log('✅ Generated main audio for:', affirmation.id)
+            // Zawsze generuj audio zdań (dla konsystencji)
+            console.log(`🎵 Generating sentence audio for ${sentences.length} sentences:`, affirmation.id)
+            const sentenceIds = await generateSentenceAudio(affirmation.id, affirmation.text, currentVoiceId)
+            console.log('✅ Generated sentence audio for:', affirmation.id)
+            
+            // Zaktualizuj afirmację z identyfikatorami zdań
+            if (sentenceIds && sentenceIds.length > 0) {
+              const updatedAffirmations = project.value.affirmations.map(aff => 
+                aff.id === affirmation.id 
+                  ? { ...aff, sentenceIds: sentenceIds, sentenceCount: sentences.length }
+                  : aff
+              )
+              project.value.affirmations = updatedAffirmations
+              await updateProject(projectId, { affirmations: updatedAffirmations })
+              saveProjectToLocalStorage(project.value)
+              console.log('✅ Updated affirmation with sentence IDs:', { affirmationId: affirmation.id, sentenceIds })
             }
             
           } catch (error) {
@@ -877,16 +880,22 @@ const saveAffirmation = async () => {
         const sentences = textToGenerate.split(/[.!?]+/).filter(s => s.trim().length > 0)
         const hasMultipleSentences = sentences.length > 1
         
-        if (hasMultipleSentences) {
-          // Dla wielozdaniowych afirmacji - generuj tylko audio zdań
-          console.log(`🎵 Multi-sentence affirmation detected (${sentences.length} sentences) - generating sentence audio only`)
-          await generateSentenceAudio(affirmationId, textToGenerate, currentVoiceId)
-          console.log('✅ Sentence audio generation completed for:', affirmationId)
-        } else {
-          // Dla pojedynczych zdań - generuj główne audio
-          console.log('🎵 Single sentence affirmation - generating main audio')
-          await autoGenerateAudio(affirmationId, textToGenerate, currentVoiceId, oldText)
-          console.log('✅ Main audio generation completed for:', affirmationId)
+        // Zawsze generuj audio zdań (dla konsystencji)
+        console.log(`🎵 Generating sentence audio for ${sentences.length} sentences:`, affirmationId)
+        const sentenceIds = await generateSentenceAudio(affirmationId, textToGenerate, currentVoiceId)
+        console.log('✅ Sentence audio generation completed for:', affirmationId)
+        
+        // Zaktualizuj afirmację w projekcie z identyfikatorami zdań
+        if (sentenceIds && sentenceIds.length > 0) {
+          const updatedAffirmations = project.value.affirmations.map(aff => 
+            aff.id === affirmationId 
+              ? { ...aff, sentenceIds: sentenceIds, sentenceCount: sentences.length }
+              : aff
+          )
+          project.value.affirmations = updatedAffirmations
+          await updateProject(projectId, { affirmations: updatedAffirmations })
+          saveProjectToLocalStorage(project.value)
+          console.log('✅ Updated affirmation with sentence IDs:', { affirmationId, sentenceIds })
         }
         
       } catch (error) {
@@ -913,12 +922,25 @@ const editAffirmation = (affirmation) => {
 const deleteAffirmation = async (affirmationId) => {
   if (!confirm(t('project.alerts.confirm_delete_affirmation'))) return
   
+  // Znajdź afirmację do usunięcia (żeby pobrać sentenceIds)
+  const affirmationToDelete = project.value.affirmations.find(aff => aff.id === affirmationId)
   const updatedAffirmations = project.value.affirmations.filter(aff => aff.id !== affirmationId)
   
   try {
-    // Usuń audio dla afirmacji
-    const { deleteAudio } = useAffirmationAudio()
+    // Usuń audio dla afirmacji (przekaż sentenceIds jeśli istnieją)
+    const { deleteAudio, deleteSentenceAudio } = useAffirmationAudio()
+    
+    // Usuń główne audio
     await deleteAudio(affirmationId)
+    
+    // Usuń audio zdań używając przechowywanych identyfikatorów
+    if (affirmationToDelete?.sentenceIds) {
+      console.log('🗑️ Deleting sentence audio using stored IDs:', affirmationToDelete.sentenceIds)
+      await deleteSentenceAudio(affirmationId, null, affirmationToDelete.sentenceIds)
+    } else {
+      console.log('🗑️ No stored sentence IDs, using fallback cleanup')
+      await deleteSentenceAudio(affirmationId)
+    }
     
     await updateProject(projectId, { affirmations: updatedAffirmations })
     project.value.affirmations = updatedAffirmations
