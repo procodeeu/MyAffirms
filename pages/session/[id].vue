@@ -98,29 +98,29 @@ import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 const { user, logout: authLogout } = useAuth()
 const { t, locale } = useI18n()
 const { getUserProjects } = useFirestore()
-const { speak, stop, isSpeaking, getLanguageMapping, getAvailableAiVoices } = useTextToSpeech()
-const { play: playBackgroundMusic, stop: stopBackgroundMusic, fadeOut: fadeOutBackgroundMusic, setVolume: setMusicVolume } = useBackgroundMusic()
-const audioManager = useAudioManager()
+const sessionAudioManager = useSessionAudioManager()
 
 const route = useRoute()
 const router = useRouter()
 const projectId = route.params.id
 
 const project = ref(null)
-const isPlaying = ref(false)
-const isFinished = ref(false)
-const currentIndex = ref(0)
-const currentAffirmation = ref(null)
-const sessionTimeout = ref(null)
+
+// Use session audio manager state
+const { 
+  isPlaying, 
+  isFinished, 
+  currentAffirmation, 
+  currentIndex, 
+  progress,
+  startSession: startAudioSession,
+  stopSession: stopAudioSession,
+  nextAffirmation: nextAudioAffirmation
+} = sessionAudioManager
 
 const activeAffirmations = computed(() => {
   if (!project.value || !project.value.affirmations) return []
   return project.value.affirmations.filter(a => a.isActive !== false)
-})
-
-const progress = computed(() => {
-  if (!isPlaying.value || activeAffirmations.value.length === 0) return 0
-  return ((currentIndex.value + 1) / activeAffirmations.value.length) * 100
 })
 
 const loadProject = async () => {
@@ -169,14 +169,8 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  stop()
-  
-  // Stop background music when component unmounts
-  stopBackgroundMusic()
-  
-  if (sessionTimeout.value) {
-    clearTimeout(sessionTimeout.value)
-  }
+  // Session audio manager handles cleanup automatically
+  sessionAudioManager.cleanup()
 })
 
 const getProjectFromLocalStorage = (id) => {
@@ -204,240 +198,30 @@ const getProjectFromLocalStorage = (id) => {
 const startSession = async () => {
   if (activeAffirmations.value.length === 0) return
   
-  isFinished.value = false
-  isPlaying.value = true
-  currentIndex.value = 0
-  
-  // Start background music if enabled
   const settings = project.value?.sessionSettings || {}
-  if (settings.backgroundMusic) {
-    const musicVolume = settings.musicVolume || 0.15
-    const musicType = settings.musicType || 'birds'
-    
-    // Use async/await for audio file loading
-    try {
-      await playBackgroundMusic(musicVolume, musicType)
-    } catch (error) {
-      console.error('Failed to start background music:', error)
-    }
-  }
-  
-  playCurrentAffirmation()
-}
-
-const getAppropriateVoiceId = (sessionSettings = {}) => {
-  const currentLanguage = getLanguageMapping(locale.value)
-  const voices = getAvailableAiVoices(currentLanguage)
-  
-  // Check if saved voice is for current language
-  const savedVoiceId = sessionSettings.voiceId
-  if (savedVoiceId && savedVoiceId.startsWith(currentLanguage)) {
-    return savedVoiceId
-  }
-  
-  // Check if we have a saved voice for current language in voicesByLanguage
-  const savedByLanguage = sessionSettings.voicesByLanguage?.[currentLanguage]
-  if (savedByLanguage && voices.find(v => v.id === savedByLanguage)) {
-    return savedByLanguage
-  }
-  
-  // Fallback to default voice for current language
-  if (voices.length > 0) {
-    const defaultVoice = voices.find(v => v.gender === 'female') || voices[0]
-    return defaultVoice.id
-  }
-  
-  return 'pl-PL-ZofiaNeural'
-}
-
-// Funkcja do odtwarzania afirmacji z pauzami między zdaniami używając premium głosu
-const playAffirmationWithSentencePauses = async (affirmation, options) => {
-  const { speechRate, sentencePause, voiceId } = options
-  const sentences = affirmation.text.split(/[.!?]+/).filter(s => s.trim().length > 0)
-  
-  const { autoGenerateAudio, playAudio, deleteSentenceAudio } = useAffirmationAudio()
-  
-  // Dla wielozdaniowych afirmacji używamy tylko pre-generowanych audio zdań
-  
-  for (let i = 0; i < sentences.length; i++) {
-    if (!isPlaying.value) break // Sprawdź czy sesja nie została zatrzymana
-    
-    const sentence = sentences[i].trim()
-    if (sentence) {
-      // Utwórz tymczasowe ID dla zdania
-      const sentenceId = `${affirmation.id}_sentence_${i}`
-      const sentenceText = sentence + (sentence.match(/[.!?]$/) ? '' : '.')
-      
-      try {
-        // Odtwórz pre-generowane audio dla zdania
-        await playAudio(sentenceId, {
-          playbackRate: speechRate,
-          volume: 1.0
-        }, user.value)
-      } catch (error) {
-        // Fallback do TTS jeśli brak pre-generowanego audio
-        console.warn(`Missing pre-generated audio for sentence: "${sentenceText}" - using TTS fallback`)
-        await speak(sentenceText, { 
-          rate: speechRate, 
-          voiceId: voiceId
-        })
-      }
-      
-      // Dodaj pauzę między zdaniami (oprócz ostatniego) - tylko jeśli sentencePause > 0
-      if (i < sentences.length - 1 && isPlaying.value && sentencePause > 0) {
-        await new Promise(resolve => {
-          const pauseTimeout = setTimeout(resolve, sentencePause * 1000)
-          // Sprawdzaj co 100ms czy sesja nie została zatrzymana
-          const checkInterval = setInterval(() => {
-            if (!isPlaying.value) {
-              clearTimeout(pauseTimeout)
-              clearInterval(checkInterval)
-              resolve()
-            }
-          }, 100)
-          
-          setTimeout(() => clearInterval(checkInterval), sentencePause * 1000)
-        })
-      }
-    }
-  }
-}
-
-const playCurrentAffirmation = async () => {
-  if (!isPlaying.value) return
-  
-  currentAffirmation.value = activeAffirmations.value[currentIndex.value]
-  
-  const settings = project.value?.sessionSettings || {}
-  const { speechRate = 1.0, pauseDuration = 3, sentencePause = 4, repeatAffirmation = false, repeatDelay = 5 } = settings
   
   try {
-    // Poczekaj na załadowanie user jeśli nie jest jeszcze dostępny
-    if (!user.value) {
-      await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          unwatch()
-          reject(new Error('User loading timeout'))
-        }, 5000) // 5s timeout
-        
-        const unwatch = watch(user, (newUser) => {
-          if (newUser) {
-            clearTimeout(timeout)
-            unwatch()
-            resolve()
-          }
-        })
-      })
-    }
-    
-    // Sprawdź czy tekst ma wiele zdań i czy pauza jest włączona
-    const sentences = currentAffirmation.value.text.split(/[.!?]+/).filter(s => s.trim().length > 0)
-    const hasMultipleSentences = sentences.length > 1
-    const shouldUseSentencePause = sentencePause > 0 && hasMultipleSentences
-    const voiceId = getAppropriateVoiceId(settings)
-    
-    // Użyj Audio Manager do odtwarzania
-    await audioManager.playAffirmation(currentAffirmation.value, {
-      speechRate,
-      sentencePause: shouldUseSentencePause ? sentencePause : 0,
-      voiceId
-    })
-    
-    if (repeatAffirmation && isPlaying.value) {
-      sessionTimeout.value = setTimeout(async () => {
-        if (isPlaying.value) {
-          // Użyj Audio Manager do powtarzania
-          await audioManager.playAffirmation(currentAffirmation.value, {
-            speechRate,
-            sentencePause: shouldUseSentencePause ? sentencePause : 0,
-            voiceId
-          })
-          scheduleNextAffirmation(pauseDuration)
-        }
-      }, repeatDelay * 1000)
-    } else {
-      scheduleNextAffirmation(pauseDuration)
-    }
+    await startAudioSession(activeAffirmations.value, settings)
   } catch (error) {
-    console.error('Audio playback failed:', error)
-    
-    // Fallback do generowania na żywo (jeśli audio nie istnieje)
-    // voiceId już zadeklarowane wyżej
-    
-    try {
-      // W fallback zawsze używaj TTS z pauzami (jeśli są włączone)
-      const voiceId = getAppropriateVoiceId(settings)
-      const sentences = currentAffirmation.value.text.split(/[.!?]+/).filter(s => s.trim().length > 0)
-      const hasMultipleSentences = sentences.length > 1
-      const shouldUseSentencePause = sentencePause > 0 && hasMultipleSentences
-      
-      await speak(currentAffirmation.value.text, { 
-        rate: speechRate, 
-        sentencePause: shouldUseSentencePause ? sentencePause : 0,
-        voiceId: voiceId
-      })
-      
-      if (repeatAffirmation && isPlaying.value) {
-        sessionTimeout.value = setTimeout(async () => {
-          if (isPlaying.value) {
-            await speak(currentAffirmation.value.text, { 
-              rate: speechRate, 
-              sentencePause: shouldUseSentencePause ? sentencePause : 0,
-              voiceId: voiceId
-            })
-            scheduleNextAffirmation(pauseDuration)
-          }
-        }, repeatDelay * 1000)
-      } else {
-        scheduleNextAffirmation(pauseDuration)
-      }
-    } catch (fallbackError) {
-      console.error('Fallback TTS also failed:', fallbackError)
-      // Przejdź do następnej afirmacji
-      scheduleNextAffirmation(pauseDuration)
-    }
+    console.error('Failed to start session:', error)
+    // Optionally show user-friendly error message
   }
 }
 
-const scheduleNextAffirmation = (pauseDuration) => {
-  if (isPlaying.value) {
-    sessionTimeout.value = setTimeout(() => {
-      if (isPlaying.value) {
-        nextAffirmation()
-      }
-    }, pauseDuration * 1000)
-  }
+// Voice selection logic moved to Session Audio Manager
+
+// Sentence pause logic moved to Session Audio Manager
+
+// Affirmation playback logic moved to Session Audio Manager
+
+// Scheduling logic moved to Session Audio Manager
+
+const stopSession = async () => {
+  await stopAudioSession()
 }
 
-const stopSession = () => {
-  isPlaying.value = false
-  isFinished.value = true
-  stop()
-  
-  // Stop background music with fade out
-  fadeOutBackgroundMusic()
-  
-  if (sessionTimeout.value) {
-    clearTimeout(sessionTimeout.value)
-  }
-}
-
-const nextAffirmation = () => {
-  stop()
-  if (sessionTimeout.value) {
-    clearTimeout(sessionTimeout.value)
-  }
-
-  if (currentIndex.value < activeAffirmations.value.length - 1) {
-    currentIndex.value++
-    playCurrentAffirmation()
-  } else {
-    isPlaying.value = false
-    isFinished.value = true
-    
-    // Stop background music when session finishes naturally
-    fadeOutBackgroundMusic()
-  }
+const nextAffirmation = async () => {
+  await nextAudioAffirmation()
 }
 
 const goBack = () => {
