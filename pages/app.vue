@@ -560,7 +560,7 @@ import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 const { user, logout: authLogout } = useAuth()
 const { isPremiumActive } = usePremium()
 const { subscribeToLanguageChanges } = useI18nInit()
-const { autoGenerateAudio } = useAffirmationAudio()
+const audioManager = useAudioManager()
 
 // Calculate bubble positions based on user ID
 const bubblePositions = computed(() => {
