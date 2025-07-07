@@ -522,9 +522,26 @@ const loadProject = async () => {
   unsubscribe = subscribeToUserProjects((projects) => {
     const updatedProject = projects.find(p => p.id === projectId)
     if (updatedProject) {
-      project.value = {
-        ...updatedProject,
-        sessionSettings: project.value?.sessionSettings || updatedProject.sessionSettings
+      // Preserve local affirmations order if we just added/modified something
+      const shouldPreserveOrder = project.value && 
+        project.value.affirmations && 
+        updatedProject.affirmations &&
+        project.value.affirmations.length === updatedProject.affirmations.length
+      
+      if (shouldPreserveOrder) {
+        // Only update metadata, keep current affirmations order
+        project.value = {
+          ...project.value,
+          name: updatedProject.name,
+          updatedAt: updatedProject.updatedAt,
+          sessionSettings: project.value?.sessionSettings || updatedProject.sessionSettings
+        }
+      } else {
+        // Full update for new/deleted affirmations
+        project.value = {
+          ...updatedProject,
+          sessionSettings: project.value?.sessionSettings || updatedProject.sessionSettings
+        }
       }
       
       saveProjectToLocalStorage(project.value)

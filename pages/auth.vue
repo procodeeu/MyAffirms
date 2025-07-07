@@ -2,7 +2,9 @@
   <div class="min-h-screen bg-pastel-vanilla flex items-center justify-center py-12 px-4">
     <div class="max-w-md w-full bg-pastel-dun rounded-4xl p-10 border-2 border-pastel-cinereous">
       <div class="text-center mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 mb-2 font-crimson">My affirms</h1>
+        <div class="flex justify-center mb-4">
+          <img src="/logo-my-affirms.svg" alt="My Affirms" class="h-10 w-auto" />
+        </div>
         <p class="text-gray-600">{{ $t('auth.login_to_continue') }}</p>
       </div>
 

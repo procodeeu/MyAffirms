@@ -4,9 +4,11 @@
     <header class="">
       <div class="max-w-7xl mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
-          <div>
-            <div class="text-xs text-gray-700 font-crimson italic opacity-90">My affirms</div>
-            <h1 class="text-2xl font-bold text-gray-800">{{ $t('landing.demo_title') }}</h1>
+          <div class="flex items-center gap-3">
+            <img src="/logo-my-affirms.svg" alt="My Affirms" class="h-8 w-auto" />
+            <div>
+              <h1 class="text-xl font-bold text-gray-800">{{ $t('landing.demo_title') }}</h1>
+            </div>
           </div>
           <div class="flex items-center gap-3">
             <button

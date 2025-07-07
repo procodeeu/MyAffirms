@@ -3,9 +3,11 @@
     
     <header class="bg-pastel-purple shadow-sm relative z-10">
       <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-800 font-crimson">My affirms</h1>
-          <p class="text-sm text-gray-700 font-crimson italic opacity-90">{{ $t('app.tagline') }}</p>
+        <div class="flex items-center gap-3">
+          <img src="/logo-my-affirms.svg" alt="My Affirms" class="h-8 w-auto" />
+          <div>
+            <p class="text-sm text-gray-700 font-crimson italic opacity-90">{{ $t('app.tagline') }}</p>
+          </div>
         </div>
         <div class="flex items-center gap-4">
           <CharacterUsageCounter />

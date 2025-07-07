@@ -61,8 +61,8 @@ export const useAffirmationManager = () => {
         throw new Error('Current project data is required')
       }
       
-      // 4. Update project with new affirmation
-      const updatedAffirmations = [...(currentProject.affirmations || []), newAffirmation]
+      // 4. Update project with new affirmation (ADD AT THE BEGINNING)
+      const updatedAffirmations = [newAffirmation, ...(currentProject.affirmations || [])]
       await updateProject(projectId, { affirmations: updatedAffirmations })
       
       // 5. Generate audio if requested
