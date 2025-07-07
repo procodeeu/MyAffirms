@@ -15,7 +15,9 @@
     "dev:emulators": "firebase emulators:start --only auth,firestore",
     "dev:full": "concurrently \"npm run dev:emulators\" \"npm run dev\"",
     "dev:bg": "nohup npm run dev > dev.log 2>&1 &",
-    "dev:port": "npm run dev:emulators & npm run dev -- --port 3060"
+    "dev:port": "npm run dev:emulators & npm run dev -- --port 3060",
+    "clean:users": "./clean-users-data.sh",
+    "clean:users-data": "./clean-users-data.sh"
   },
   "devDependencies": {
     "@playwright/test": "^1.53.1",
