@@ -560,7 +560,7 @@ import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 const { user, logout: authLogout } = useAuth()
 const { isPremiumActive } = usePremium()
 const { subscribeToLanguageChanges } = useI18nInit()
-const { autoGenerateAudio } = useAffirmationAudio()
+const audioManager = useAudioManager()
 
 // Calculate bubble positions based on user ID
 const bubblePositions = computed(() => {
@@ -1154,7 +1154,7 @@ const importFromJson = async () => {
           id: Date.now().toString() + '_' + i,
           name: projectData.projectName,
           affirmations: projectData.affirmations.map((aff, index) => ({
-            id: Date.now().toString() + '_' + i + '_' + index,
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9) + '_' + index,
             text: aff.text,
             isActive: aff.isActive !== undefined ? aff.isActive : true,
             createdAt: new Date().toISOString()
@@ -1184,7 +1184,7 @@ const importFromJson = async () => {
         id: Date.now().toString(),
         name: parsed.projectName,
         affirmations: parsed.affirmations.map((aff, index) => ({
-          id: Date.now().toString() + '_' + index,
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9) + '_' + index,
           text: aff.text,
           isActive: aff.isActive !== undefined ? aff.isActive : true,
           createdAt: new Date().toISOString()
