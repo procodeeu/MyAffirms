@@ -249,6 +249,68 @@ const getAppropriateVoiceId = (sessionSettings = {}) => {
   return 'pl-PL-ZofiaNeural'
 }
 
+// Funkcja do odtwarzania afirmacji z pauzami między zdaniami używając premium głosu
+const playAffirmationWithSentencePauses = async (affirmation, options) => {
+  const { speechRate, sentencePause, voiceId } = options
+  const sentences = affirmation.text.split(/[.!?]+/).filter(s => s.trim().length > 0)
+  
+  const { autoGenerateAudio, playAudio } = useAffirmationAudio()
+  
+  for (let i = 0; i < sentences.length; i++) {
+    if (!isPlaying.value) break // Sprawdź czy sesja nie została zatrzymana
+    
+    const sentence = sentences[i].trim()
+    if (sentence) {
+      // Utwórz tymczasowe ID dla zdania
+      const sentenceId = `${affirmation.id}_sentence_${i}`
+      const sentenceText = sentence + (sentence.match(/[.!?]$/) ? '' : '.')
+      
+      try {
+        // Spróbuj odtworzyć pre-generowane audio dla zdania
+        await playAudio(sentenceId, {
+          playbackRate: speechRate,
+          volume: 1.0
+        }, user.value)
+      } catch (error) {
+        // Jeśli nie ma audio dla zdania, wygeneruj je na żywo z premium głosem
+        console.log(`Generating audio for sentence: "${sentenceText}"`)
+        try {
+          await autoGenerateAudio(sentenceId, sentenceText, voiceId)
+          // Spróbuj odtworzyć po wygenerowaniu
+          await playAudio(sentenceId, {
+            playbackRate: speechRate,
+            volume: 1.0
+          }, user.value)
+        } catch (generateError) {
+          // Ostateczny fallback do TTS
+          console.warn('Fallback to TTS for sentence:', sentenceText)
+          await speak(sentenceText, { 
+            rate: speechRate, 
+            voiceId: voiceId
+          })
+        }
+      }
+      
+      // Dodaj pauzę między zdaniami (oprócz ostatniego)
+      if (i < sentences.length - 1 && isPlaying.value) {
+        await new Promise(resolve => {
+          const pauseTimeout = setTimeout(resolve, sentencePause * 1000)
+          // Sprawdzaj co 100ms czy sesja nie została zatrzymana
+          const checkInterval = setInterval(() => {
+            if (!isPlaying.value) {
+              clearTimeout(pauseTimeout)
+              clearInterval(checkInterval)
+              resolve()
+            }
+          }, 100)
+          
+          setTimeout(() => clearInterval(checkInterval), sentencePause * 1000)
+        })
+      }
+    }
+  }
+}
+
 const playCurrentAffirmation = async () => {
   if (!isPlaying.value) return
   
@@ -276,21 +338,45 @@ const playCurrentAffirmation = async () => {
       })
     }
     
-    // Użyj pre-generowanych plików audio
-    const { playAudio } = useAffirmationAudio()
+    // Sprawdź czy tekst ma wiele zdań i czy pauza jest włączona
+    const sentences = currentAffirmation.value.text.split(/[.!?]+/).filter(s => s.trim().length > 0)
+    const hasMultipleSentences = sentences.length > 1
+    const shouldUseSentencePause = sentencePause > 0 && hasMultipleSentences
+    const voiceId = getAppropriateVoiceId(settings)
     
-    await playAudio(currentAffirmation.value.id, {
-      playbackRate: speechRate,
-      volume: 1.0
-    }, user.value)
+    if (shouldUseSentencePause) {
+      // Dla wielozdaniowych afirmacji z pauzami - generuj audio dla każdego zdania osobno
+      await playAffirmationWithSentencePauses(currentAffirmation.value, {
+        speechRate,
+        sentencePause,
+        voiceId
+      })
+    } else {
+      // Użyj pre-generowanych plików audio (dla pojedynczych zdań lub gdy pauza wyłączona)
+      const { playAudio } = useAffirmationAudio()
+      await playAudio(currentAffirmation.value.id, {
+        playbackRate: speechRate,
+        volume: 1.0
+      }, user.value)
+    }
     
     if (repeatAffirmation && isPlaying.value) {
       sessionTimeout.value = setTimeout(async () => {
         if (isPlaying.value) {
-          await playAudio(currentAffirmation.value.id, {
-            playbackRate: speechRate,
-            volume: 1.0
-          }, user.value)
+          // Użyj tej samej logiki co przy pierwszym odtwarzaniu
+          if (shouldUseSentencePause) {
+            await playAffirmationWithSentencePauses(currentAffirmation.value, {
+              speechRate,
+              sentencePause,
+              voiceId
+            })
+          } else {
+            const { playAudio } = useAffirmationAudio()
+            await playAudio(currentAffirmation.value.id, {
+              playbackRate: speechRate,
+              volume: 1.0
+            }, user.value)
+          }
           scheduleNextAffirmation(pauseDuration)
         }
       }, repeatDelay * 1000)
@@ -301,12 +387,18 @@ const playCurrentAffirmation = async () => {
     console.error('Audio playback failed:', error)
     
     // Fallback do generowania na żywo (jeśli audio nie istnieje)
-    const voiceId = getAppropriateVoiceId(settings)
+    // voiceId już zadeklarowane wyżej
     
     try {
+      // W fallback zawsze używaj TTS z pauzami (jeśli są włączone)
+      const voiceId = getAppropriateVoiceId(settings)
+      const sentences = currentAffirmation.value.text.split(/[.!?]+/).filter(s => s.trim().length > 0)
+      const hasMultipleSentences = sentences.length > 1
+      const shouldUseSentencePause = sentencePause > 0 && hasMultipleSentences
+      
       await speak(currentAffirmation.value.text, { 
         rate: speechRate, 
-        sentencePause: sentencePause,
+        sentencePause: shouldUseSentencePause ? sentencePause : 0,
         voiceId: voiceId
       })
       
@@ -315,7 +407,7 @@ const playCurrentAffirmation = async () => {
           if (isPlaying.value) {
             await speak(currentAffirmation.value.text, { 
               rate: speechRate, 
-              sentencePause: sentencePause,
+              sentencePause: shouldUseSentencePause ? sentencePause : 0,
               voiceId: voiceId
             })
             scheduleNextAffirmation(pauseDuration)
