@@ -540,13 +540,10 @@ const {
   createProject: firestoreCreateProject,
   deleteProject: firestoreDeleteProject,
   updateProject,
-  subscribeToUserGroups,
-  createGroup,
-  updateGroup,
-  deleteGroup,
-  addProjectToGroup,
-  removeProjectFromGroup
+  subscribeToUserGroups
 } = useFirestore()
+
+const groupManager = useGroupManager()
 
 import { BUILD_VERSION } from '~/utils/version.js'
 const appVersion = ref(BUILD_VERSION)
@@ -878,15 +875,11 @@ const startSession = (project) => {
 }
 
 const getGroupProjectsCount = (group) => {
-  if (!group?.projectIds) return 0
-  return group.projectIds.length
+  return groupManager.getGroupProjectsCount(group)
 }
 
 const getGroupProjectNames = (group) => {
-  if (!group?.projectIds) return []
-  return group.projectIds
-    .map(id => projects.value.find(p => p.id === id)?.name)
-    .filter(Boolean)
+  return groupManager.getGroupProjectNames(group, projects.value)
 }
 
 const createNewGroup = async () => {
@@ -900,7 +893,9 @@ const createNewGroup = async () => {
       projectIds: selectedProjectsForGroup.value
     }
     
-    await createGroup(groupData)
+    await groupManager.createGroup(groupData, {
+      availableProjects: projects.value
+    })
     
     newGroupName.value = ''
     selectedProjectsForGroup.value = []
@@ -930,7 +925,7 @@ const saveGroupName = async () => {
   if (!editingGroupName.value.trim() || !selectedGroup.value) return
   
   try {
-    await updateGroup(selectedGroup.value.id, {
+    await groupManager.updateGroup(selectedGroup.value.id, {
       name: editingGroupName.value.trim()
     })
     
@@ -945,7 +940,7 @@ const confirmDeleteGroup = async () => {
   if (!selectedGroup.value) return
   
   try {
-    await deleteGroup(selectedGroup.value.id)
+    await groupManager.deleteGroup(selectedGroup.value.id)
     showDeleteGroupConfirm.value = false
     closeGroupSettings()
   } catch (error) {
