@@ -429,37 +429,7 @@ const { user, logout: authLogout } = useAuth()
 const { t, locale } = useI18n()
 const { getUserProjects, updateProject, subscribeToUserProjects } = useFirestore()
 const { getAvailableAiVoices, getLanguageMapping } = useTextToSpeech()
-
-// Funkcja do generowania audio dla poszczególnych zdań
-const generateSentenceAudio = async (affirmationId, text, voiceId) => {
-  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0)
-  
-  console.log(`🎵 Generating audio for ${sentences.length} sentences of affirmation:`, affirmationId)
-  
-  const { autoGenerateAudio } = useAffirmationAudio()
-  const sentenceIds = []
-  
-  for (let i = 0; i < sentences.length; i++) {
-    const sentence = sentences[i].trim()
-    if (sentence) {
-      const sentenceId = `${affirmationId}_sentence_${i}`
-      const sentenceText = sentence + (sentence.match(/[.!?]$/) ? '' : '.')
-      
-      try {
-        console.log(`🎵 Generating audio for sentence ${i + 1}/${sentences.length}:`, sentenceText)
-        await autoGenerateAudio(sentenceId, sentenceText, voiceId)
-        console.log(`✅ Sentence ${i + 1} audio generated:`, sentenceId)
-        sentenceIds.push(sentenceId)
-      } catch (error) {
-        console.error(`❌ Failed to generate audio for sentence ${i + 1}:`, error)
-        // Kontynuuj z następnym zdaniem mimo błędu
-      }
-    }
-  }
-  
-  console.log('🏁 All sentence audio generation completed for:', affirmationId)
-  return sentenceIds
-}
+const audioManager = useAudioManager()
 
 // Stan generowania audio dla poszczególnych afirmacji
 const generatingAudioIds = ref(new Set())
@@ -599,68 +569,81 @@ const loadProject = async () => {
   }
 }
 
-// Funkcja do generowania brakującego audio
+// Funkcja do generowania brakującego audio używając Audio Manager
 const generateMissingAudio = async () => {
   if (!project.value?.affirmations || !user.value) return
   
-  const { getAudioMetadata, autoGenerateAudio } = useAffirmationAudio()
   const currentVoiceId = sessionSettings.value.voiceId || 'pl-PL-ZofiaStandard'
   
   console.log(`🔍 Checking audio for ${project.value.affirmations.length} affirmations...`)
   
+  // Sprawdź które afirmacje potrzebują audio
+  const affirmationsNeedingAudio = []
+  
   for (const affirmation of project.value.affirmations) {
     try {
-      // Sprawdź czy afirmacja ma już audio
-      const metadata = await getAudioMetadata(affirmation.id)
+      const validation = await audioManager.validateAffirmationAudio(affirmation)
       
-      if (!metadata) {
-        console.log(`🎵 Generating missing audio for: ${affirmation.id} - "${affirmation.text}"`)
-        
-        // Dodaj do listy generujących się audio (pokaż preloader)
+      if (!validation.isValid) {
+        console.log(`🎵 Affirmation needs audio generation: ${affirmation.id}`)
+        affirmationsNeedingAudio.push(affirmation)
         generatingAudioIds.value.add(affirmation.id)
-        
-        // Generuj audio asynchronicznie (inteligentnie)
-        Promise.resolve().then(async () => {
-          try {
-            const sentences = affirmation.text.split(/[.!?]+/).filter(s => s.trim().length > 0)
-            const hasMultipleSentences = sentences.length > 1
-            
-            // Zawsze generuj audio zdań (dla konsystencji)
-            console.log(`🎵 Generating sentence audio for ${sentences.length} sentences:`, affirmation.id)
-            const sentenceIds = await generateSentenceAudio(affirmation.id, affirmation.text, currentVoiceId)
-            console.log('✅ Generated sentence audio for:', affirmation.id)
-            
-            // Zaktualizuj afirmację z identyfikatorami zdań
-            if (sentenceIds && sentenceIds.length > 0) {
-              const updatedAffirmations = project.value.affirmations.map(aff => 
-                aff.id === affirmation.id 
-                  ? { ...aff, sentenceIds: sentenceIds, sentenceCount: sentences.length }
-                  : aff
-              )
-              project.value.affirmations = updatedAffirmations
-              await updateProject(projectId, { affirmations: updatedAffirmations })
-              saveProjectToLocalStorage(project.value)
-              console.log('✅ Updated affirmation with sentence IDs:', { affirmationId: affirmation.id, sentenceIds })
-            }
-            
-          } catch (error) {
-            console.error('❌ Failed to generate audio for:', affirmation.id, error)
-          } finally {
-            generatingAudioIds.value.delete(affirmation.id)
-          }
-        })
-        
-        // Dodaj małe opóźnienie między generowaniem aby nie przeciążyć systemu
-        await new Promise(resolve => setTimeout(resolve, 500))
       } else {
-        console.log(`✅ Audio already exists for: ${affirmation.id}`)
+        console.log(`✅ Audio already valid for: ${affirmation.id}`)
       }
     } catch (error) {
-      console.error(`❌ Error checking audio for ${affirmation.id}:`, error)
+      console.error(`❌ Error validating audio for ${affirmation.id}:`, error)
+      // Dodaj do listy na wszelki wypadek
+      affirmationsNeedingAudio.push(affirmation)
+      generatingAudioIds.value.add(affirmation.id)
     }
   }
   
-  console.log('🏁 Audio generation check completed')
+  if (affirmationsNeedingAudio.length === 0) {
+    console.log('✅ All affirmations have valid audio')
+    return
+  }
+  
+  console.log(`🎵 Generating audio for ${affirmationsNeedingAudio.length} affirmations`)
+  
+  // Użyj Audio Manager do batch generation
+  try {
+    const result = await audioManager.createProjectAudio(affirmationsNeedingAudio, currentVoiceId)
+    
+    // Zaktualizuj afirmacje z wynikami
+    if (result.success > 0) {
+      const updatedAffirmations = [...project.value.affirmations]
+      
+      for (const resultItem of result.results) {
+        if (resultItem.success) {
+          const affIndex = updatedAffirmations.findIndex(aff => aff.id === resultItem.affirmationId)
+          if (affIndex !== -1) {
+            updatedAffirmations[affIndex] = {
+              ...updatedAffirmations[affIndex],
+              sentenceIds: resultItem.sentenceIds,
+              sentenceCount: resultItem.sentenceCount
+            }
+          }
+        }
+      }
+      
+      project.value.affirmations = updatedAffirmations
+      await updateProject(projectId, { affirmations: updatedAffirmations })
+      saveProjectToLocalStorage(project.value)
+      
+      console.log(`✅ Updated ${result.success} affirmations with sentence IDs`)
+    }
+    
+    console.log(`🏁 Audio generation completed: ${result.success} success, ${result.errors} errors`)
+    
+  } catch (error) {
+    console.error('❌ Batch audio generation failed:', error)
+  } finally {
+    // Usuń wszystkie z listy generujących się audio
+    affirmationsNeedingAudio.forEach(aff => {
+      generatingAudioIds.value.delete(aff.id)
+    })
+  }
 }
 
 // Załaduj projekt gdy użytkownik jest dostępny
@@ -859,8 +842,7 @@ const saveAffirmation = async () => {
     project.value.affirmations = updatedAffirmations
     saveProjectToLocalStorage(project.value)
     
-    // Auto-generuj audio dla afirmacji (główne + zdania)
-    const { autoGenerateAudio } = useAffirmationAudio()
+    // Auto-generuj audio dla afirmacji używając Audio Manager
     const currentVoiceId = sessionSettings.value.voiceId || 'pl-PL-ZofiaStandard'
     
     console.log('🎵 Starting audio generation for affirmation:', { 
@@ -880,22 +862,25 @@ const saveAffirmation = async () => {
         const sentences = textToGenerate.split(/[.!?]+/).filter(s => s.trim().length > 0)
         const hasMultipleSentences = sentences.length > 1
         
-        // Zawsze generuj audio zdań (dla konsystencji)
-        console.log(`🎵 Generating sentence audio for ${sentences.length} sentences:`, affirmationId)
-        const sentenceIds = await generateSentenceAudio(affirmationId, textToGenerate, currentVoiceId)
-        console.log('✅ Sentence audio generation completed for:', affirmationId)
+        // Użyj Audio Manager do stworzenia audio
+        const result = await audioManager.createAffirmationAudio(
+          affirmationId, 
+          textToGenerate, 
+          currentVoiceId, 
+          oldText
+        )
         
         // Zaktualizuj afirmację w projekcie z identyfikatorami zdań
-        if (sentenceIds && sentenceIds.length > 0) {
+        if (result.success && result.sentenceIds.length > 0) {
           const updatedAffirmations = project.value.affirmations.map(aff => 
             aff.id === affirmationId 
-              ? { ...aff, sentenceIds: sentenceIds, sentenceCount: sentences.length }
+              ? { ...aff, sentenceIds: result.sentenceIds, sentenceCount: result.sentenceCount }
               : aff
           )
           project.value.affirmations = updatedAffirmations
           await updateProject(projectId, { affirmations: updatedAffirmations })
           saveProjectToLocalStorage(project.value)
-          console.log('✅ Updated affirmation with sentence IDs:', { affirmationId, sentenceIds })
+          console.log('✅ Updated affirmation with sentence IDs:', { affirmationId, sentenceIds: result.sentenceIds })
         }
         
       } catch (error) {
@@ -927,20 +912,8 @@ const deleteAffirmation = async (affirmationId) => {
   const updatedAffirmations = project.value.affirmations.filter(aff => aff.id !== affirmationId)
   
   try {
-    // Usuń audio dla afirmacji (przekaż sentenceIds jeśli istnieją)
-    const { deleteAudio, deleteSentenceAudio } = useAffirmationAudio()
-    
-    // Usuń główne audio
-    await deleteAudio(affirmationId)
-    
-    // Usuń audio zdań używając przechowywanych identyfikatorów
-    if (affirmationToDelete?.sentenceIds) {
-      console.log('🗑️ Deleting sentence audio using stored IDs:', affirmationToDelete.sentenceIds)
-      await deleteSentenceAudio(affirmationId, null, affirmationToDelete.sentenceIds)
-    } else {
-      console.log('🗑️ No stored sentence IDs, using fallback cleanup')
-      await deleteSentenceAudio(affirmationId)
-    }
+    // Usuń audio dla afirmacji używając Audio Manager
+    await audioManager.deleteAffirmationAudio(affirmationId, affirmationToDelete?.sentenceIds)
     
     await updateProject(projectId, { affirmations: updatedAffirmations })
     project.value.affirmations = updatedAffirmations

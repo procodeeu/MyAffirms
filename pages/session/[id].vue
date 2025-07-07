@@ -100,7 +100,7 @@ const { t, locale } = useI18n()
 const { getUserProjects } = useFirestore()
 const { speak, stop, isSpeaking, getLanguageMapping, getAvailableAiVoices } = useTextToSpeech()
 const { play: playBackgroundMusic, stop: stopBackgroundMusic, fadeOut: fadeOutBackgroundMusic, setVolume: setMusicVolume } = useBackgroundMusic()
-const { getAudioUrl, deleteAudio } = useAffirmationAudio()
+const audioManager = useAudioManager()
 
 const route = useRoute()
 const router = useRouter()
@@ -336,18 +336,18 @@ const playCurrentAffirmation = async () => {
     const shouldUseSentencePause = sentencePause > 0 && hasMultipleSentences
     const voiceId = getAppropriateVoiceId(settings)
     
-    // Zawsze używaj audio zdań (dla konsystencji)
-    await playAffirmationWithSentencePauses(currentAffirmation.value, {
+    // Użyj Audio Manager do odtwarzania
+    await audioManager.playAffirmation(currentAffirmation.value, {
       speechRate,
-      sentencePause: shouldUseSentencePause ? sentencePause : 0, // Pauza 0 = brak przerw
+      sentencePause: shouldUseSentencePause ? sentencePause : 0,
       voiceId
     })
     
     if (repeatAffirmation && isPlaying.value) {
       sessionTimeout.value = setTimeout(async () => {
         if (isPlaying.value) {
-          // Użyj tej samej logiki co przy pierwszym odtwarzaniu - zawsze audio zdań
-          await playAffirmationWithSentencePauses(currentAffirmation.value, {
+          // Użyj Audio Manager do powtarzania
+          await audioManager.playAffirmation(currentAffirmation.value, {
             speechRate,
             sentencePause: shouldUseSentencePause ? sentencePause : 0,
             voiceId
