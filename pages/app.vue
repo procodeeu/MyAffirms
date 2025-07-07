@@ -544,6 +544,7 @@ const {
 } = useFirestore()
 
 const groupManager = useGroupManager()
+const projectManager = useProjectManager()
 
 import { BUILD_VERSION } from '~/utils/version.js'
 const appVersion = ref(BUILD_VERSION)
@@ -717,8 +718,7 @@ onUnmounted(() => {
 })
 
 const getDefaultProjectName = () => {
-  const count = projects.value.length + 1
-  return t('app.projects.unnamed', { count })
+  return projectManager.getDefaultProjectName(projects.value)
 }
 
 const createProject = async () => {
