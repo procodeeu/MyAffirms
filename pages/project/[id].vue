@@ -431,6 +431,14 @@ const { getUserProjects, updateProject, subscribeToUserProjects } = useFirestore
 const { getAvailableAiVoices, getLanguageMapping } = useTextToSpeech()
 const audioManager = useAudioManager()
 const affirmationManager = useAffirmationManager()
+const sessionSettingsManager = useSessionSettings({
+  onUpdate: (newSettings) => {
+    if (project.value) {
+      project.value.sessionSettings = newSettings
+      saveProjectToLocalStorage(project.value)
+    }
+  }
+})
 
 // Stan generowania audio dla poszczególnych afirmacji
 const generatingAudioIds = ref(new Set())
@@ -459,53 +467,16 @@ const dragOver = ref(null)
 const draggedItem = ref(null)
 const draggedIndex = ref(null)
 
-const sessionSettings = ref({
-  speechRate: 1.0,
-  pauseDuration: 3,
-  sentencePause: 4,
-  repeatAffirmation: false,
-  repeatDelay: 5,
-  voiceId: 'pl-PL-ZofiaNeural',
-  voicesByLanguage: {}, // Store selected voices per language
-  backgroundMusic: false, // Background relaxing music
-  musicVolume: 0.15, // Low volume for background music
-  musicType: 'birds' // Type of background music: birds, ocean
-})
+// Use session settings from manager
+const { 
+  settings: sessionSettings, 
+  availableVoices,
+  updateSettings: updateSessionSettings,
+  loadSettings: loadSessionSettings,
+  handleLanguageChange: handleSettingsLanguageChange
+} = sessionSettingsManager
 
-const availableVoices = computed(() => {
-  const ttsLanguage = getLanguageMapping(locale.value)
-  return getAvailableAiVoices(ttsLanguage)
-})
-
-// Watch for language changes and update voice selection
-watch(locale, (newLocale) => {
-  const ttsLanguage = getLanguageMapping(newLocale)
-  const voices = getAvailableAiVoices(ttsLanguage)
-  
-  if (voices.length > 0) {
-    // Check if we have a saved voice for this language
-    const savedVoiceId = sessionSettings.value.voicesByLanguage[ttsLanguage]
-    const savedVoiceExists = savedVoiceId && voices.find(v => v.id === savedVoiceId)
-    
-    if (savedVoiceExists) {
-      // Use saved voice for this language
-      sessionSettings.value.voiceId = savedVoiceId
-    } else {
-      // Set default voice and save it
-      const defaultVoice = voices.find(v => v.gender === 'female') || voices[0]
-      sessionSettings.value.voiceId = defaultVoice.id
-      sessionSettings.value.voicesByLanguage[ttsLanguage] = defaultVoice.id
-    }
-  }
-})
-
-// Watch for voice changes and save per language
-watch(() => sessionSettings.value.voiceId, (newVoiceId) => {
-  if (newVoiceId) {
-    const ttsLanguage = getLanguageMapping(locale.value)
-    sessionSettings.value.voicesByLanguage[ttsLanguage] = newVoiceId
-  }
-})
+// Language change handling is now managed by sessionSettingsManager
 
 let unsubscribe = null
 
@@ -520,12 +491,8 @@ const loadProject = async () => {
     if (savedProject) {
       project.value = savedProject
       if (savedProject.sessionSettings) {
-        // Merge saved settings with default structure to preserve new properties
-        sessionSettings.value = {
-          ...sessionSettings.value,
-          ...savedProject.sessionSettings,
-          voicesByLanguage: savedProject.sessionSettings.voicesByLanguage || {}
-        }
+        // Load settings using session settings manager
+        loadSessionSettings(savedProject.sessionSettings)
       }
       return true
     }
@@ -675,12 +642,7 @@ onMounted(() => {
   }
 })
 
-watch(sessionSettings, (newSettings) => {
-  if (project.value) {
-    project.value.sessionSettings = newSettings
-    saveProjectToLocalStorage(project.value)
-  }
-}, { deep: true })
+// Settings persistence is now handled by sessionSettingsManager onUpdate callback
 
 const getProjectFromLocalStorage = (id) => {
   if (!user.value?.uid) {
