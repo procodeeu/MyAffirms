@@ -1,32 +1,5 @@
 <template>
   <div class="min-h-screen bg-pastel-vanilla relative overflow-hidden">
-    <!-- Decorative bubbles in background -->
-    <div class="absolute inset-0 pointer-events-none">
-      <div 
-        class="absolute w-96 h-96 rounded-full" 
-        :style="{ 
-          top: bubblePositions.bubble1.top + 'px', 
-          left: bubblePositions.bubble1.left + 'px',
-          backgroundColor: 'rgba(255, 255, 255, 0.3)'
-        }"
-      ></div>
-      <div 
-        class="absolute w-80 h-80 rounded-full" 
-        :style="{ 
-          top: bubblePositions.bubble2.top + 'px', 
-          right: bubblePositions.bubble2.right + 'px',
-          backgroundColor: 'rgba(255, 252, 228, 0.6)'
-        }"
-      ></div>
-      <div 
-        class="absolute w-64 h-64 rounded-full" 
-        :style="{ 
-          bottom: bubblePositions.bubble3.bottom + 'px', 
-          left: bubblePositions.bubble3.left + 'px',
-          backgroundColor: 'rgba(248, 240, 180, 0.4)'
-        }"
-      ></div>
-    </div>
     
     <header class="bg-pastel-purple shadow-sm relative z-10">
       <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -560,51 +533,8 @@ import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
 const { user, logout: authLogout } = useAuth()
 const { isPremiumActive } = usePremium()
 const { subscribeToLanguageChanges } = useI18nInit()
-const { autoGenerateAudio } = useAffirmationAudio()
+const audioManager = useAudioManager()
 
-// Calculate bubble positions based on user ID
-const bubblePositions = computed(() => {
-  if (!user.value?.uid) {
-    return {
-      bubble1: { top: 80, left: 200 },
-      bubble2: { top: 160, right: 300 },
-      bubble3: { bottom: 80, left: 400 }
-    }
-  }
-  
-  // Prosta funkcja hash dla stringa
-  const hash = (str) => {
-    let hash = 0
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i)
-      hash = ((hash << 5) - hash) + char
-      hash = hash & hash // Konwersja do 32bit
-    }
-    return Math.abs(hash)
-  }
-  
-  const userHash = hash(user.value.uid)
-  
-  // Generowanie pozycji na podstawie hash'a
-  const seed1 = (userHash * 1234567) % 1000000
-  const seed2 = (userHash * 2345678) % 1000000  
-  const seed3 = (userHash * 3456789) % 1000000
-  
-  return {
-    bubble1: { 
-      top: 50 + (seed1 % 200), 
-      left: 100 + (seed1 % 400) 
-    },
-    bubble2: { 
-      top: 100 + (seed2 % 250), 
-      right: 50 + (seed2 % 350) 
-    },
-    bubble3: { 
-      bottom: 50 + (seed3 % 150), 
-      left: 200 + (seed3 % 500) 
-    }
-  }
-})
 const { 
   subscribeToUserProjects,
   createProject: firestoreCreateProject,
@@ -1124,7 +1054,7 @@ const generateAudioForProject = async (project) => {
   for (const affirmation of project.affirmations) {
     try {
       console.log(`Generating audio for affirmation: ${affirmation.id} - "${affirmation.text}"`)
-      await autoGenerateAudio(affirmation.id, affirmation.text, 'pl-PL-ZofiaNeural')
+      await audioManager.createAffirmationAudio(affirmation.id, affirmation.text, 'pl-PL-ZofiaNeural')
       console.log(`Audio generated successfully for: ${affirmation.id}`)
       
       // Add small delay between generations to avoid overwhelming the system
