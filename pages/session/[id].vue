@@ -304,8 +304,8 @@ const playAffirmationWithSentencePauses = async (affirmation, options) => {
         }
       }
       
-      // Dodaj pauzę między zdaniami (oprócz ostatniego)
-      if (i < sentences.length - 1 && isPlaying.value) {
+      // Dodaj pauzę między zdaniami (oprócz ostatniego) - tylko jeśli sentencePause > 0
+      if (i < sentences.length - 1 && isPlaying.value && sentencePause > 0) {
         await new Promise(resolve => {
           const pauseTimeout = setTimeout(resolve, sentencePause * 1000)
           // Sprawdzaj co 100ms czy sesja nie została zatrzymana
@@ -357,15 +357,15 @@ const playCurrentAffirmation = async () => {
     const shouldUseSentencePause = sentencePause > 0 && hasMultipleSentences
     const voiceId = getAppropriateVoiceId(settings)
     
-    if (shouldUseSentencePause) {
-      // Dla wielozdaniowych afirmacji z pauzami - generuj audio dla każdego zdania osobno
+    if (hasMultipleSentences) {
+      // Dla wielozdaniowych afirmacji - zawsze używaj audio zdań (z pauzami lub bez)
       await playAffirmationWithSentencePauses(currentAffirmation.value, {
         speechRate,
-        sentencePause,
+        sentencePause: shouldUseSentencePause ? sentencePause : 0, // Pauza 0 = brak przerw
         voiceId
       })
     } else {
-      // Użyj pre-generowanych plików audio (dla pojedynczych zdań lub gdy pauza wyłączona)
+      // Dla pojedynczych zdań - użyj głównego audio
       const { playAudio } = useAffirmationAudio()
       await playAudio(currentAffirmation.value.id, {
         playbackRate: speechRate,
@@ -377,10 +377,10 @@ const playCurrentAffirmation = async () => {
       sessionTimeout.value = setTimeout(async () => {
         if (isPlaying.value) {
           // Użyj tej samej logiki co przy pierwszym odtwarzaniu
-          if (shouldUseSentencePause) {
+          if (hasMultipleSentences) {
             await playAffirmationWithSentencePauses(currentAffirmation.value, {
               speechRate,
-              sentencePause,
+              sentencePause: shouldUseSentencePause ? sentencePause : 0,
               voiceId
             })
           } else {

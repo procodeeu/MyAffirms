@@ -622,16 +622,23 @@ const generateMissingAudio = async () => {
         // Dodaj do listy generujących się audio (pokaż preloader)
         generatingAudioIds.value.add(affirmation.id)
         
-        // Generuj audio asynchronicznie (główne + zdania)
+        // Generuj audio asynchronicznie (inteligentnie)
         Promise.resolve().then(async () => {
           try {
-            // 1. Generuj główne audio
-            await autoGenerateAudio(affirmation.id, affirmation.text, currentVoiceId)
-            console.log('✅ Generated main audio for:', affirmation.id)
+            const sentences = affirmation.text.split(/[.!?]+/).filter(s => s.trim().length > 0)
+            const hasMultipleSentences = sentences.length > 1
             
-            // 2. Generuj audio zdań
-            await generateSentenceAudio(affirmation.id, affirmation.text, currentVoiceId)
-            console.log('✅ Generated sentence audio for:', affirmation.id)
+            if (hasMultipleSentences) {
+              // Dla wielozdaniowych afirmacji - generuj tylko audio zdań
+              console.log(`🎵 Multi-sentence affirmation detected (${sentences.length} sentences) - generating sentence audio only`)
+              await generateSentenceAudio(affirmation.id, affirmation.text, currentVoiceId)
+              console.log('✅ Generated sentence audio for:', affirmation.id)
+            } else {
+              // Dla pojedynczych zdań - generuj główne audio
+              console.log('🎵 Single sentence affirmation - generating main audio')
+              await autoGenerateAudio(affirmation.id, affirmation.text, currentVoiceId)
+              console.log('✅ Generated main audio for:', affirmation.id)
+            }
             
           } catch (error) {
             console.error('❌ Failed to generate audio for:', affirmation.id, error)
@@ -867,13 +874,20 @@ const saveAffirmation = async () => {
     const textToGenerate = affirmationText.value.trim() // Zachowaj tekst przed zamknięciem modala
     setTimeout(async () => {
       try {
-        // 1. Generuj główne audio afirmacji
-        await autoGenerateAudio(affirmationId, textToGenerate, currentVoiceId, oldText)
-        console.log('✅ Main audio generation completed for:', affirmationId)
+        const sentences = textToGenerate.split(/[.!?]+/).filter(s => s.trim().length > 0)
+        const hasMultipleSentences = sentences.length > 1
         
-        // 2. Generuj audio dla poszczególnych zdań (jeśli afirmacja ma wiele zdań)
-        await generateSentenceAudio(affirmationId, textToGenerate, currentVoiceId)
-        console.log('✅ Sentence audio generation completed for:', affirmationId)
+        if (hasMultipleSentences) {
+          // Dla wielozdaniowych afirmacji - generuj tylko audio zdań
+          console.log(`🎵 Multi-sentence affirmation detected (${sentences.length} sentences) - generating sentence audio only`)
+          await generateSentenceAudio(affirmationId, textToGenerate, currentVoiceId)
+          console.log('✅ Sentence audio generation completed for:', affirmationId)
+        } else {
+          // Dla pojedynczych zdań - generuj główne audio
+          console.log('🎵 Single sentence affirmation - generating main audio')
+          await autoGenerateAudio(affirmationId, textToGenerate, currentVoiceId, oldText)
+          console.log('✅ Main audio generation completed for:', affirmationId)
+        }
         
       } catch (error) {
         console.error('❌ Audio generation failed:', error)
