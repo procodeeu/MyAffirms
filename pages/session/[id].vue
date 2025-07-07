@@ -100,6 +100,7 @@ const { t, locale } = useI18n()
 const { getUserProjects } = useFirestore()
 const { speak, stop, isSpeaking, getLanguageMapping, getAvailableAiVoices } = useTextToSpeech()
 const { play: playBackgroundMusic, stop: stopBackgroundMusic, fadeOut: fadeOutBackgroundMusic, setVolume: setMusicVolume } = useBackgroundMusic()
+const { getAudioUrl, deleteAudio } = useAffirmationAudio()
 
 const route = useRoute()
 const router = useRouter()
@@ -254,7 +255,19 @@ const playAffirmationWithSentencePauses = async (affirmation, options) => {
   const { speechRate, sentencePause, voiceId } = options
   const sentences = affirmation.text.split(/[.!?]+/).filter(s => s.trim().length > 0)
   
-  const { autoGenerateAudio, playAudio } = useAffirmationAudio()
+  const { autoGenerateAudio, playAudio, deleteSentenceAudio } = useAffirmationAudio()
+  
+  // STRATEGIA: Usuń główne audio afirmacji jeśli istnieje (oszczędzamy miejsce)
+  // Będziemy używać tylko audio zdań gdy pauzy są włączone
+  try {
+    const mainAudioUrl = await getAudioUrl(affirmation.id, user.value)
+    if (mainAudioUrl) {
+      console.log('🗑️ Removing main audio to save space - using sentence audio instead')
+      await deleteAudio(affirmation.id)
+    }
+  } catch (error) {
+    // Ignoruj błędy - może nie ma głównego audio
+  }
   
   for (let i = 0; i < sentences.length; i++) {
     if (!isPlaying.value) break // Sprawdź czy sesja nie została zatrzymana

@@ -255,12 +255,12 @@ export const useAffirmationAudio = () => {
     try {
       console.log('🗑️ Attempting to delete audio for affirmation:', affirmationId)
       
-      // Pobierz informacje o audio z Firestore
+      // 1. Usuń główne audio afirmacji
       const audioDoc = await getDoc(doc($firebase.db, 'affirmation_audio', affirmationId))
       
       if (audioDoc.exists()) {
         const data = audioDoc.data()
-        console.log('📄 Found audio document:', { filename: data.filename, userId: data.user_id })
+        console.log('📄 Found main audio document:', { filename: data.filename, userId: data.user_id })
         
         // Sprawdź czy należy do użytkownika
         if (data.user_id === activeUser.uid) {
@@ -268,36 +268,82 @@ export const useAffirmationAudio = () => {
           try {
             const audioRef = storageRef($firebase.storage, `audio/${activeUser.uid}/${data.filename}`)
             await deleteObject(audioRef)
-            console.log('✅ Deleted audio file from storage:', data.filename)
+            console.log('✅ Deleted main audio file from storage:', data.filename)
           } catch (storageError) {
             if (storageError.code === 'storage/object-not-found') {
-              console.log('ℹ️ Audio file already deleted from storage:', data.filename)
+              console.log('ℹ️ Main audio file already deleted from storage:', data.filename)
             } else {
-              console.warn('⚠️ Could not delete audio file from storage:', storageError.message)
+              console.warn('⚠️ Could not delete main audio file from storage:', storageError.message)
             }
-            // Kontynuuj mimo błędu storage - usuń przynajmniej metadata
           }
           
           // Usuń dokument z Firestore
           await deleteDoc(doc($firebase.db, 'affirmation_audio', affirmationId))
-          console.log('✅ Deleted audio metadata for affirmation:', affirmationId)
-        } else {
-          console.warn('⚠️ User ID mismatch - cannot delete audio:', { 
-            docUserId: data.user_id, 
-            currentUserId: activeUser.uid 
-          })
+          console.log('✅ Deleted main audio metadata for affirmation:', affirmationId)
         }
-      } else {
-        console.log('ℹ️ No audio document found for affirmation:', affirmationId)
       }
       
-      // Note: Orphaned file cleanup removed to prevent unnecessary 404 errors
-      // The main deletion logic above should handle all cases properly
-      // If orphaned files become an issue, consider implementing server-side cleanup
+      // 2. Usuń wszystkie audio zdań dla tej afirmacji
+      await deleteSentenceAudio(affirmationId, activeUser)
       
     } catch (err) {
       console.error('❌ Error deleting audio:', err)
       // Nie rzucamy błędu, bo to może być wywoływane automatycznie
+    }
+  }
+
+  // Usuń audio dla wszystkich zdań afirmacji
+  const deleteSentenceAudio = async (affirmationId, userOverride = null) => {
+    const activeUser = userOverride || user.value
+    
+    if (!activeUser || !$firebase.db || !$firebase.storage) return
+    
+    try {
+      console.log('🗑️ Cleaning up sentence audio for affirmation:', affirmationId)
+      
+      // Znajdź wszystkie dokumenty audio zdań dla tej afirmacji
+      const sentenceQuery = query(
+        collection($firebase.db, 'affirmation_audio'),
+        where('user_id', '==', activeUser.uid)
+      )
+      
+      const querySnapshot = await getDocs(sentenceQuery)
+      let deletedSentences = 0
+      
+      for (const doc of querySnapshot.docs) {
+        const docId = doc.id
+        const data = doc.data()
+        
+        // Sprawdź czy to audio zdania dla naszej afirmacji
+        if (docId.startsWith(`${affirmationId}_sentence_`)) {
+          console.log('🗑️ Found sentence audio to delete:', docId)
+          
+          try {
+            // Usuń plik z Storage
+            if (data.filename) {
+              const audioRef = storageRef($firebase.storage, `audio/${activeUser.uid}/${data.filename}`)
+              await deleteObject(audioRef)
+              console.log('✅ Deleted sentence audio file:', data.filename)
+            }
+            
+            // Usuń dokument z Firestore
+            await deleteDoc(doc.ref)
+            console.log('✅ Deleted sentence audio metadata:', docId)
+            deletedSentences++
+          } catch (error) {
+            console.warn('⚠️ Error deleting sentence audio:', docId, error.message)
+          }
+        }
+      }
+      
+      if (deletedSentences > 0) {
+        console.log(`✅ Cleaned up ${deletedSentences} sentence audio files for affirmation:`, affirmationId)
+      } else {
+        console.log('ℹ️ No sentence audio found to clean up for affirmation:', affirmationId)
+      }
+      
+    } catch (err) {
+      console.error('❌ Error cleaning up sentence audio:', err)
     }
   }
   
@@ -397,6 +443,7 @@ export const useAffirmationAudio = () => {
     hasAudio,
     playAudio,
     deleteAudio,
+    deleteSentenceAudio,
     deleteAllProjectAudio,
     autoGenerateAudio
   }
