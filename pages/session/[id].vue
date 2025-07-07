@@ -257,17 +257,7 @@ const playAffirmationWithSentencePauses = async (affirmation, options) => {
   
   const { autoGenerateAudio, playAudio, deleteSentenceAudio } = useAffirmationAudio()
   
-  // STRATEGIA: Usuń główne audio afirmacji jeśli istnieje (oszczędzamy miejsce)
-  // Będziemy używać tylko audio zdań gdy pauzy są włączone
-  try {
-    const mainAudioUrl = await getAudioUrl(affirmation.id, user.value)
-    if (mainAudioUrl) {
-      console.log('🗑️ Removing main audio to save space - using sentence audio instead')
-      await deleteAudio(affirmation.id)
-    }
-  } catch (error) {
-    // Ignoruj błędy - może nie ma głównego audio
-  }
+  // Dla wielozdaniowych afirmacji używamy tylko pre-generowanych audio zdań
   
   for (let i = 0; i < sentences.length; i++) {
     if (!isPlaying.value) break // Sprawdź czy sesja nie została zatrzymana
@@ -279,29 +269,18 @@ const playAffirmationWithSentencePauses = async (affirmation, options) => {
       const sentenceText = sentence + (sentence.match(/[.!?]$/) ? '' : '.')
       
       try {
-        // Spróbuj odtworzyć pre-generowane audio dla zdania
+        // Odtwórz pre-generowane audio dla zdania
         await playAudio(sentenceId, {
           playbackRate: speechRate,
           volume: 1.0
         }, user.value)
       } catch (error) {
-        // Jeśli nie ma audio dla zdania, wygeneruj je na żywo z premium głosem
-        console.log(`Generating audio for sentence: "${sentenceText}"`)
-        try {
-          await autoGenerateAudio(sentenceId, sentenceText, voiceId)
-          // Spróbuj odtworzyć po wygenerowaniu
-          await playAudio(sentenceId, {
-            playbackRate: speechRate,
-            volume: 1.0
-          }, user.value)
-        } catch (generateError) {
-          // Ostateczny fallback do TTS
-          console.warn('Fallback to TTS for sentence:', sentenceText)
-          await speak(sentenceText, { 
-            rate: speechRate, 
-            voiceId: voiceId
-          })
-        }
+        // Fallback do TTS jeśli brak pre-generowanego audio
+        console.warn(`Missing pre-generated audio for sentence: "${sentenceText}" - using TTS fallback`)
+        await speak(sentenceText, { 
+          rate: speechRate, 
+          voiceId: voiceId
+        })
       }
       
       // Dodaj pauzę między zdaniami (oprócz ostatniego) - tylko jeśli sentencePause > 0
