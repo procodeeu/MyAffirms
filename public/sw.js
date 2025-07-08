@@ -18,8 +18,10 @@ let currentSession = {
   isLoading: false,
   preloadQueue: new Set(),
   connectionType: 'unknown',
-  maxCachedAudio: 15, // Maximum audio files to keep in memory
-  preloadCount: 3 // Default preload count
+  maxCachedAudio: 50, // Increased cache size
+  preloadCount: 10, // Increased preload count
+  playbackStartTime: 0,
+  playbackPositionUpdater: null
 }
 
 // === SERVICE WORKER LIFECYCLE ===
@@ -106,8 +108,8 @@ async function startAudioSession(sessionData) {
     // Detect connection type and adjust preloading
     detectConnectionType()
     
-    // Preload first few audio files intelligently
-    await intelligentPreload()
+    // Preload all audio files for session
+    await preloadAllAudio()
     
     // Start playing first affirmation
     await playCurrentAffirmation()
@@ -211,10 +213,6 @@ async function playCurrentAffirmation() {
   console.log('🎵 Playing affirmation:', affirmation.id)
   
   try {
-    // Update Media Session metadata
-    updateMediaSessionMetadata(affirmation)
-    updateMediaSessionPlaybackState('playing')
-    
     // Get audio URLs for this affirmation
     const audioUrls = await getAffirmationAudioUrls(affirmation)
     
@@ -223,6 +221,10 @@ async function playCurrentAffirmation() {
       await scheduleNextAffirmation()
       return
     }
+    
+    // Update Media Session metadata with duration
+    await updateMediaSessionMetadata(affirmation, audioUrls)
+    updateMediaSessionPlaybackState('playing')
     
     // Play audio sequence
     await playAudioSequence(audioUrls)
@@ -250,9 +252,6 @@ async function playCurrentAffirmation() {
     } else {
       await scheduleNextAffirmation()
     }
-    
-    // Preload upcoming affirmations in background
-    setTimeout(() => preloadUpcoming(), 500)
     
   } catch (error) {
     console.error('❌ Failed to play affirmation:', error)
@@ -307,8 +306,13 @@ async function playAudioBuffer(audioUrl, playbackRate = 1.0) {
       
       currentSession.currentSource = source
       
+      // Start tracking playback position for Media Session
+      currentSession.playbackStartTime = currentSession.audioContext.currentTime
+      startPlaybackPositionUpdater(audioBuffer.duration)
+      
       source.onended = () => {
         currentSession.currentSource = null
+        stopPlaybackPositionUpdater()
         resolve()
       }
       
@@ -363,8 +367,6 @@ async function nextAffirmation() {
       affirmation: currentSession.affirmations[currentSession.currentIndex]
     })
     
-    // Trigger preloading of upcoming affirmations
-    setTimeout(() => preloadUpcoming(), 200)
   } else {
     // Session finished
     console.log('🎉 Session completed')
@@ -483,8 +485,19 @@ function setupMediaSession() {
   })
 }
 
-function updateMediaSessionMetadata(affirmation) {
+async function updateMediaSessionMetadata(affirmation, audioUrls) {
   if (!('mediaSession' in navigator)) return
+
+  let duration = 0
+  try {
+    // Calculate total duration of the affirmation
+    for (const url of audioUrls) {
+      const buffer = await loadAudioBuffer(url)
+      duration += buffer.duration
+    }
+  } catch (error) {
+    console.warn('Could not calculate duration for Media Session', error)
+  }
   
   navigator.mediaSession.metadata = new MediaMetadata({
     title: affirmation.text.substring(0, 100) + (affirmation.text.length > 100 ? '...' : ''),
@@ -495,12 +508,49 @@ function updateMediaSessionMetadata(affirmation) {
       { src: '/icon-512.png', sizes: '512x512', type: 'image/png' }
     ]
   })
+
+  // Set position state
+  if (duration > 0) {
+    updateMediaSessionPositionState(duration)
+  }
 }
 
 function updateMediaSessionPlaybackState(state) {
   if (!('mediaSession' in navigator)) return
   
   navigator.mediaSession.playbackState = state
+}
+
+function updateMediaSessionPositionState(duration) {
+  if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+    navigator.mediaSession.setPositionState({
+      duration: duration,
+      playbackRate: 1.0,
+      position: 0
+    })
+  }
+}
+
+function startPlaybackPositionUpdater(duration) {
+  if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+    stopPlaybackPositionUpdater() // Clear any existing updater
+
+    currentSession.playbackPositionUpdater = setInterval(() => {
+      const elapsedTime = currentSession.audioContext.currentTime - currentSession.playbackStartTime
+      navigator.mediaSession.setPositionState({
+        duration: duration,
+        playbackRate: 1.0,
+        position: Math.min(elapsedTime, duration)
+      })
+    }, 250)
+  }
+}
+
+function stopPlaybackPositionUpdater() {
+  if (currentSession.playbackPositionUpdater) {
+    clearInterval(currentSession.playbackPositionUpdater)
+    currentSession.playbackPositionUpdater = null
+  }
 }
 
 // === UTILITY FUNCTIONS ===
@@ -516,7 +566,7 @@ async function getAffirmationAudioUrls(affirmation) {
   return []
 }
 
-// === INTELLIGENT PRELOADING SYSTEM ===
+// === AGGRESSIVE PRELOADING SYSTEM ===
 
 function detectConnectionType() {
   if ('connection' in navigator) {
@@ -526,100 +576,56 @@ function detectConnectionType() {
     // Adjust preload count based on connection
     switch (connection.effectiveType) {
       case '4g':
-        currentSession.preloadCount = 5
-        currentSession.maxCachedAudio = 20
+        currentSession.preloadCount = 20
+        currentSession.maxCachedAudio = 100
         break
       case '3g':
-        currentSession.preloadCount = 3
-        currentSession.maxCachedAudio = 15
+        currentSession.preloadCount = 10
+        currentSession.maxCachedAudio = 50
         break
       case '2g':
       case 'slow-2g':
-        currentSession.preloadCount = 2
-        currentSession.maxCachedAudio = 10
+        currentSession.preloadCount = 5
+        currentSession.maxCachedAudio = 25
         break
       default:
-        currentSession.preloadCount = 3
-        currentSession.maxCachedAudio = 15
+        currentSession.preloadCount = 10
+        currentSession.maxCachedAudio = 50
     }
     
     console.log(`📶 Connection: ${connection.effectiveType}, preload count: ${currentSession.preloadCount}`)
   }
 }
 
-async function intelligentPreload() {
+async function preloadAllAudio() {
   if (!currentSession.isActive || currentSession.isLoading) return
   
   currentSession.isLoading = true
   
   try {
-    console.log('🧠 Starting intelligent preload...')
+    console.log('🧠 Preloading all audio for the session...')
     
-    // Phase 1: Preload first sentence of upcoming affirmations (for quick start)
-    await preloadFirstSentences()
+    const allUrls = new Set()
+    for (const affirmation of currentSession.affirmations) {
+      const urls = await getAffirmationAudioUrls(affirmation)
+      for (const url of urls) {
+        allUrls.add(url)
+      }
+    }
+
+    const preloadPromises = []
+    for (const url of allUrls) {
+      preloadPromises.push(loadAudioBufferSafely(url, url))
+    }
     
-    // Phase 2: Preload remaining sentences in background
-    setTimeout(() => preloadRemainingSentences(), 1000)
+    await Promise.allSettled(preloadPromises)
+    console.log('✅ All audio preloaded')
     
   } catch (error) {
-    console.error('❌ Failed to preload audio files:', error)
+    console.error('❌ Failed to preload all audio files:', error)
   } finally {
     currentSession.isLoading = false
   }
-}
-
-async function preloadFirstSentences() {
-  const preloadCount = Math.min(currentSession.preloadCount, currentSession.affirmations.length)
-  console.log(`🎯 Preloading first sentences for ${preloadCount} affirmations`)
-  
-  const preloadPromises = []
-  
-  for (let i = 0; i < preloadCount; i++) {
-    const affirmation = currentSession.affirmations[i]
-    const audioUrls = await getAffirmationAudioUrls(affirmation)
-    
-    // Preload only first audio file (first sentence) for quick start
-    if (audioUrls.length > 0) {
-      const preloadPromise = loadAudioBufferSafely(audioUrls[0], `aff_${i}_first`)
-      preloadPromises.push(preloadPromise)
-    }
-  }
-  
-  // Wait for all first sentences to load
-  await Promise.allSettled(preloadPromises)
-  console.log('✅ First sentences preloaded')
-}
-
-async function preloadRemainingSentences() {
-  if (!currentSession.isActive) return
-  
-  console.log('🔄 Preloading remaining sentences...')
-  
-  const preloadCount = Math.min(currentSession.preloadCount, currentSession.affirmations.length)
-  
-  for (let i = 0; i < preloadCount; i++) {
-    if (!currentSession.isActive) break
-    
-    const affirmation = currentSession.affirmations[i]
-    const audioUrls = await getAffirmationAudioUrls(affirmation)
-    
-    // Preload remaining sentences (skip first one as it's already loaded)
-    for (let j = 1; j < audioUrls.length; j++) {
-      if (!currentSession.isActive) break
-      
-      try {
-        await loadAudioBufferSafely(audioUrls[j], `aff_${i}_sent_${j}`)
-        
-        // Small delay to avoid overwhelming the system
-        await new Promise(resolve => setTimeout(resolve, 100))
-        
-      } catch (error) {
-        console.warn(`⚠️ Failed to preload sentence ${j} of affirmation ${i}:`, error)
-      }
-    }
-  }
-  
-  console.log('✅ Remaining sentences preloaded')
 }
 
 async function loadAudioBufferSafely(audioUrl, identifier) {
@@ -668,39 +674,6 @@ function manageCacheSize() {
     })
     
     console.log(`✅ Cache cleaned: ${currentSession.audioBuffers.size} items remaining`)
-  }
-}
-
-// Preload upcoming affirmations as session progresses
-async function preloadUpcoming() {
-  if (!currentSession.isActive) return
-  
-  const currentIndex = currentSession.currentIndex
-  const startIndex = currentIndex + 1
-  const endIndex = Math.min(startIndex + currentSession.preloadCount, currentSession.affirmations.length)
-  
-  console.log(`🔮 Preloading upcoming affirmations: ${startIndex} to ${endIndex - 1}`)
-  
-  for (let i = startIndex; i < endIndex; i++) {
-    if (!currentSession.isActive) break
-    
-    const affirmation = currentSession.affirmations[i]
-    const audioUrls = await getAffirmationAudioUrls(affirmation)
-    
-    // Preload all sentences for upcoming affirmations
-    for (let j = 0; j < audioUrls.length; j++) {
-      if (!currentSession.isActive) break
-      
-      try {
-        await loadAudioBufferSafely(audioUrls[j], `upcoming_${i}_${j}`)
-        
-        // Small delay between preloads
-        await new Promise(resolve => setTimeout(resolve, 50))
-        
-      } catch (error) {
-        console.warn(`⚠️ Failed to preload upcoming audio ${i}_${j}:`, error)
-      }
-    }
   }
 }
 
