@@ -26,11 +26,11 @@
         <div v-if="!isPlaying && !isFinished" class="space-y-6">
           <h2 class="text-3xl font-bold text-gray-900 font-crimson">{{ $t('session.ready_to_start') }}</h2>
           <p class="text-gray-600">
-            {{ $t('session.session_contains_affirmations', { count: activeAffirmations.length }) }}
+            {{ $t('session.session_contains_affirmations', { count: activeAffirmations?.length || 0 }) }}
           </p>
           <button
             @click="startSession"
-            :disabled="activeAffirmations.length === 0"
+            :disabled="(activeAffirmations?.length || 0) === 0"
             class="bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 px-10 py-4 rounded-full font-medium text-lg flex items-center gap-2 mx-auto border-2 border-pastel-khaki-2 hover:border-gray-800"
           >
             <Play class="w-5 h-5" /> {{ $t('session.start') }}
@@ -78,7 +78,7 @@
     <footer v-if="isPlaying" class="p-4">
       <div class="max-w-2xl mx-auto">
         <div class="text-sm text-gray-600 mb-2 text-center">
-          {{ $t('session.progress', { current: currentIndex + 1, total: activeAffirmations.length }) }}
+          {{ $t('session.progress', { current: currentIndex + 1, total: activeAffirmations?.length || 0 }) }}
         </div>
         <div class="w-full bg-gray-200 rounded-full h-2.5">
           <div 
@@ -88,16 +88,24 @@
         </div>
       </div>
     </footer>
+    
+    <!-- Background Audio Controls - temporarily disabled -->
+    <!-- <BackgroundAudioControls :show-debug-info="true" /> -->
   </div>
 </template>
 
 <script setup>
 import { ArrowLeft, Play, Square, SkipForward, CheckCircle } from 'lucide-vue-next'
 import LanguageSwitcher from '~/components/LanguageSwitcher.vue'
+import BackgroundAudioControls from '~/components/BackgroundAudioControls.vue'
+// import { useBackgroundAudioSession } from '~/composables/useBackgroundAudioSession'
 
 const { user, logout: authLogout } = useAuth()
+const { useLogger } = await import('~/composables/useLogger.js')
+const logger = useLogger()
 const { t, locale } = useI18n()
 const { getUserProjects } = useFirestore()
+// const backgroundAudioSession = useBackgroundAudioSession()
 const sessionAudioManager = useSessionAudioManager()
 
 const route = useRoute()
@@ -106,20 +114,42 @@ const projectId = route.params.id
 
 const project = ref(null)
 
-// Use session audio manager state
+// Use session audio manager
 const { 
   isPlaying, 
   isFinished, 
   currentAffirmation, 
   currentIndex, 
   progress,
-  startSession: startAudioSession,
-  stopSession: stopAudioSession,
-  nextAffirmation: nextAudioAffirmation
+  startAudioSession,
+  stopAudioSession,
+  nextAudioAffirmation
 } = sessionAudioManager
 
+// Helper function - define before use
+const getProjectFromLocalStorage = (id) => {
+  if (!user.value?.uid) {
+    return null
+  }
+  
+  const key = `projects_${user.value.uid}`
+  const saved = localStorage.getItem(key)
+  
+  if (saved) {
+    try {
+      const projects = JSON.parse(saved)
+      const found = projects.find(p => p.id === id)
+      return found
+    } catch (e) {
+      console.error('Session error parsing localStorage projects:', e)
+      return null
+    }
+  }
+  return null
+}
+
 const activeAffirmations = computed(() => {
-  if (!project.value || !project.value.affirmations) return []
+  if (!project.value?.affirmations) return []
   return project.value.affirmations.filter(a => a.isActive !== false)
 })
 
@@ -169,34 +199,14 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  // Session audio manager handles cleanup automatically
-  sessionAudioManager.cleanup()
+  // Stop any active audio session
+  if (isPlaying.value) {
+    stopAudioSession()
+  }
 })
 
-const getProjectFromLocalStorage = (id) => {
-  if (!user.value?.uid) {
-    return null
-  }
-  
-  const key = `projects_${user.value.uid}`
-  const saved = localStorage.getItem(key)
-  
-  if (saved) {
-    try {
-      const projects = JSON.parse(saved)
-      
-      const found = projects.find(p => p.id === id)
-      return found
-    } catch (e) {
-      console.error('Session error parsing localStorage projects:', e)
-      return null
-    }
-  }
-  return null
-}
-
 const startSession = async () => {
-  if (activeAffirmations.value.length === 0) return
+  if ((activeAffirmations.value?.length || 0) === 0) return
   
   const settings = project.value?.sessionSettings || {}
   

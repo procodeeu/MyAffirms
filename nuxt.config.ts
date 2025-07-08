@@ -4,7 +4,7 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@pinia/nuxt',
     '@nuxtjs/i18n'
-    // '@vite-pwa/nuxt' - temporarily disabled
+    // '@vite-pwa/nuxt' - temporarily disabled due to COOP issues
   ],
   ssr: false,
   devServer: {
@@ -54,6 +54,23 @@ export default defineNuxtConfig({
     fallbackLocale: 'en'
   },
   
+  pwa: {
+    registerType: 'autoUpdate',
+    workbox: {
+      navigateFallback: '/',
+      globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
+    },
+    client: {
+      installPrompt: true,
+    },
+    devOptions: {
+      enabled: true,
+      suppressWarnings: true,
+      navigateFallbackAllowlist: [/^\/$/],
+      type: 'module',
+    },
+  },
+
   runtimeConfig: {
     // Private keys (only available on server-side)
     firebaseProjectId: process.env.FIREBASE_PROJECT_ID || 'my-affirms',

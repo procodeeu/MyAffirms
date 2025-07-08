@@ -244,7 +244,13 @@
     "finished_description": "Good job. Come back tomorrow for another dose of positive energy.",
     "finish": "Finish",
     "progress": "Progress: {current} / {total}",
-    "page_title": "Session: {name} - My affirms"
+    "page_title": "Session: {name} - My affirms",
+    "backgroundPlayback": "Background Playback",
+    "backgroundMode": "Background Mode",
+    "foregroundMode": "Foreground Mode",
+    "backgroundSupported": "Background audio supported",
+    "foregroundOnly": "Foreground only",
+    "technicalInfo": "Technical Information"
   },
   "subscription": {
     "usage_resets": "Usage resets"

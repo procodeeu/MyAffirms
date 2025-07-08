@@ -98,11 +98,13 @@ fi
 
 # Test 6: Check critical CSS files
 echo "🔍 Testing critical assets..."
-CSS_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PROD_URL/_nuxt/entry.xCbXhAz4.css" 2>/dev/null || echo "404")
+# Find the actual CSS file name from the build
+CSS_FILE=$(find .output/public/_nuxt -name "entry.*.css" -type f | head -1 | xargs basename 2>/dev/null || echo "entry.css")
+CSS_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PROD_URL/_nuxt/$CSS_FILE" 2>/dev/null || echo "404")
 if [ "$CSS_STATUS" -eq 200 ]; then
-    echo "✅ CSS assets loading correctly"
+    echo "✅ CSS assets loading correctly ($CSS_FILE)"
 else
-    echo "⚠️  CSS assets might have different names (this is normal after rebuild)"
+    echo "⚠️  CSS assets might have different names (tried $CSS_FILE)"
 fi
 
 # Test 7: Run Playwright E2E tests to verify version display

@@ -268,7 +268,13 @@
     "finished_description": "Dobrze wykonana praca. Wróć jutro po kolejną dawkę pozytywnej energii.",
     "finish": "Zakończ",
     "progress": "Postęp: {current} / {total}",
-    "page_title": "Sesja: {name} - My affirms"
+    "page_title": "Sesja: {name} - My affirms",
+    "backgroundPlayback": "Odtwarzanie w tle",
+    "backgroundMode": "Tryb w tle",
+    "foregroundMode": "Tryb na pierwszym planie",
+    "backgroundSupported": "Audio w tle obsługiwane",
+    "foregroundOnly": "Tylko na pierwszym planie",
+    "technicalInfo": "Informacje techniczne"
   },
   "subscription": {
     "usage_resets": "Resetuje się użycie"

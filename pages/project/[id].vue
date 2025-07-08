@@ -234,7 +234,8 @@
                 {{ $t('project.session_settings.speech_rate', { rate: sessionSettings.speechRate }) }}
               </label>
               <input
-                v-model.number="sessionSettings.speechRate"
+                :value="sessionSettings.speechRate"
+                @input="updateSessionSettings({ speechRate: parseFloat($event.target.value) })"
                 type="range"
                 min="0.5"
                 max="2"
@@ -248,7 +249,8 @@
                 {{ $t('project.session_settings.pause_duration', { duration: sessionSettings.pauseDuration }) }}
               </label>
               <input
-                v-model.number="sessionSettings.pauseDuration"
+                :value="sessionSettings.pauseDuration"
+                @input="updateSessionSettings({ pauseDuration: parseFloat($event.target.value) })"
                 type="range"
                 min="1"
                 max="10"
@@ -262,7 +264,8 @@
                 {{ $t('project.session_settings.sentence_pause', { pause: sessionSettings.sentencePause }) }}
               </label>
               <input
-                v-model.number="sessionSettings.sentencePause"
+                :value="sessionSettings.sentencePause"
+                @input="updateSessionSettings({ sentencePause: parseFloat($event.target.value) })"
                 type="range"
                 min="1"
                 max="10"
@@ -273,7 +276,8 @@
             
             <label class="flex items-center">
               <input
-                v-model="sessionSettings.repeatAffirmation"
+                :checked="sessionSettings.repeatAffirmation"
+                @change="updateSessionSettings({ repeatAffirmation: $event.target.checked })"
                 type="checkbox"
                 class="mr-2"
               />
@@ -285,7 +289,8 @@
                 {{ $t('project.session_settings.repeat_delay', { delay: sessionSettings.repeatDelay }) }}
               </label>
               <input
-                v-model.number="sessionSettings.repeatDelay"
+                :value="sessionSettings.repeatDelay"
+                @input="updateSessionSettings({ repeatDelay: parseFloat($event.target.value) })"
                 type="range"
                 min="3"
                 max="30"
@@ -299,7 +304,8 @@
                 {{ $t('project.session_settings.voice_selection') }}
               </label>
               <select
-                v-model="sessionSettings.voiceId"
+                :value="sessionSettings.voiceId"
+                @change="updateSessionSettings({ voiceId: $event.target.value })"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pastel-violet"
               >
                 <option 
@@ -317,7 +323,8 @@
               <label class="flex items-center">
                 <input
                   type="checkbox"
-                  v-model="sessionSettings.backgroundMusic"
+                  :checked="sessionSettings.backgroundMusic"
+                  @change="updateSessionSettings({ backgroundMusic: $event.target.checked })"
                   class="mr-2"
                 />
                 Delikatna muzyka relaksacyjna w tle
@@ -329,7 +336,8 @@
                     Rodzaj dźwięków
                   </label>
                   <select
-                    v-model="sessionSettings.musicType"
+                    :value="sessionSettings.musicType"
+                    @change="updateSessionSettings({ musicType: $event.target.value })"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pastel-violet"
                   >
                     <optgroup label="Dźwięki generowane">
@@ -356,7 +364,8 @@
                   </label>
                   <input
                     type="range"
-                    v-model.number="sessionSettings.musicVolume"
+                    :value="sessionSettings.musicVolume"
+                    @input="updateSessionSettings({ musicVolume: parseFloat($event.target.value) })"
                     min="0.05"
                     max="0.4"
                     step="0.05"
@@ -554,45 +563,53 @@ const loadProject = async () => {
   }
 }
 
+// Flag to prevent duplicate audio generation
+const isGeneratingMissingAudio = ref(false)
+
 // Funkcja do generowania brakującego audio używając Audio Manager
 const generateMissingAudio = async () => {
-  if (!project.value?.affirmations || !user.value) return
+  if (!project.value?.affirmations || !user.value || isGeneratingMissingAudio.value) return
   
-  const currentVoiceId = sessionSettings.value.voiceId || 'pl-PL-ZofiaStandard'
+  isGeneratingMissingAudio.value = true
   
-  console.log(`🔍 Checking audio for ${project.value.affirmations.length} affirmations...`)
+  // Zdefiniuj poza try-catch żeby była dostępna w finally
+  let affirmationsNeedingAudio = []
   
-  // Sprawdź które afirmacje potrzebują audio
-  const affirmationsNeedingAudio = []
-  
-  for (const affirmation of project.value.affirmations) {
-    try {
-      const validation = await audioManager.validateAffirmationAudio(affirmation)
-      
-      if (!validation.isValid) {
-        console.log(`🎵 Affirmation needs audio generation: ${affirmation.id}`)
+  try {
+    const currentVoiceId = sessionSettings.value.voiceId || 'pl-PL-ZofiaStandard'
+    
+    console.log(`🔍 Checking audio for ${project.value.affirmations.length} affirmations...`)
+    
+    // Sprawdź które afirmacje potrzebują audio
+    affirmationsNeedingAudio = []
+    
+    for (const affirmation of project.value.affirmations) {
+      try {
+        const validation = await audioManager.validateAffirmationAudio(affirmation)
+        
+        if (!validation.isValid) {
+          console.log(`🎵 Affirmation needs audio generation: ${affirmation.id}`)
+          affirmationsNeedingAudio.push(affirmation)
+          generatingAudioIds.value.add(affirmation.id)
+        } else {
+          console.log(`✅ Audio already valid for: ${affirmation.id}`)
+        }
+      } catch (error) {
+        console.error(`❌ Error validating audio for ${affirmation.id}:`, error)
+        // Dodaj do listy na wszelki wypadek
         affirmationsNeedingAudio.push(affirmation)
         generatingAudioIds.value.add(affirmation.id)
-      } else {
-        console.log(`✅ Audio already valid for: ${affirmation.id}`)
       }
-    } catch (error) {
-      console.error(`❌ Error validating audio for ${affirmation.id}:`, error)
-      // Dodaj do listy na wszelki wypadek
-      affirmationsNeedingAudio.push(affirmation)
-      generatingAudioIds.value.add(affirmation.id)
     }
-  }
-  
-  if (affirmationsNeedingAudio.length === 0) {
-    console.log('✅ All affirmations have valid audio')
-    return
-  }
-  
-  console.log(`🎵 Generating audio for ${affirmationsNeedingAudio.length} affirmations`)
-  
-  // Użyj Audio Manager do batch generation
-  try {
+    
+    if (affirmationsNeedingAudio.length === 0) {
+      console.log('✅ All affirmations have valid audio')
+      return
+    }
+    
+    console.log(`🎵 Generating audio for ${affirmationsNeedingAudio.length} affirmations`)
+    
+    // Użyj Audio Manager do batch generation
     const result = await audioManager.createProjectAudio(affirmationsNeedingAudio, currentVoiceId)
     
     // Zaktualizuj afirmacje z wynikami
@@ -622,12 +639,13 @@ const generateMissingAudio = async () => {
     console.log(`🏁 Audio generation completed: ${result.success} success, ${result.errors} errors`)
     
   } catch (error) {
-    console.error('❌ Batch audio generation failed:', error)
+    console.error('❌ Audio generation failed:', error)
   } finally {
     // Usuń wszystkie z listy generujących się audio
     affirmationsNeedingAudio.forEach(aff => {
       generatingAudioIds.value.delete(aff.id)
     })
+    isGeneratingMissingAudio.value = false
   }
 }
 
@@ -654,7 +672,7 @@ onMounted(() => {
   if (voices.length > 0) {
     const defaultVoice = voices.find(v => v.gender === 'female') || voices[0]
     if (!sessionSettings.value.voiceId || !voices.find(v => v.id === sessionSettings.value.voiceId)) {
-      sessionSettings.value.voiceId = defaultVoice.id
+      updateSessionSettings({ voiceId: defaultVoice.id })
     }
   }
 })

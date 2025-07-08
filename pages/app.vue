@@ -525,6 +525,9 @@
     </div>
 
     <PWAInstallPrompt />
+    
+    <!-- Background Audio Controls - temporarily disabled -->
+    <!-- <BackgroundAudioControls /> -->
   </div>
 </template>
 

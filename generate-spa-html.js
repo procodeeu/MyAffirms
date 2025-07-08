@@ -1,14 +1,15 @@
 const fs = require('fs');
 const path = require('path');
 
-// Find the main entry JS file from the actual build output
+// Find the main entry JS and CSS files from the actual build output
 const nuxtDir = path.join(__dirname, '.output/public/_nuxt');
 let entryFile = 'entry.js'; // fallback
+let entryCssFile = 'entry.css'; // fallback
 let buildId = '';
 
 try {
   // Find the largest JS file (likely the main entry)
-  const files = fs.readdirSync(nuxtDir)
+  const jsFiles = fs.readdirSync(nuxtDir)
     .filter(file => file.endsWith('.js') && !file.includes('error'))
     .map(file => {
       const filePath = path.join(nuxtDir, file);
@@ -17,8 +18,17 @@ try {
     })
     .sort((a, b) => b.size - a.size);
   
-  if (files.length > 0) {
-    entryFile = files[0].name;
+  if (jsFiles.length > 0) {
+    entryFile = jsFiles[0].name;
+  }
+
+  // Find the main entry CSS file
+  const cssFiles = fs.readdirSync(nuxtDir)
+    .filter(file => file.startsWith('entry.') && file.endsWith('.css'))
+    .sort();
+  
+  if (cssFiles.length > 0) {
+    entryCssFile = cssFiles[0];
   }
 
   // Try to get buildId from latest.json
@@ -28,7 +38,7 @@ try {
     buildId = latest.id || '';
   }
 } catch (e) {
-  console.log('Could not read nuxt directory, using fallback entry file name');
+  console.log('Could not read nuxt directory, using fallback file names');
 }
 
 const html = `<!DOCTYPE html>
@@ -58,7 +68,7 @@ const html = `<!DOCTYPE html>
     <meta name="msapplication-TileColor" content="#1e40af">
     
     <!-- Main CSS -->
-    <link rel="stylesheet" href="/_nuxt/entry.9cNvTtFR.css">
+    <link rel="stylesheet" href="/_nuxt/${entryCssFile}">
     
     <!-- Runtime Config -->
     <script>
@@ -159,4 +169,4 @@ const html = `<!DOCTYPE html>
 // Write the 200.html file
 const outputPath = path.join(__dirname, '.output/public/200.html');
 fs.writeFileSync(outputPath, html);
-console.log(`Generated 200.html with entry file: ${entryFile}`);
+console.log(`Generated 200.html with entry JS: ${entryFile}, CSS: ${entryCssFile}`);

@@ -2,11 +2,13 @@
 import { useAudioManager } from './useAudioManager'
 import { useBackgroundMusic } from './useBackgroundMusic'
 import { useTextToSpeech } from './useTextToSpeech'
+import { useBackgroundTiming } from './useBackgroundTiming'
 
 export const useSessionAudioManager = () => {
   const audioManager = useAudioManager()
   const backgroundMusic = useBackgroundMusic()
   const tts = useTextToSpeech()
+  const timing = useBackgroundTiming()
   
   // Session state
   const sessionState = ref({
@@ -39,70 +41,54 @@ export const useSessionAudioManager = () => {
     
     // Check if saved voice is for current language
     const savedVoiceId = settings.voiceId
-    if (savedVoiceId && savedVoiceId.startsWith(currentLanguage)) {
+    if (savedVoiceId && voices.find(v => v.id === savedVoiceId)) {
       return savedVoiceId
     }
     
-    // Check if we have a saved voice for current language in voicesByLanguage
-    const savedByLanguage = settings.voicesByLanguage?.[currentLanguage]
-    if (savedByLanguage && voices.find(v => v.id === savedByLanguage)) {
-      return savedByLanguage
-    }
-    
-    // Fallback to default voice for current language
+    // Return default voice for current language
     if (voices.length > 0) {
       const defaultVoice = voices.find(v => v.gender === 'female') || voices[0]
       return defaultVoice.id
     }
     
-    return 'pl-PL-ZofiaNeural'
+    return 'pl-PL-ZofiaNeural' // Ultimate fallback
   }
   
-  // === SESSION LIFECYCLE ===
+  // === SESSION MANAGEMENT ===
   
-  const startSession = async (affirmations, settings = {}) => {
-    console.log('🎯 Starting session with', affirmations.length, 'affirmations')
+  const startAudioSession = async (affirmations, settings) => {
+    console.log('Starting audio session with', affirmations.length, 'affirmations')
     
-    if (affirmations.length === 0) {
-      throw new Error('No affirmations provided for session')
+    if (!affirmations || affirmations.length === 0) {
+      throw new Error('No affirmations provided')
     }
     
-    // Initialize session state
+    // Reset session state
     sessionState.value = {
       isActive: true,
       isPaused: false,
       isFinished: false,
       currentIndex: 0,
-      currentAffirmation: affirmations[0],
-      affirmations: [...affirmations], // Create copy
+      currentAffirmation: null,
+      affirmations: [...affirmations],
       settings: { ...settings },
       timeout: null
     }
     
-    try {
-      // Start background music if enabled
-      if (settings.backgroundMusic) {
-        const musicVolume = settings.musicVolume || 0.15
-        const musicType = settings.musicType || 'birds'
-        
-        console.log('🎵 Starting background music:', { musicType, musicVolume })
-        await backgroundMusic.play(musicVolume, musicType)
-      }
-      
-      // Start playing first affirmation
-      await playCurrentAffirmation()
-      
-      console.log('✅ Session started successfully')
-      
-    } catch (error) {
-      console.error('❌ Failed to start session:', error)
-      await stopSession()
-      throw error
+    // Start background music if enabled
+    if (settings.backgroundMusic) {
+      await backgroundMusic.play(settings.musicVolume, settings.musicType)
     }
+    
+    // Start playing first affirmation
+    await playCurrentAffirmation()
   }
   
-  const stopSession = async () => {
-    console.log('⏹️ Stopping session')
+  const stopAudioSession = async () => {
+    console.log('Stopping audio session')
+    
+    sessionState.value.isActive = false
+    sessionState.value.isPaused = false
     
     // Clear any pending timeouts
     if (sessionState.value.timeout) {
@@ -110,144 +96,80 @@ export const useSessionAudioManager = () => {
       sessionState.value.timeout = null
     }
     
-    // Stop all audio
+    // Stop audio playback
     audioManager.stopPlayback()
-    tts.stop()
     
-    // Fade out background music
-    backgroundMusic.fadeOut()
-    
-    // Update session state
-    sessionState.value.isActive = false
-    sessionState.value.isFinished = true
-    sessionState.value.isPaused = false
-    
-    console.log('✅ Session stopped')
+    // Stop background music
+    backgroundMusic.stop()
   }
   
-  const pauseSession = () => {
-    console.log('⏸️ Pausing session')
-    
-    if (!sessionState.value.isActive) return
-    
-    // Clear timeout
-    if (sessionState.value.timeout) {
-      clearTimeout(sessionState.value.timeout)
-      sessionState.value.timeout = null
-    }
-    
-    // Stop current audio
-    audioManager.stopPlayback()
-    tts.stop()
-    
+  const pauseAudioSession = () => {
+    console.log('Pausing audio session')
     sessionState.value.isPaused = true
-    console.log('✅ Session paused')
+    audioManager.stopPlayback()
   }
   
-  const resumeSession = async () => {
-    console.log('▶️ Resuming session')
-    
-    if (!sessionState.value.isActive || !sessionState.value.isPaused) return
-    
+  const resumeAudioSession = async () => {
+    console.log('Resuming audio session')
     sessionState.value.isPaused = false
-    
-    try {
-      await playCurrentAffirmation()
-      console.log('✅ Session resumed')
-    } catch (error) {
-      console.error('❌ Failed to resume session:', error)
-      await stopSession()
-    }
+    await playCurrentAffirmation()
   }
   
-  const nextAffirmation = async () => {
-    console.log('⏭️ Moving to next affirmation')
-    
+  const nextAudioAffirmation = async () => {
     if (!sessionState.value.isActive) return
     
-    // Clear current timeout
-    if (sessionState.value.timeout) {
-      clearTimeout(sessionState.value.timeout)
-      sessionState.value.timeout = null
-    }
+    sessionState.value.currentIndex++
     
-    // Stop current audio
-    audioManager.stopPlayback()
-    tts.stop()
-    
-    // Move to next affirmation
-    if (sessionState.value.currentIndex < sessionState.value.affirmations.length - 1) {
-      sessionState.value.currentIndex++
-      sessionState.value.currentAffirmation = sessionState.value.affirmations[sessionState.value.currentIndex]
-      
-      try {
-        await playCurrentAffirmation()
-      } catch (error) {
-        console.error('❌ Failed to play next affirmation:', error)
-        await stopSession()
-      }
-    } else {
+    if (sessionState.value.currentIndex >= sessionState.value.affirmations.length) {
       // Session finished
-      console.log('🏁 Session completed - all affirmations played')
-      await finishSession()
+      sessionState.value.isFinished = true
+      sessionState.value.isActive = false
+      console.log('Audio session completed')
+      backgroundMusic.stop()
+      return
     }
+    
+    await playCurrentAffirmation()
   }
   
-  const finishSession = async () => {
-    console.log('🏁 Finishing session naturally')
-    
-    sessionState.value.isActive = false
-    sessionState.value.isFinished = true
-    
-    // Fade out background music
-    backgroundMusic.fadeOut()
-    
-    console.log('✅ Session finished')
-  }
-  
-  // === AFFIRMATION PLAYBACK ===
+  // === PLAYBACK LOGIC ===
   
   const playCurrentAffirmation = async () => {
     if (!sessionState.value.isActive || sessionState.value.isPaused) return
     
-    const affirmation = sessionState.value.currentAffirmation
+    const affirmation = sessionState.value.affirmations[sessionState.value.currentIndex]
+    if (!affirmation) return
+    
+    sessionState.value.currentAffirmation = affirmation
     const settings = sessionState.value.settings
     
-    console.log('🎵 Playing affirmation:', affirmation.id)
-    
-    const {
-      speechRate = 1.0,
-      pauseDuration = 3,
-      sentencePause = 4,
-      repeatAffirmation = false,
-      repeatDelay = 5
-    } = settings
+    console.log(`Playing affirmation ${sessionState.value.currentIndex + 1}/${sessionState.value.affirmations.length}:`, affirmation.text)
     
     try {
-      // Wait for user if not available (for auth context)
-      const { user } = useAuth()
-      if (!user.value) {
-        await waitForUser()
-      }
+      const {
+        speechRate = 1.0,
+        sentencePause = 0,
+        repeatAffirmation = false,
+        repeatDelay = 5,
+        pauseDuration = 3
+      } = settings
       
-      // Determine voice and sentence pause settings
-      const sentences = affirmation.text.split(/[.!?]+/).filter(s => s.trim().length > 0)
-      const hasMultipleSentences = sentences.length > 1
-      const shouldUseSentencePause = sentencePause > 0 && hasMultipleSentences
       const voiceId = getAppropriateVoiceId(settings)
+      const shouldUseSentencePause = sentencePause > 0
       
-      // Try to play using Audio Manager (pre-generated audio)
-      await audioManager.playAffirmation(affirmation, {
-        speechRate,
-        sentencePause: shouldUseSentencePause ? sentencePause : 0,
-        voiceId
-      })
-      
-      console.log('✅ Affirmation played successfully')
-      
-      // Handle repetition
-      if (repeatAffirmation && sessionState.value.isActive && !sessionState.value.isPaused) {
-        sessionState.value.timeout = setTimeout(async () => {
+      // Try to play with audio manager first
+      try {
+        await audioManager.playAffirmation(affirmation, {
+          speechRate,
+          sentencePause: shouldUseSentencePause ? sentencePause : 0,
+          voiceId
+        })
+        
+        console.log('Affirmation played successfully')
+        
+        // Handle repetition
+        if (repeatAffirmation && sessionState.value.isActive && !sessionState.value.isPaused) {
+          await timing.delay(repeatDelay)
           if (sessionState.value.isActive && !sessionState.value.isPaused) {
             try {
               await audioManager.playAffirmation(affirmation, {
@@ -255,72 +177,66 @@ export const useSessionAudioManager = () => {
                 sentencePause: shouldUseSentencePause ? sentencePause : 0,
                 voiceId
               })
-              scheduleNextAffirmation(pauseDuration)
+              await scheduleNextAffirmation(pauseDuration)
             } catch (error) {
-              console.error('❌ Repeat playback failed:', error)
-              scheduleNextAffirmation(pauseDuration)
+              console.error('Repeat playback failed:', error)
+              await scheduleNextAffirmation(pauseDuration)
             }
           }
-        }, repeatDelay * 1000)
-      } else {
-        scheduleNextAffirmation(pauseDuration)
-      }
-      
-    } catch (error) {
-      console.warn('⚠️ Audio Manager playback failed, trying TTS fallback:', error)
-      
-      // Fallback to TTS
-      try {
-        const voiceId = getAppropriateVoiceId(settings)
-        const sentences = affirmation.text.split(/[.!?]+/).filter(s => s.trim().length > 0)
-        const hasMultipleSentences = sentences.length > 1
-        const shouldUseSentencePause = sentencePause > 0 && hasMultipleSentences
+        } else {
+          await scheduleNextAffirmation(pauseDuration)
+        }
         
+      } catch (audioError) {
+        console.warn('Audio manager failed, trying TTS fallback:', audioError)
+        
+        // Fallback to TTS
         await tts.speak(affirmation.text, {
           rate: speechRate,
           sentencePause: shouldUseSentencePause ? sentencePause : 0,
           voiceId: voiceId
         })
         
-        console.log('✅ TTS fallback successful')
+        console.log('TTS fallback successful')
         
         // Handle repetition for TTS
         if (repeatAffirmation && sessionState.value.isActive && !sessionState.value.isPaused) {
-          sessionState.value.timeout = setTimeout(async () => {
-            if (sessionState.value.isActive && !sessionState.value.isPaused) {
-              try {
-                await tts.speak(affirmation.text, {
-                  rate: speechRate,
-                  sentencePause: shouldUseSentencePause ? sentencePause : 0,
-                  voiceId: voiceId
-                })
-                scheduleNextAffirmation(pauseDuration)
-              } catch (error) {
-                console.error('❌ TTS repeat failed:', error)
-                scheduleNextAffirmation(pauseDuration)
-              }
+          await timing.delay(repeatDelay)
+          if (sessionState.value.isActive && !sessionState.value.isPaused) {
+            try {
+              await tts.speak(affirmation.text, {
+                rate: speechRate,
+                sentencePause: shouldUseSentencePause ? sentencePause : 0,
+                voiceId: voiceId
+              })
+              await scheduleNextAffirmation(pauseDuration)
+            } catch (error) {
+              console.error('TTS repeat failed:', error)
+              await scheduleNextAffirmation(pauseDuration)
             }
-          }, repeatDelay * 1000)
+          }
         } else {
-          scheduleNextAffirmation(pauseDuration)
+          await scheduleNextAffirmation(pauseDuration)
         }
-        
-      } catch (ttsError) {
-        console.error('❌ TTS fallback also failed:', ttsError)
-        // Move to next affirmation even if current one fails
-        scheduleNextAffirmation(pauseDuration)
       }
+    } catch (error) {
+      console.error('Failed to play affirmation:', error)
+      await scheduleNextAffirmation(pauseDuration)
     }
   }
   
-  const scheduleNextAffirmation = (pauseDuration) => {
+  const scheduleNextAffirmation = async (pauseDuration) => {
     if (sessionState.value.isActive && !sessionState.value.isPaused) {
-      console.log(`⏰ Scheduling next affirmation in ${pauseDuration}s`)
-      sessionState.value.timeout = setTimeout(() => {
+      console.log(`Scheduling next affirmation in ${pauseDuration}s`)
+      
+      try {
+        await timing.delay(pauseDuration)
         if (sessionState.value.isActive && !sessionState.value.isPaused) {
-          nextAffirmation()
+          await nextAudioAffirmation()
         }
-      }, pauseDuration * 1000)
+      } catch (error) {
+        console.warn('Scheduling failed:', error)
+      }
     }
   }
   
@@ -339,64 +255,30 @@ export const useSessionAudioManager = () => {
         if (newUser) {
           clearTimeout(timeout)
           unwatch()
-          resolve()
+          resolve(newUser)
         }
-      })
+      }, { immediate: true })
     })
   }
   
-  // === CLEANUP ===
-  
-  const cleanup = () => {
-    console.log('🧹 Cleaning up session audio manager')
-    
-    if (sessionState.value.timeout) {
-      clearTimeout(sessionState.value.timeout)
-    }
-    
-    audioManager.stopPlayback()
-    tts.stop()
-    backgroundMusic.stop()
-    
-    // Reset state
-    sessionState.value = {
-      isActive: false,
-      isPaused: false,
-      isFinished: false,
-      currentIndex: 0,
-      currentAffirmation: null,
-      affirmations: [],
-      settings: {},
-      timeout: null
-    }
-  }
-  
-  // Auto cleanup on unmount
-  onUnmounted(() => {
-    cleanup()
-  })
-  
   return {
-    // State (readonly)
-    isPlaying: readonly(isPlaying),
-    isFinished: readonly(isFinished),
-    currentAffirmation: readonly(currentAffirmation),
-    currentIndex: readonly(currentIndex),
-    progress: readonly(progress),
+    // State
+    sessionState: readonly(sessionState),
+    isPlaying,
+    isFinished,
+    currentAffirmation,
+    currentIndex,
+    progress,
     
-    // Session control
-    startSession,
-    stopSession,
-    pauseSession,
-    resumeSession,
-    nextAffirmation,
+    // Session management
+    startAudioSession,
+    stopAudioSession,
+    pauseAudioSession,
+    resumeAudioSession,
+    nextAudioAffirmation,
     
     // Utility
-    cleanup,
-    
-    // Access to underlying managers (for advanced usage)
-    audioManager,
-    backgroundMusic,
-    tts
+    waitForUser,
+    getAppropriateVoiceId
   }
 }
