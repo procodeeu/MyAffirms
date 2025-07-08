@@ -62,42 +62,45 @@ export const useAudioPlayback = () => {
 
   // Odtwórz sekwencję audio z pauzami
   const playAudioSequence = async (audioUrls, options = {}) => {
-    const { sentencePause = 0, speechRate = 1.0 } = options
+    const { sentencePause = 0, speechRate = 1.0, postSequencePause = 0 } = options;
 
     for (let i = 0; i < audioUrls.length; i++) {
-      if (isStopped.value) break
+      if (isStopped.value) break;
 
-      const audioUrl = audioUrls[i]
+      const audioUrl = audioUrls[i];
       
       try {
         await playAudioFromUrl(audioUrl, {
           playbackRate: speechRate,
           volume: 1.0
-        })
+        });
       } catch (error) {
-        console.warn(`⚠️ Failed to play audio ${i + 1}:`, error)
-        // Kontynuuj z następnym audio
+        console.warn(`⚠️ Failed to play audio ${i + 1}:`, error);
       }
 
-      // Dodaj pauzę między audio (oprócz ostatniego)
       if (i < audioUrls.length - 1 && sentencePause > 0 && !isStopped.value) {
-        await new Promise(resolve => {
-          const pauseTimeout = setTimeout(resolve, sentencePause * 1000)
-          
-          // Sprawdzaj co 100ms czy nie zatrzymano
-          const checkInterval = setInterval(() => {
-            if (isStopped.value) {
-              clearTimeout(pauseTimeout)
-              clearInterval(checkInterval)
-              resolve()
-            }
-          }, 100)
-
-          setTimeout(() => clearInterval(checkInterval), sentencePause * 1000)
-        })
+        await playSilence(sentencePause);
       }
     }
-  }
+
+    // Play pause after the entire sequence is done
+    if (!isStopped.value && postSequencePause > 0) {
+      console.log(`Playing post-sequence pause of ${postSequencePause}s`);
+      await playSilence(postSequencePause);
+    }
+  };
+
+  const playSilence = async (duration) => {
+    if (isStopped.value) return;
+    console.log(`Playing silence for ${duration}s`);
+    const silenceUrl = '/audio/silence/longchirp-88445.mp3';
+    try {
+      await playAudioFromUrl(silenceUrl);
+    } catch (error) {
+      console.warn('Failed to play silence audio, falling back to timeout', error);
+      await new Promise(resolve => setTimeout(resolve, duration * 1000));
+    }
+  };
 
   // Usuń audio element z aktywnych
   const removeFromActiveElements = (audio) => {

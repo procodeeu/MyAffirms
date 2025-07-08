@@ -135,16 +135,16 @@ export const useSessionAudioManager = () => {
   // === PLAYBACK LOGIC ===
   
   const playCurrentAffirmation = async () => {
-    if (!sessionState.value.isActive || sessionState.value.isPaused) return
-    
-    const affirmation = sessionState.value.affirmations[sessionState.value.currentIndex]
-    if (!affirmation) return
-    
-    sessionState.value.currentAffirmation = affirmation
-    const settings = sessionState.value.settings
-    
-    console.log(`Playing affirmation ${sessionState.value.currentIndex + 1}/${sessionState.value.affirmations.length}:`, affirmation.text)
-    
+    if (!sessionState.value.isActive || sessionState.value.isPaused) return;
+
+    const affirmation = sessionState.value.affirmations[sessionState.value.currentIndex];
+    if (!affirmation) return;
+
+    sessionState.value.currentAffirmation = affirmation;
+    const settings = sessionState.value.settings;
+
+    console.log(`Playing affirmation ${sessionState.value.currentIndex + 1}/${sessionState.value.affirmations.length}:`, affirmation.text);
+
     try {
       const {
         speechRate = 1.0,
@@ -152,93 +152,61 @@ export const useSessionAudioManager = () => {
         repeatAffirmation = false,
         repeatDelay = 5,
         pauseDuration = 3
-      } = settings
-      
-      const voiceId = getAppropriateVoiceId(settings)
-      const shouldUseSentencePause = sentencePause > 0
-      
-      // Try to play with audio manager first
-      try {
-        await audioManager.playAffirmation(affirmation, {
-          speechRate,
-          sentencePause: shouldUseSentencePause ? sentencePause : 0,
-          voiceId
-        })
-        
-        console.log('Affirmation played successfully')
-        
-        // Handle repetition
-        if (repeatAffirmation && sessionState.value.isActive && !sessionState.value.isPaused) {
-          await timing.delay(repeatDelay)
-          if (sessionState.value.isActive && !sessionState.value.isPaused) {
-            try {
-              await audioManager.playAffirmation(affirmation, {
-                speechRate,
-                sentencePause: shouldUseSentencePause ? sentencePause : 0,
-                voiceId
-              })
-              await scheduleNextAffirmation(pauseDuration)
-            } catch (error) {
-              console.error('Repeat playback failed:', error)
-              await scheduleNextAffirmation(pauseDuration)
-            }
+      } = settings;
+
+      const voiceId = getAppropriateVoiceId(settings);
+      const shouldUseSentencePause = sentencePause > 0;
+
+      const playAffirmationLogic = async (includePostSequencePause = false) => {
+        try {
+          await audioManager.playAffirmation(affirmation, {
+            speechRate,
+            sentencePause: shouldUseSentencePause ? sentencePause : 0,
+            voiceId,
+            postSequencePause: includePostSequencePause ? pauseDuration : 0
+          });
+        } catch (audioError) {
+          console.warn('Audio manager failed, trying TTS fallback:', audioError);
+          await tts.speak(affirmation.text, {
+            rate: speechRate,
+            sentencePause: shouldUseSentencePause ? sentencePause : 0,
+            voiceId: voiceId
+          });
+          // If TTS is used, we still need to play the post-sequence pause separately
+          if (includePostSequencePause) {
+            await audioManager.playSilence(pauseDuration);
           }
-        } else {
-          await scheduleNextAffirmation(pauseDuration)
         }
-        
-      } catch (audioError) {
-        console.warn('Audio manager failed, trying TTS fallback:', audioError)
-        
-        // Fallback to TTS
-        await tts.speak(affirmation.text, {
-          rate: speechRate,
-          sentencePause: shouldUseSentencePause ? sentencePause : 0,
-          voiceId: voiceId
-        })
-        
-        console.log('TTS fallback successful')
-        
-        // Handle repetition for TTS
-        if (repeatAffirmation && sessionState.value.isActive && !sessionState.value.isPaused) {
-          await timing.delay(repeatDelay)
-          if (sessionState.value.isActive && !sessionState.value.isPaused) {
-            try {
-              await tts.speak(affirmation.text, {
-                rate: speechRate,
-                sentencePause: shouldUseSentencePause ? sentencePause : 0,
-                voiceId: voiceId
-              })
-              await scheduleNextAffirmation(pauseDuration)
-            } catch (error) {
-              console.error('TTS repeat failed:', error)
-              await scheduleNextAffirmation(pauseDuration)
-            }
-          }
-        } else {
-          await scheduleNextAffirmation(pauseDuration)
-        }
-      }
-    } catch (error) {
-      console.error('Failed to play affirmation:', error)
-      await scheduleNextAffirmation(pauseDuration)
-    }
-  }
-  
-  const scheduleNextAffirmation = async (pauseDuration) => {
-    if (sessionState.value.isActive && !sessionState.value.isPaused) {
-      console.log(`Scheduling next affirmation in ${pauseDuration}s`)
-      
-      try {
-        await timing.delay(pauseDuration)
+      };
+
+      // 1. Play the affirmation for the first time
+      // Only play post-sequence pause if it's not the last affirmation
+      const isLastAffirmation = (sessionState.value.currentIndex === sessionState.value.affirmations.length - 1);
+      await playAffirmationLogic(!isLastAffirmation);
+
+      // 2. Handle repetition if enabled
+      if (repeatAffirmation && sessionState.value.isActive && !sessionState.value.isPaused) {
+        await audioManager.playSilence(repeatDelay);
         if (sessionState.value.isActive && !sessionState.value.isPaused) {
-          await nextAudioAffirmation()
+          await playAffirmationLogic(false); // No post-sequence pause for repetition
         }
-      } catch (error) {
-        console.warn('Scheduling failed:', error)
       }
+
+      // 3. Schedule the next affirmation (no more direct pause here)
+      await scheduleNextAffirmation();
+
+    } catch (error) {
+      console.error('Failed to play affirmation:', error);
+      await scheduleNextAffirmation(); // Try to continue even on error
     }
-  }
+  };
+
+  const scheduleNextAffirmation = async () => {
+    if (sessionState.value.isActive && !sessionState.value.isPaused) {
+      console.log(`Scheduling next affirmation immediately.`);
+      await nextAudioAffirmation();
+    }
+  };
   
   // === UTILITY FUNCTIONS ===
   

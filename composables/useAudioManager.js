@@ -88,7 +88,7 @@ export const useAudioManager = () => {
 
   // Odtwórz afirmację z pauzami między zdaniami
   const playAffirmation = async (affirmation, options = {}) => {
-    const { speechRate = 1.0, sentencePause = 0, voiceId } = options
+    const { speechRate = 1.0, sentencePause = 0, voiceId, postSequencePause = 0 } = options;
 
     console.log('🎵 Playing affirmation:', affirmation.id)
 
@@ -121,7 +121,8 @@ export const useAudioManager = () => {
       // Odtwórz sekwencję audio
       await playback.playAudioSequence(audioUrls, {
         sentencePause,
-        speechRate
+        speechRate,
+        postSequencePause
       })
 
       console.log('✅ Affirmation playback completed')
@@ -137,6 +138,11 @@ export const useAudioManager = () => {
     console.log('⏹️ Stopping audio playback')
     playback.stopAllAudio()
   }
+
+  const playSilence = async (duration) => {
+    console.log(`Playing silence for ${duration}s`);
+    await playback.playSilence(duration);
+  };
 
   // === BATCH OPERATIONS ===
 
@@ -352,6 +358,7 @@ export const useAudioManager = () => {
     // Playback
     playAffirmation,
     stopPlayback,
+    playSilence,
 
     // Batch operations
     createProjectAudio,
