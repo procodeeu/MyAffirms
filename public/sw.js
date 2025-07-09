@@ -1,10 +1,8 @@
-'''// Service Worker for background audio playback
+// Service Worker for background audio playback
 // Handles affirmation sessions in background with Media Session API
 
 const CACHE_NAME = 'my-affirms-audio-v1'
 const AUDIO_CACHE_NAME = 'my-affirms-audio-files-v1'
-const SILENCE_FILE_PATH = '/audio/silence/longchirp-88445.mp3';
-
 
 // Global state for current session
 let currentSession = {
@@ -207,63 +205,78 @@ function stopAudioSession() {
 // === AUDIO PLAYBACK ===
 
 async function playCurrentAffirmation() {
-  if (!currentSession.isActive || currentSession.isPaused) return;
-
-  const affirmation = currentSession.affirmations[currentSession.currentIndex];
-  if (!affirmation) return;
-
-  console.log('🎵 Playing affirmation:', affirmation.id);
-
+  if (!currentSession.isActive || currentSession.isPaused) return
+  
+  const affirmation = currentSession.affirmations[currentSession.currentIndex]
+  if (!affirmation) return
+  
+  console.log('🎵 Playing affirmation:', affirmation.id)
+  
   try {
-    const audioUrls = await getAffirmationAudioUrls(affirmation);
-
+    // Get audio URLs for this affirmation
+    const audioUrls = await getAffirmationAudioUrls(affirmation)
+    
     if (audioUrls.length === 0) {
-      console.warn('⚠️ No audio URLs found for affirmation');
-      await scheduleNextAffirmation();
-      return;
+      console.warn('⚠️ No audio URLs found for affirmation')
+      await scheduleNextAffirmation()
+      return
     }
-
-    await updateMediaSessionMetadata(affirmation, audioUrls);
-    updateMediaSessionPlaybackState('playing');
-
-    // Play the sequence of sentences
-    await playAudioSequence(audioUrls);
-
+    
+    // Update Media Session metadata with duration
+    await updateMediaSessionMetadata(affirmation, audioUrls)
+    updateMediaSessionPlaybackState('playing')
+    
+    // Play audio sequence
+    await playAudioSequence(audioUrls)
+    
     // Handle repetition if enabled
     if (currentSession.settings.repeatAffirmation && currentSession.isActive && !currentSession.isPaused) {
-      console.log('🔁 Repeating affirmation after a pause...');
-      // Use the silence file for the repeat delay
-      await playAudioBuffer(SILENCE_FILE_PATH);
-
-      if (currentSession.isActive && !currentSession.isPaused) {
-        // Re-play the sequence
-        await playAudioSequence(audioUrls);
+      const repeatDelay = (currentSession.settings.repeatDelay || 5)
+      
+      try {
+        await createSilentDelay(repeatDelay)
+        if (currentSession.isActive && !currentSession.isPaused) {
+          await playAudioSequence(audioUrls)
+          await scheduleNextAffirmation()
+        }
+      } catch (error) {
+        console.warn('⚠️ Repeat silent delay failed, falling back to setTimeout:', error)
+        // Fallback do setTimeout
+        currentSession.nextTimeout = setTimeout(async () => {
+          if (currentSession.isActive && !currentSession.isPaused) {
+            await playAudioSequence(audioUrls)
+            await scheduleNextAffirmation()
+          }
+        }, repeatDelay * 1000)
       }
+    } else {
+      await scheduleNextAffirmation()
     }
-
-    // Schedule the next affirmation (which includes the main pause)
-    await scheduleNextAffirmation();
-
+    
   } catch (error) {
-    console.error('❌ Failed to play affirmation:', error);
-    // Even on error, try to move to the next one
-    await scheduleNextAffirmation();
+    console.error('❌ Failed to play affirmation:', error)
+    await scheduleNextAffirmation()
   }
 }
 
 async function playAudioSequence(audioUrls) {
-  const sentencePause = (currentSession.settings.sentencePause || 0);
-  const speechRate = currentSession.settings.speechRate || 1.0;
-
+  const sentencePause = (currentSession.settings.sentencePause || 0) * 1000
+  const speechRate = currentSession.settings.speechRate || 1.0
+  
   for (let i = 0; i < audioUrls.length; i++) {
-    if (!currentSession.isActive || currentSession.isPaused) break;
-
-    await playAudioBuffer(audioUrls[i], speechRate);
-
+    if (!currentSession.isActive || currentSession.isPaused) break
+    
+    await playAudioBuffer(audioUrls[i], speechRate)
+    
     // Add pause between sentences (except last one)
     if (i < audioUrls.length - 1 && sentencePause > 0) {
-       // Always use the 5s silence file for sentence pauses for this test
-      await playAudioBuffer(SILENCE_FILE_PATH);
+      await new Promise(resolve => {
+        // Użyj silent delay zamiast setTimeout dla pauzy między zdaniami
+        createSilentDelay(sentencePause / 1000).then(resolve).catch(() => {
+          // Fallback do setTimeout
+          setTimeout(resolve, sentencePause)
+        })
+      })
     }
   }
 }
@@ -362,24 +375,68 @@ async function nextAffirmation() {
 }
 
 async function scheduleNextAffirmation() {
-  if (!currentSession.isActive || currentSession.isPaused) return;
-
-  console.log(`⏰ Scheduling next affirmation with a pause.`);
-
-  try {
-    // Use the silent audio file to maintain the audio session during the pause
-    await playAudioBuffer(SILENCE_FILE_PATH);
+  const pauseDuration = (currentSession.settings.pauseDuration || 3) * 1000
+  
+  if (currentSession.isActive && !currentSession.isPaused) {
+    console.log(`⏰ Scheduling next affirmation in ${pauseDuration}ms`)
     
-    // After the "silence" has played, move to the next affirmation
-    if (currentSession.isActive && !currentSession.isPaused) {
-      nextAffirmation();
+    // Użyj silent audio zamiast setTimeout - to będzie działać w tle
+    try {
+      await createSilentDelay(pauseDuration / 1000)
+      if (currentSession.isActive && !currentSession.isPaused) {
+        nextAffirmation()
+      }
+    } catch (error) {
+      console.warn('⚠️ Silent delay failed, falling back to setTimeout:', error)
+      // Fallback do setTimeout
+      currentSession.nextTimeout = setTimeout(() => {
+        if (currentSession.isActive && !currentSession.isPaused) {
+          nextAffirmation()
+        }
+      }, pauseDuration)
     }
-  } catch (error) {
-    console.error('❌ Failed to play silence for pause, stopping session to be safe:', error);
-    // If playing silence fails, it's safer to stop the session
-    // as we can no longer guarantee playback.
-    stopAudioSession();
   }
+}
+
+// Tworzy ciche audio delay które działa w tle
+function createSilentDelay(durationSeconds) {
+  return new Promise((resolve, reject) => {
+    // Tworzymy bardzo ciche audio o określonej długości
+    const audioContext = new (self.AudioContext || self.webkitAudioContext)()
+    
+    const sampleRate = audioContext.sampleRate
+    const numSamples = Math.floor(sampleRate * durationSeconds)
+    const buffer = audioContext.createBuffer(1, numSamples, sampleRate)
+    
+    // Buffer jest już wypełniony zerami (ciche)
+    const source = audioContext.createBufferSource()
+    source.buffer = buffer
+    
+    // Podłącz do destination ale z bardzo niską głośnością
+    const gainNode = audioContext.createGain()
+    gainNode.gain.value = 0.001 // Prawie niesłyszalne
+    source.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+    
+    source.onended = () => {
+      console.log(`✅ Silent delay completed: ${durationSeconds}s`)
+      audioContext.close()
+      resolve()
+    }
+    
+    source.onerror = (error) => {
+      console.warn('⚠️ Silent audio error:', error)
+      audioContext.close()
+      reject(error)
+    }
+    
+    try {
+      source.start()
+    } catch (error) {
+      audioContext.close()
+      reject(error)
+    }
+  })
 }
 
 function finishSession() {
@@ -555,8 +612,6 @@ async function preloadAllAudio() {
         allUrls.add(url)
       }
     }
-    allUrls.add(SILENCE_FILE_PATH);
-
 
     const preloadPromises = []
     for (const url of allUrls) {
@@ -675,4 +730,3 @@ function releaseWakeLock() {
 }
 
 console.log('🚀 My Affirms Service Worker loaded')
-'''
