@@ -23,18 +23,40 @@
 
     <main class="flex-1 flex items-center justify-center p-6">
       <div class="w-full max-w-2xl text-center">
-        <div v-if="!isPlaying && !isFinished" class="space-y-6">
+        <div v-if="!isPlaying && !isFinished && !isPreparingMergedAudio" class="space-y-6">
           <h2 class="text-3xl font-bold text-gray-900 font-crimson">{{ $t('session.ready_to_start') }}</h2>
           <p class="text-gray-600">
             {{ $t('session.session_contains_affirmations', { count: activeAffirmations?.length || 0 }) }}
           </p>
+          
+          <!-- Info o trybie odtwarzania -->
+          <div v-if="isMobile" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p class="text-sm text-blue-800">
+              📱 Tryb mobilny: Audio zostanie połączone w jeden plik dla lepszej stabilności
+            </p>
+          </div>
+          
           <button
-            @click="startSession"
+            @click="handleStartSession"
             :disabled="(activeAffirmations?.length || 0) === 0"
             class="bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 px-10 py-4 rounded-full font-medium text-lg flex items-center gap-2 mx-auto border-2 border-pastel-khaki-2 hover:border-gray-800"
           >
             <Play class="w-5 h-5" /> {{ $t('session.start') }}
           </button>
+        </div>
+
+        <!-- Loading state podczas przygotowywania merged audio -->
+        <div v-if="isPreparingMergedAudio" class="space-y-6">
+          <h2 class="text-2xl font-bold text-gray-900 font-crimson">Przygotowywanie audio...</h2>
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <div class="flex items-center justify-center space-x-3">
+              <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              <p class="text-blue-800">Łączenie plików audio...</p>
+            </div>
+            <p class="text-sm text-blue-600 mt-2 text-center">
+              Optymalizacja dla urządzeń mobilnych
+            </p>
+          </div>
         </div>
 
         <div v-if="isPlaying" class="space-y-8">
@@ -44,6 +66,7 @@
             </p>
           </div>
           
+          <!-- Kontrolki - różne dla desktop i mobile -->
           <div class="flex justify-center gap-4">
             <button
               @click="stopSession"
@@ -51,12 +74,22 @@
             >
               <Square class="w-5 h-5" /> {{ $t('common.stop') }}
             </button>
+            
+            <!-- Przycisk Next tylko na desktop -->
             <button
+              v-if="sessionMode === 'desktop'"
               @click="nextAffirmation"
               class="bg-gray-600 hover:bg-gray-700 text-white px-8 py-4 rounded-full font-medium flex items-center gap-2 border-2 border-gray-600 hover:border-white"
             >
               <SkipForward class="w-5 h-5" /> {{ $t('common.next') }}
             </button>
+          </div>
+          
+          <!-- Info o trybie na mobile -->
+          <div v-if="isMobile" class="mt-4">
+            <p class="text-sm text-gray-600">
+              🎵 {{ sessionMode === 'mobile-merged' ? 'Odtwarzanie połączonego audio' : 'Odtwarzanie sekwencji' }}
+            </p>
           </div>
         </div>
 
@@ -106,7 +139,7 @@ const logger = useLogger()
 const { t, locale } = useI18n()
 const { getUserProjects } = useFirestore()
 // const backgroundAudioSession = useBackgroundAudioSession()
-const sessionAudioManager = useSessionAudioManager()
+const unifiedAudioSession = useUnifiedAudioSession()
 
 const route = useRoute()
 const router = useRouter()
@@ -114,17 +147,21 @@ const projectId = route.params.id
 
 const project = ref(null)
 
-// Use session audio manager
+// Use unified audio session (smart desktop/mobile switching)
 const { 
   isPlaying, 
-  isFinished, 
+  isFinished,
+  isPreparingMergedAudio,
   currentAffirmation, 
   currentIndex, 
   progress,
-  startAudioSession,
-  stopAudioSession,
-  nextAudioAffirmation
-} = sessionAudioManager
+  activeAffirmations: sessionAffirmations,
+  startSession,
+  stopSession,
+  nextAffirmation,
+  sessionMode,
+  isMobile
+} = unifiedAudioSession
 
 // Helper function - define before use
 const getProjectFromLocalStorage = (id) => {
@@ -205,33 +242,32 @@ onUnmounted(() => {
   }
 })
 
-const startSession = async () => {
-  if ((activeAffirmations.value?.length || 0) === 0) return
-  
-  const settings = project.value?.sessionSettings || {}
-  
-  try {
-    await startAudioSession(activeAffirmations.value, settings)
-  } catch (error) {
-    console.error('Failed to start session:', error)
-    // Optionally show user-friendly error message
+// Handler for starting session with unified audio
+const handleStartSession = async () => {
+  if (!activeAffirmations.value?.length) {
+    console.warn('No active affirmations to start session')
+    return
   }
-}
 
-// Voice selection logic moved to Session Audio Manager
+  try {
+    logger.log('Starting unified audio session', {
+      projectId: projectId,
+      affirmationsCount: activeAffirmations.value.length,
+      isMobile: isMobile.value
+    })
 
-// Sentence pause logic moved to Session Audio Manager
+    // Get session settings (you can extend this)
+    const sessionSettings = {
+      sentencePause: 0.5,
+      affirmationPause: 2.0,
+      speechRate: 1.0,
+      ...project.value?.sessionSettings
+    }
 
-// Affirmation playback logic moved to Session Audio Manager
-
-// Scheduling logic moved to Session Audio Manager
-
-const stopSession = async () => {
-  await stopAudioSession()
-}
-
-const nextAffirmation = async () => {
-  await nextAudioAffirmation()
+    await startSession(activeAffirmations.value, sessionSettings)
+  } catch (error) {
+    console.error('Failed to start unified session:', error)
+  }
 }
 
 const goBack = () => {

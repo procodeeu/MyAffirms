@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Unified Audio Session</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .info { background: #e3f2fd; border: 1px solid #2196f3; }
+        .success { background: #e8f5e9; border: 1px solid #4caf50; }
+        .error { background: #ffebee; border: 1px solid #f44336; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+        .primary { background: #2196f3; color: white; }
+        .danger { background: #f44336; color: white; }
+        .progress { width: 100%; height: 20px; background: #f0f0f0; border-radius: 10px; overflow: hidden; }
+        .progress-bar { height: 100%; background: #2196f3; transition: width 0.3s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Test Unified Audio Session</h1>
+        
+        <div class="status info">
+            <strong>Device Info:</strong><br>
+            Mobile: <span id="isMobile">-</span><br>
+            AudioContext Support: <span id="audioContextSupport">-</span><br>
+            User Agent: <span id="userAgent">-</span>
+        </div>
+
+        <div class="status info">
+            <strong>Test Audio URLs:</strong><br>
+            <small>Używamy przykładowych plików audio do testowania</small>
+        </div>
+
+        <div>
+            <button class="primary" onclick="testAudioMerger()">Test Audio Merger</button>
+            <button class="primary" onclick="testMobileDetection()">Test Mobile Detection</button>
+            <button class="danger" onclick="stopTest()">Stop</button>
+        </div>
+
+        <div id="progress-container" style="display: none;">
+            <h3>Progress:</h3>
+            <div class="progress">
+                <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+            </div>
+            <p id="progressText">0%</p>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Symulacja composables dla testu
+        const useAudioMerger = () => {
+            const isProcessing = { value: false }
+            const progress = { value: 0 }
+            const error = { value: null }
+
+            const isMobile = {
+                value: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+            }
+
+            const isAudioContextSupported = {
+                value: !!(window.AudioContext || window.webkitAudioContext)
+            }
+
+            // Symulacja mergowania audio
+            const mergeAudioFromUrls = async (audioUrls, options = {}) => {
+                isProcessing.value = true
+                progress.value = 0
+                error.value = null
+
+                try {
+                    // Symulacja procesu
+                    for (let i = 0; i <= 100; i += 10) {
+                        progress.value = i
+                        updateProgress(i)
+                        await new Promise(resolve => setTimeout(resolve, 200))
+                    }
+
+                    // Symulacja wyniku
+                    const blob = new Blob(['fake audio data'], { type: 'audio/wav' })
+                    const url = URL.createObjectURL(blob)
+
+                    return {
+                        blob,
+                        url,
+                        duration: 30.5,
+                        size: blob.size,
+                        format: 'wav'
+                    }
+
+                } catch (err) {
+                    error.value = err.message
+                    throw err
+                } finally {
+                    isProcessing.value = false
+                }
+            }
+
+            return {
+                isProcessing,
+                progress,
+                error,
+                isMobile,
+                isAudioContextSupported,
+                mergeAudioFromUrls
+            }
+        }
+
+        // Inicjalizacja
+        const audioMerger = useAudioMerger()
+
+        function updateDeviceInfo() {
+            document.getElementById('isMobile').textContent = audioMerger.isMobile.value ? 'Tak' : 'Nie'
+            document.getElementById('audioContextSupport').textContent = audioMerger.isAudioContextSupported.value ? 'Tak' : 'Nie'
+            document.getElementById('userAgent').textContent = navigator.userAgent.substring(0, 50) + '...'
+        }
+
+        function updateProgress(percent) {
+            document.getElementById('progressBar').style.width = percent + '%'
+            document.getElementById('progressText').textContent = percent + '%'
+        }
+
+        function showProgress() {
+            document.getElementById('progress-container').style.display = 'block'
+        }
+
+        function hideProgress() {
+            document.getElementById('progress-container').style.display = 'none'
+        }
+
+        function addResult(message, type = 'info') {
+            const results = document.getElementById('results')
+            const div = document.createElement('div')
+            div.className = `status ${type}`
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}:</strong> ${message}`
+            results.appendChild(div)
+            results.scrollTop = results.scrollHeight
+        }
+
+        async function testAudioMerger() {
+            addResult('🧪 Rozpoczynanie testu Audio Merger...', 'info')
+            showProgress()
+
+            try {
+                // Symulacja URL-i audio
+                const testUrls = [
+                    'https://example.com/audio1.mp3',
+                    'https://example.com/audio2.mp3',
+                    'https://example.com/audio3.mp3'
+                ]
+
+                addResult(`📁 Testowanie z ${testUrls.length} plikami audio`, 'info')
+
+                const result = await audioMerger.mergeAudioFromUrls(testUrls, {
+                    pauseBetween: 1.0,
+                    outputFormat: 'wav'
+                })
+
+                addResult(`✅ Sukces! Utworzono plik: ${result.format}, rozmiar: ${result.size} bytes, czas: ${result.duration}s`, 'success')
+                addResult(`🔗 URL: ${result.url.substring(0, 50)}...`, 'info')
+
+            } catch (error) {
+                addResult(`❌ Błąd: ${error.message}`, 'error')
+            } finally {
+                hideProgress()
+            }
+        }
+
+        function testMobileDetection() {
+            addResult('📱 Test detekcji urządzenia mobilnego...', 'info')
+            
+            const deviceInfo = {
+                isMobile: audioMerger.isMobile.value,
+                audioContextSupported: audioMerger.isAudioContextSupported.value,
+                userAgent: navigator.userAgent,
+                screenWidth: window.screen.width,
+                screenHeight: window.screen.height,
+                touchSupport: 'ontouchstart' in window
+            }
+
+            addResult(`📊 Wyniki detekcji:`, 'info')
+            addResult(`• Mobile: ${deviceInfo.isMobile}`, 'info')
+            addResult(`• AudioContext: ${deviceInfo.audioContextSupported}`, 'info')
+            addResult(`• Touch: ${deviceInfo.touchSupport}`, 'info')
+            addResult(`• Screen: ${deviceInfo.screenWidth}x${deviceInfo.screenHeight}`, 'info')
+
+            // Rekomendacja trybu
+            let recommendedMode = 'desktop'
+            if (deviceInfo.isMobile && deviceInfo.audioContextSupported) {
+                recommendedMode = 'mobile-merged'
+            } else if (deviceInfo.isMobile) {
+                recommendedMode = 'mobile-sequence'
+            }
+
+            addResult(`🎯 Rekomendowany tryb: ${recommendedMode}`, 'success')
+        }
+
+        function stopTest() {
+            addResult('🛑 Test zatrzymany', 'info')
+            hideProgress()
+        }
+
+        // Inicjalizacja przy ładowaniu strony
+        window.onload = function() {
+            updateDeviceInfo()
+            addResult('🚀 Test Unified Audio Session gotowy', 'success')
+        }
+    </script>
+</body>
+</html>
