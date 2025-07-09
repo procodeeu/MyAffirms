@@ -7,12 +7,12 @@
     "shared"
   ],
   "scripts": {
-    "dev:web": "turbo run dev --filter=web-app",
-    "dev:mobile": "turbo run dev --filter=mobile-app",
+    "dev:web": "turbo run dev --filter=@my-affirms/web-app",
+    "dev:mobile": "turbo run dev --filter=@my-affirms/mobile-app",
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "build:web": "turbo run build --filter=web-app",
-    "build:mobile": "turbo run build --filter=mobile-app",
+    "build:web": "turbo run build --filter=@my-affirms/web-app",
+    "build:mobile": "turbo run build --filter=@my-affirms/mobile-app",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "test": "turbo run test",

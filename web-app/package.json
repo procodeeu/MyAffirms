@@ -1,5 +1,5 @@
 {
-  "name": "my-affirms-monorepo-webapp",
+  "name": "@my-affirms/web-app",
   "private": true,
   "workspaces": [
     "web-app",
