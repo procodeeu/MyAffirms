@@ -1,9 +1,19 @@
-# Google Cloud Text-to-Speech Setup
+# Google Cloud Text-to-Speech - Rozwiazywanie Problemow
 
-## Problem
-API key is invalid: `API key not valid. Please pass a valid API key.`
+**Przewodnik diagnostyki i naprawy problemow z Google Cloud TTS API w My Affirms.**
 
-## Solution
+## Najczestsze Problemy i Rozwiazania
+
+### Problem: Nieprawidlowy Klucz API
+**Objaw:** `API key not valid. Please pass a valid API key.`
+
+**Przyczyny:**
+- Brak klucza API w zmiennych srodowiskowych
+- Nieprawidlowy format klucza
+- Klucz nie ma uprawnien do Text-to-Speech API
+- Klucz zostal uniewazniony lub wygasl
+
+### Rozwiazanie Krok po Kroku
 
 ### 1. Check .env file
 Add to `/Users/karol/Documents/GitHub/MyAffirms/.env`:

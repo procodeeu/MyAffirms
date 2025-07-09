@@ -2,9 +2,17 @@
 
 Uniwersalny skrypt do czyszczenia danych audio użytkowników z Firebase.
 
-## 📋 Opis
+## Opis Funkcjonalnosci
 
-`clean-users-data.sh` to kompleksowy skrypt z dwoma trybami:
+`clean-users-data.sh` to kompleksowy skrypt deweloperski z dwoma trybami pracy, zaprojektowany specjalnie dla ekosystemu My Affirms. Skrypt umozliwia bezpieczne zarzadzanie danymi testowymi i reset srodowiska deweloperskiego.
+
+### Architektura Skryptu
+Skrypt wykorzystuje Firebase CLI i Google Cloud SDK do operacji na:
+- **Firestore Database** - kolekcje projektow, grup, afirmacji
+- **Firebase Storage** - pliki audio MP3 wygenerowane przez TTS
+- **Authentication** - opcjonalne czyszczenie uzytkownikow testowych
+
+`clean-users-data.sh` oferuje dwa tryby pracy:
 
 ### 🎵 **Tryb Audio (BEZPIECZNY)**
 - 🗑️ Usuwa kolekcję `affirmation_audio` z Firestore

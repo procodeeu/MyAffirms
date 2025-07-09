@@ -1,6 +1,16 @@
-# Firebase Index Setup
+# Firebase Firestore Indexes - Konfiguracja Wydajnosci
 
-## Required Indexes for Usage Collections
+**Kompletny przewodnik konfiguracji indeksow Firestore dla optymalnej wydajnosci My Affirms.**
+
+## Przegląd Systemu Indeksow
+
+Firebase Firestore wymaga kompozytowych indeksow dla zapytan z wieloma polami. My Affirms wykorzystuje zaawansowane zapytania do:
+- **Tracking uzytkownikow** - monitorowanie aktywnosci i uzycia
+- **Analytics** - zbieranie danych o sesjach i afirmacjach  
+- **Premium features** - kontrola limitow subskrypcji
+- **Performance optimization** - szybkie wyszukiwanie projektow
+
+### Wymagane Indeksy dla Kolekcji Usage
 
 ### 1. Index for `usage_tracking` Collection (Current Error)
 

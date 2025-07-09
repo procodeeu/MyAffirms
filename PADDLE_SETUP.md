@@ -1,11 +1,28 @@
-# Konfiguracja Paddle Payment + Firebase
+# Paddle Payment System - Kompletna Integracja z My Affirms
 
-## Wymagania
+**Szczegolowy przewodnik konfiguracji systemu platnosci Paddle dla subskrypcji premium w My Affirms.**
 
-1. **Firebase**: Projekt Firebase skonfigurowany z Firestore i Storage
-2. **Konto Paddle**: Musisz się zarejestrować na [paddle.com](https://paddle.com)
-3. **Konto Sandbox**: Dodatkowe konto sandbox do testów
-4. **Zweryfikowana domena**: Dla konta produkcyjnego
+## Architektura Systemu Platnosci
+
+### Komponenty Integracji
+- **Paddle Checkout** - bezpieczny formularz platnosci
+- **Webhook System** - automatyczne aktualizacje statusu subskrypcji
+- **Firebase Integration** - synchronizacja danych subskrypcji
+- **Usage Tracking** - monitorowanie limitow premium features
+
+### Model Biznesowy
+- **Cena:** 30 PLN/miesiac
+- **Waluta:** PLN (Polski Zloty)
+- **Cykl:** Miesieczne automatyczne odnowienia
+- **Funkcje Premium:** Neural TTS voices, unlimited projekty, analytics
+
+## Wymagania Wstepne
+
+1. **Firebase**: Projekt Firebase z Firestore, Storage i Authentication
+2. **Konto Paddle**: Zarejestrowane i zweryfikowane konto na [paddle.com](https://paddle.com)
+3. **Sandbox Environment**: Osobne konto sandbox do testow
+4. **Zweryfikowana domena**: Wymagana dla konta produkcyjnego
+5. **SSL Certificate**: HTTPS wymagane dla webhook endpoints
 
 ## Kroki instalacji
 

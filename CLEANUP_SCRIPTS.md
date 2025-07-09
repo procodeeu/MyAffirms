@@ -1,6 +1,22 @@
-# 🧹 Firebase Data Cleanup Scripts
+# Firebase Data Cleanup Scripts - Kompletny Zestaw Narzedzi
 
-Kompletny zestaw skryptów do czyszczenia danych Firebase podczas developmentu i maintenance.
+**Profesjonalny zestaw skryptow do zarzadzania danymi Firebase w ekosystemie My Affirms.**
+
+Ten zestaw narzedzi zostal zaprojektowany dla deweloperow i administratorow systemu My Affirms, umozliwiajac bezpieczne zarzadzanie danymi podczas developmentu, testowania i maintenance aplikacji.
+
+## Architektura Systemu Czyszczenia
+
+### Komponenty Systemu
+- **Firebase Firestore** - baza danych z kolekcjami: projects, groups, affirmation_audio, subscriptions
+- **Firebase Storage** - pliki audio MP3 wygenerowane przez Google Cloud TTS
+- **Firebase Authentication** - konta uzytkownikow testowych
+- **Google Cloud Storage** - backup i archiwizacja danych
+
+### Strategie Czyszczenia
+1. **Selektywne czyszczenie** - tylko okreslone typy danych
+2. **Kompletny reset** - powrot do stanu poczatkowego
+3. **Backup przed czyszczeniem** - ochrona przed utrata danych
+4. **Walidacja integralnosci** - sprawdzenie spojnosci po operacji
 
 ## 📋 Dostępne Skrypty
 
