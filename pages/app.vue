@@ -526,8 +526,8 @@
 
     <PWAInstallPrompt />
     
-    <!-- Background Audio Controls - temporarily disabled -->
-    <!-- <BackgroundAudioControls /> -->
+    <!-- Background Audio Controls - now using unified audio -->
+    <BackgroundAudioControls />
   </div>
 </template>
 

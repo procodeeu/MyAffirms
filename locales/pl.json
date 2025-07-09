@@ -280,7 +280,9 @@
     "playing_merged_audio": "Odtwarzanie połączonego audio",
     "playing_all_affirmations": "Odtwarzanie wszystkich twoich afirmacji",
     "audio_context_not_supported": "Łączenie audio nie jest obsługiwane",
-    "audio_context_help": "Twoja przeglądarka nie obsługuje AudioContext. Spróbuj nowoczesnej przeglądarki."
+    "audio_context_help": "Twoja przeglądarka nie obsługuje AudioContext. Spróbuj nowoczesnej przeglądarki.",
+    "affirmations_merged": "afirmacji połączonych",
+    "unified_mode": "Tryb unified"
   },
   "subscription": {
     "usage_resets": "Resetuje się użycie"

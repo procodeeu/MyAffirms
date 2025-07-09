@@ -1,10 +1,10 @@
-// Audio Merger - łączenie wielu plików audio w jeden za pomocą AudioContext
+// Audio Merger - laczenie wielu plikow audio w jeden za pomoca AudioContext
 export const useAudioMerger = () => {
   const isProcessing = ref(false)
   const progress = ref(0)
   const error = ref(null)
 
-  // Sprawdź czy urządzenie to mobile
+  // Sprawdz czy urzadzenie to mobile
   const isMobile = computed(() => {
     if (process.client) {
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
@@ -12,19 +12,29 @@ export const useAudioMerger = () => {
     return false
   })
 
-  // Pobierz i zdekoduj pojedynczy plik audio
+  // Pobierz i zdekoduj pojedynczy plik audio - CORS fix
   const fetchAndDecodeAudio = async (audioContext, url) => {
     try {
-      console.log('🎵 Fetching audio:', url)
-      const response = await fetch(url)
+      console.log('Fetching audio:', url)
+      
+      // Uzyj server proxy dla Firebase Storage - rozwiazuje CORS
+      const proxyUrl = `/api/audio/proxy?url=${encodeURIComponent(url)}`
+      const response = await fetch(proxyUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'audio/*,*/*;q=0.9'
+        }
+      })
+      
       if (!response.ok) {
         throw new Error(`Failed to fetch audio: ${response.status}`)
       }
       
       const arrayBuffer = await response.arrayBuffer()
+      
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
       
-      console.log('✅ Audio decoded:', {
+      console.log('Audio decoded:', {
         duration: audioBuffer.duration,
         channels: audioBuffer.numberOfChannels,
         sampleRate: audioBuffer.sampleRate
@@ -32,216 +42,209 @@ export const useAudioMerger = () => {
       
       return audioBuffer
     } catch (err) {
-      console.error('❌ Error fetching/decoding audio:', err)
+      console.error('Error fetching/decoding audio:', err)
       throw err
     }
   }
 
-  // Połącz wiele AudioBuffer w jeden
-  const mergeAudioBuffers = (audioContext, audioBuffers, pauseBetween = 1.0) => {
+  // Polacz wiele AudioBuffer w jeden
+  const mergeAudioBuffers = (audioContext, audioBuffers, pauseBetween = 0) => {
     if (!audioBuffers.length) {
       throw new Error('No audio buffers to merge')
     }
 
-    // Oblicz całkowitą długość z pauzami
-    const pauseSamples = Math.floor(pauseBetween * audioContext.sampleRate)
-    const totalSamples = audioBuffers.reduce((sum, buffer) => {
-      return sum + buffer.length + pauseSamples
-    }, 0) - pauseSamples // Usuń ostatnią pauzę
+    // Oblicz calkowity czas
+    const totalDuration = audioBuffers.reduce((sum, buffer, index) => {
+      return sum + buffer.duration + (index < audioBuffers.length - 1 ? pauseBetween : 0)
+    }, 0)
 
-    // Znajdź maksymalną liczbę kanałów
-    const maxChannels = Math.max(...audioBuffers.map(buffer => buffer.numberOfChannels))
-    
-    console.log('🔧 Merging audio:', {
-      buffers: audioBuffers.length,
-      totalDuration: totalSamples / audioContext.sampleRate,
-      channels: maxChannels,
-      pauseBetween
-    })
+    // Uzyj najwyzszej czestotliwosci probkowania
+    const sampleRate = Math.max(...audioBuffers.map(buffer => buffer.sampleRate))
+    const numberOfChannels = Math.max(...audioBuffers.map(buffer => buffer.numberOfChannels))
 
-    // Stwórz nowy bufor
+    // Utworz nowy buffer
     const mergedBuffer = audioContext.createBuffer(
-      maxChannels,
-      totalSamples,
-      audioContext.sampleRate
+      numberOfChannels,
+      Math.ceil(totalDuration * sampleRate),
+      sampleRate
     )
 
-    // Skopiuj dane z każdego bufora
-    let offset = 0
-    audioBuffers.forEach((buffer, index) => {
-      for (let channel = 0; channel < maxChannels; channel++) {
-        const sourceChannel = Math.min(channel, buffer.numberOfChannels - 1)
-        const sourceData = buffer.getChannelData(sourceChannel)
-        const targetData = mergedBuffer.getChannelData(channel)
+    let currentOffset = 0
+
+    // Skopiuj kazdy buffer
+    audioBuffers.forEach((buffer, bufferIndex) => {
+      for (let channel = 0; channel < numberOfChannels; channel++) {
+        const mergedChannelData = mergedBuffer.getChannelData(channel)
         
-        // Skopiuj dane audio
-        targetData.set(sourceData, offset)
+        if (channel < buffer.numberOfChannels) {
+          const bufferChannelData = buffer.getChannelData(channel)
+          
+          // Resample jesli potrzebne
+          if (buffer.sampleRate === sampleRate) {
+            mergedChannelData.set(bufferChannelData, currentOffset)
+          } else {
+            // Prosty resampling
+            const ratio = buffer.sampleRate / sampleRate
+            const resampledLength = Math.floor(bufferChannelData.length / ratio)
+            
+            for (let i = 0; i < resampledLength; i++) {
+              const sourceIndex = Math.floor(i * ratio)
+              mergedChannelData[currentOffset + i] = bufferChannelData[sourceIndex]
+            }
+          }
+        }
       }
-      
-      offset += buffer.length
-      
-      // Dodaj pauzę (oprócz ostatniego)
-      if (index < audioBuffers.length - 1) {
-        // Pauza jest już wypełniona zerami (cisza)
-        offset += pauseSamples
+
+      // Przejdz do nastepnego buffera z pauza
+      currentOffset += Math.ceil(buffer.duration * sampleRate)
+      if (bufferIndex < audioBuffers.length - 1) {
+        currentOffset += Math.ceil(pauseBetween * sampleRate)
       }
-      
-      // Aktualizuj progress
-      progress.value = ((index + 1) / audioBuffers.length) * 80 // 80% na mergowanie
     })
 
-    console.log('✅ Audio buffers merged successfully')
     return mergedBuffer
   }
 
-  // Konwertuj AudioBuffer do WAV Blob
-  const audioBufferToWav = (buffer) => {
-    const numChannels = buffer.numberOfChannels
-    const sampleRate = buffer.sampleRate
-    const format = 1 // PCM
-    const bitDepth = 16
-
-    let result
-    if (numChannels === 2) {
-      result = interleave(buffer.getChannelData(0), buffer.getChannelData(1))
-    } else {
-      result = buffer.getChannelData(0)
-    }
-
-    const bufferLength = result.length * 2
-    const wavBuffer = new ArrayBuffer(44 + bufferLength)
-    const view = new DataView(wavBuffer)
+  // Konwertuj AudioBuffer do WAV
+  const audioBufferToWav = (audioBuffer) => {
+    const numberOfChannels = audioBuffer.numberOfChannels
+    const sampleRate = audioBuffer.sampleRate
+    const length = audioBuffer.length
+    const arrayBuffer = new ArrayBuffer(44 + length * numberOfChannels * 2)
+    const view = new DataView(arrayBuffer)
 
     // WAV header
-    const writeString = (view, offset, string) => {
+    const writeString = (offset, string) => {
       for (let i = 0; i < string.length; i++) {
         view.setUint8(offset + i, string.charCodeAt(i))
       }
     }
 
-    writeString(view, 0, 'RIFF')
-    view.setUint32(4, 36 + bufferLength, true)
-    writeString(view, 8, 'WAVE')
-    writeString(view, 12, 'fmt ')
+    writeString(0, 'RIFF')
+    view.setUint32(4, 36 + length * numberOfChannels * 2, true)
+    writeString(8, 'WAVE')
+    writeString(12, 'fmt ')
     view.setUint32(16, 16, true)
-    view.setUint16(20, format, true)
-    view.setUint16(22, numChannels, true)
+    view.setUint16(20, 1, true)
+    view.setUint16(22, numberOfChannels, true)
     view.setUint32(24, sampleRate, true)
-    view.setUint32(28, sampleRate * numChannels * 2, true)
-    view.setUint16(32, numChannels * 2, true)
-    view.setUint16(34, bitDepth, true)
-    writeString(view, 36, 'data')
-    view.setUint32(40, bufferLength, true)
+    view.setUint32(28, sampleRate * numberOfChannels * 2, true)
+    view.setUint16(32, numberOfChannels * 2, true)
+    view.setUint16(34, 16, true)
+    writeString(36, 'data')
+    view.setUint32(40, length * numberOfChannels * 2, true)
 
+    // Audio data
     let offset = 44
-    for (let i = 0; i < result.length; i++, offset += 2) {
-      let s = Math.max(-1, Math.min(1, result[i]))
-      s = s < 0 ? s * 0x8000 : s * 0x7FFF
-      view.setInt16(offset, s, true)
+    for (let i = 0; i < length; i++) {
+      for (let channel = 0; channel < numberOfChannels; channel++) {
+        const sample = Math.max(-1, Math.min(1, audioBuffer.getChannelData(channel)[i]))
+        view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true)
+        offset += 2
+      }
     }
 
-    return new Blob([view], { type: 'audio/wav' })
+    return arrayBuffer
   }
 
-  // Pomocnicza funkcja do interleave stereo
-  const interleave = (left, right) => {
-    const length = left.length + right.length
-    const result = new Float32Array(length)
+  // Sprawdz czy AudioContext jest dostepny
+  const isAudioContextSupported = computed(() => {
+    if (!process.client) return false
+    return !!(window.AudioContext || window.webkitAudioContext)
+  })
 
-    let index = 0
-    let inputIndex = 0
-
-    while (index < length) {
-      result[index++] = left[inputIndex]
-      result[index++] = right[inputIndex]
-      inputIndex++
+  // Glowna funkcja laczenia audio z URL-ow
+  const mergeAudioFromUrls = async (urls, options = {}) => {
+    if (!urls || urls.length === 0) {
+      throw new Error('No URLs provided for merging')
     }
-    return result
-  }
 
-  // Główna funkcja łączenia audio z URL-i
-  const mergeAudioFromUrls = async (audioUrls, options = {}) => {
-    const { pauseBetween = 1.0, outputFormat = 'wav' } = options
-    
-    if (!audioUrls || !audioUrls.length) {
-      throw new Error('No audio URLs provided')
+    if (!isAudioContextSupported.value) {
+      throw new Error('AudioContext not supported in this browser')
     }
+
+    const {
+      pauseBetween = 0,
+      outputFormat = 'wav'
+    } = options
 
     isProcessing.value = true
-    progress.value = 0
     error.value = null
+    progress.value = 0
 
     try {
-      console.log('🎵 Starting audio merge process:', {
-        urls: audioUrls.length,
+      console.log('Starting audio merge process:', {
+        urls: urls.length,
         pauseBetween,
         outputFormat
       })
 
-      // Stwórz AudioContext
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)()
-      
+      // Utworz AudioContext
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext
+      const audioContext = new AudioContextClass()
+
       // Pobierz i zdekoduj wszystkie pliki audio
       const audioBuffers = []
-      for (let i = 0; i < audioUrls.length; i++) {
-        const buffer = await fetchAndDecodeAudio(audioContext, audioUrls[i])
-        audioBuffers.push(buffer)
+      for (let i = 0; i < urls.length; i++) {
+        const url = urls[i]
+        const audioBuffer = await fetchAndDecodeAudio(audioContext, url)
+        audioBuffers.push(audioBuffer)
         
-        // Aktualizuj progress (70% na pobieranie)
-        progress.value = ((i + 1) / audioUrls.length) * 70
+        progress.value = ((i + 1) / urls.length) * 50 // 50% za pobieranie
       }
 
-      // Połącz bufory
+      console.log('All audio files decoded, starting merge...')
+
+      // Polacz wszystkie buffery
       const mergedBuffer = mergeAudioBuffers(audioContext, audioBuffers, pauseBetween)
       
+      progress.value = 75
+
+      console.log('Audio merged, converting to output format...')
+
       // Konwertuj do wybranego formatu
       let blob
+      let mimeType
+
       if (outputFormat === 'wav') {
-        blob = audioBufferToWav(mergedBuffer)
-        progress.value = 100
+        const wavArrayBuffer = audioBufferToWav(mergedBuffer)
+        blob = new Blob([wavArrayBuffer], { type: 'audio/wav' })
+        mimeType = 'audio/wav'
       } else {
         throw new Error(`Unsupported output format: ${outputFormat}`)
       }
 
-      // Stwórz URL do pobrania
+      progress.value = 90
+
+      // Utworz URL do pobrania
       const url = URL.createObjectURL(blob)
       
-      console.log('✅ Audio merge completed:', {
+      progress.value = 100
+
+      console.log('Audio merge completed successfully:', {
         duration: mergedBuffer.duration,
         size: blob.size,
         format: outputFormat
       })
 
+      // Zamknij AudioContext
+      await audioContext.close()
+
       return {
-        blob,
         url,
+        blob,
         duration: mergedBuffer.duration,
         size: blob.size,
-        format: outputFormat
+        mimeType
       }
 
     } catch (err) {
+      console.error('Audio merge failed:', err)
       error.value = err.message
-      console.error('❌ Audio merge failed:', err)
       throw err
     } finally {
       isProcessing.value = false
     }
-  }
-
-  // Sprawdź czy można użyć AudioContext
-  const isAudioContextSupported = computed(() => {
-    if (process.client) {
-      return !!(window.AudioContext || window.webkitAudioContext)
-    }
-    return false
-  })
-
-  // Cleanup function
-  const cleanup = () => {
-    isProcessing.value = false
-    progress.value = 0
-    error.value = null
   }
 
   return {
@@ -249,12 +252,12 @@ export const useAudioMerger = () => {
     isProcessing: readonly(isProcessing),
     progress: readonly(progress),
     error: readonly(error),
+    
+    // Computed
     isMobile,
     isAudioContextSupported,
-
+    
     // Methods
-    mergeAudioFromUrls,
-    audioBufferToWav,
-    cleanup
+    mergeAudioFromUrls
   }
 }

@@ -18,17 +18,9 @@ export const usePreloadingStats = () => {
   // === STATS COLLECTION ===
 
   const requestStats = async () => {
-    if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) {
-      return
-    }
-
-    try {
-      navigator.serviceWorker.controller.postMessage({
-        type: 'GET_PRELOAD_STATS'
-      })
-    } catch (error) {
-      console.warn('Failed to request preload stats:', error)
-    }
+    // Service Worker removed - stats not available
+    console.warn('Service Worker stats disabled - unified audio system')
+    return
   }
 
   const handleStatsMessage = (event) => {
@@ -75,22 +67,8 @@ export const usePreloadingStats = () => {
   // === LIFECYCLE ===
 
   onMounted(() => {
-    isServiceWorkerSupported.value = 'serviceWorker' in navigator
-    
-    if (isServiceWorkerSupported.value) {
-      navigator.serviceWorker.addEventListener('message', handleStatsMessage)
-      
-      // Request initial stats
-      setTimeout(requestStats, 1000)
-      
-      // Update stats periodically
-      const interval = setInterval(requestStats, 5000)
-      
-      onUnmounted(() => {
-        clearInterval(interval)
-        navigator.serviceWorker.removeEventListener('message', handleStatsMessage)
-      })
-    }
+    // Service Worker removed
+    isServiceWorkerSupported.value = false
   })
 
   return {

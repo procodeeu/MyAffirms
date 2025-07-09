@@ -6,11 +6,11 @@
       <div class="flex items-center justify-between mb-3">
         <div class="flex-1 min-w-0">
           <h3 class="text-sm font-medium text-gray-900 dark:text-white truncate">
-            {{ $t('session.backgroundPlayback') }}
+            {{ $t('session.playing_merged_audio') }}
           </h3>
           <p class="text-xs text-gray-500 dark:text-gray-400">
-            {{ currentIndex + 1 }} / {{ sessionState.total }} • 
-            {{ capabilities.currentSystem === 'service-worker' ? $t('session.backgroundMode') : $t('session.foregroundMode') }}
+            {{ sessionState.total }} {{ $t('session.affirmations_merged') }} • 
+            {{ $t('session.unified_mode') }}
           </p>
         </div>
         
@@ -27,10 +27,10 @@
         </div>
       </div>
       
-      <!-- Current Affirmation -->
-      <div v-if="currentAffirmation" class="mb-3">
+      <!-- Merged Audio Info -->
+      <div class="mb-3">
         <p class="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
-          {{ currentAffirmation.text }}
+          {{ $t('session.playing_all_affirmations') }}
         </p>
       </div>
       
@@ -110,7 +110,7 @@
 </template>
 
 <script setup>
-import { useBackgroundAudioSession } from '~/composables/useBackgroundAudioSession'
+import { useUnifiedAudioSession } from '~/composables/useUnifiedAudioSession'
 import { usePreloadingStats } from '~/composables/usePreloadingStats'
 
 const props = defineProps({
@@ -120,25 +120,35 @@ const props = defineProps({
   }
 })
 
-const backgroundAudio = useBackgroundAudioSession()
+const unifiedAudio = useUnifiedAudioSession()
 const preloadStats = usePreloadingStats()
 
 // Reactive state
-const sessionState = backgroundAudio.sessionState
-const isPlaying = backgroundAudio.isPlaying
-const currentAffirmation = backgroundAudio.currentAffirmation
-const currentIndex = backgroundAudio.currentIndex
-const progress = backgroundAudio.progress
-const capabilities = ref({})
+const isPlaying = unifiedAudio.isPlaying
+const isFinished = unifiedAudio.isFinished
+const progress = unifiedAudio.progress
+const activeAffirmations = unifiedAudio.activeAffirmations
+
+// Simplified session state for unified audio
+const sessionState = computed(() => ({
+  isActive: isPlaying.value || isFinished.value,
+  isPaused: false,
+  total: activeAffirmations.value?.length || 0
+}))
+
+const currentIndex = computed(() => isFinished.value ? activeAffirmations.value?.length || 0 : 0)
+const currentAffirmation = computed(() => activeAffirmations.value?.[0] || null)
+const capabilities = ref({ currentSystem: 'unified-merged' })
 
 // === METHODS ===
 
 const togglePlayback = async () => {
   try {
     if (isPlaying.value) {
-      await backgroundAudio.pauseSession()
+      await unifiedAudio.stopSession()
     } else {
-      await backgroundAudio.resumeSession()
+      // Unified audio nie ma resume - trzeba restart
+      console.log('Unified audio nie obsługuje pause/resume')
     }
   } catch (error) {
     console.error('❌ Failed to toggle playback:', error)
@@ -147,7 +157,8 @@ const togglePlayback = async () => {
 
 const nextAffirmation = async () => {
   try {
-    await backgroundAudio.nextAffirmation()
+    // Unified audio odtwarza wszystko jako jeden plik - brak next
+    console.log('Unified audio nie obsługuje przeskakiwania afirmacji')
   } catch (error) {
     console.error('❌ Failed to skip to next affirmation:', error)
   }
@@ -155,7 +166,7 @@ const nextAffirmation = async () => {
 
 const stopSession = async () => {
   try {
-    await backgroundAudio.stopSession()
+    await unifiedAudio.stopSession()
   } catch (error) {
     console.error('❌ Failed to stop session:', error)
   }
@@ -164,9 +175,14 @@ const stopSession = async () => {
 // === LIFECYCLE ===
 
 onMounted(async () => {
-  // Initialize and get capabilities
-  await backgroundAudio.initialize()
-  capabilities.value = backgroundAudio.getCapabilities()
+  // Unified audio nie wymaga inicjalizacji
+  capabilities.value = { 
+    currentSystem: 'unified-merged',
+    supportsBackgroundAudio: false,
+    supportsServiceWorker: false,
+    supportsMediaSession: false,
+    supportsWakeLock: false
+  }
 })
 </script>
 

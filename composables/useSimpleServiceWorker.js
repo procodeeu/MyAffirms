@@ -19,7 +19,8 @@ export const useSimpleServiceWorker = () => {
     try {
       console.log('Registering Service Worker...')
       
-      const registration = await navigator.serviceWorker.register('/sw.js', {
+      // Service Worker removed - unified audio uses Media Session instead
+      throw new Error('Service Worker disabled')
         scope: '/'
       })
       

@@ -29,10 +29,10 @@
             {{ $t('session.session_contains_affirmations', { count: activeAffirmations?.length || 0 }) }}
           </p>
           
-          <!-- Info o trybie odtwarzania -->
-          <div v-if="isMobile" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <!-- Info o unified audio -->
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p class="text-sm text-blue-800">
-              📱 Tryb mobilny: Audio zostanie połączone w jeden plik dla lepszej stabilności
+              🎵 {{ $t('session.merging_all_affirmations') }}
             </p>
           </div>
           
@@ -113,8 +113,8 @@
       </div>
     </footer>
     
-    <!-- Background Audio Controls - temporarily disabled -->
-    <!-- <BackgroundAudioControls :show-debug-info="true" /> -->
+    <!-- Background Audio Controls - now using unified audio -->
+    <BackgroundAudioControls :show-debug-info="true" />
   </div>
 </template>
 
@@ -125,8 +125,6 @@ import BackgroundAudioControls from '~/components/BackgroundAudioControls.vue'
 // import { useBackgroundAudioSession } from '~/composables/useBackgroundAudioSession'
 
 const { user, logout: authLogout } = useAuth()
-const { useLogger } = await import('~/composables/useLogger.js')
-const logger = useLogger()
 const { t, locale } = useI18n()
 const { getUserProjects } = useFirestore()
 // const backgroundAudioSession = useBackgroundAudioSession()
@@ -237,10 +235,9 @@ const handleStartSession = async () => {
   }
 
   try {
-    logger.log('Starting unified audio session', {
+    console.log('Starting unified audio session', {
       projectId: projectId,
-      affirmationsCount: activeAffirmations.value.length,
-      isMobile: isMobile.value
+      affirmationsCount: activeAffirmations.value.length
     })
 
     // Get session settings (you can extend this)
