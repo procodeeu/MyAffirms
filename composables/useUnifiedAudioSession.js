@@ -88,8 +88,8 @@ export const useUnifiedAudioSession = () => {
     }
   }
 
-  // Rozpocznij sesje - zawsze merged audio
-  const startSession = async (affirmations, settings = {}) => {
+  // Przygotuj sesje - tylko przygotuj merged audio, nie odtwarzaj automatycznie
+  const prepareSession = async (affirmations, settings = {}) => {
     if (!affirmations?.length) {
       throw new Error('No affirmations provided')
     }
@@ -98,18 +98,19 @@ export const useUnifiedAudioSession = () => {
     stopSession()
     activeAffirmations.value = affirmations
 
-    console.log('Starting unified audio session:', {
+    console.log('Preparing unified audio session:', {
       affirmations: affirmations.length,
       audioContextSupported: isAudioContextSupported.value
     })
 
     try {
-      // Przygotuj i odtwarz merged audio
-      await prepareMergedAudio(affirmations, settings)
-      await playMergedAudio()
+      // Tylko przygotuj merged audio
+      const result = await prepareMergedAudio(affirmations, settings)
+      console.log('Session prepared successfully - ready for native player')
+      return result
 
     } catch (error) {
-      console.error('Failed to start session:', error)
+      console.error('Failed to prepare session:', error)
       throw error
     }
   }
@@ -170,10 +171,11 @@ export const useUnifiedAudioSession = () => {
     isFinished: readonly(isFinished),
     isPreparingMergedAudio: readonly(isPreparingMergedAudio),
     activeAffirmations: readonly(activeAffirmations),
+    mergedAudioUrl: readonly(mergedAudioUrl),
     progress,
 
     // Methods
-    startSession,
+    prepareSession,
     stopSession,
     resetSession,
     

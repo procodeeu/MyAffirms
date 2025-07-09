@@ -23,7 +23,7 @@
 
     <main class="flex-1 flex items-center justify-center p-6">
       <div class="w-full max-w-2xl text-center">
-        <div v-if="!isPlaying && !isFinished && !isPreparingMergedAudio" class="space-y-6">
+        <div v-if="!mergedAudioUrl && !isPreparingMergedAudio" class="space-y-6">
           <h2 class="text-3xl font-bold text-gray-900 font-crimson">{{ $t('session.ready_to_start') }}</h2>
           <p class="text-gray-600">
             {{ $t('session.session_contains_affirmations', { count: activeAffirmations?.length || 0 }) }}
@@ -37,11 +37,11 @@
           </div>
           
           <button
-            @click="handleStartSession"
+            @click="handlePrepareSession"
             :disabled="(activeAffirmations?.length || 0) === 0"
             class="bg-pastel-khaki-2 hover:bg-pastel-dun disabled:bg-gray-300 text-gray-800 px-10 py-4 rounded-full font-medium text-lg flex items-center gap-2 mx-auto border-2 border-pastel-khaki-2 hover:border-gray-800"
           >
-            <Play class="w-5 h-5" /> {{ $t('session.start') }}
+            <Play class="w-5 h-5" /> {{ $t('session.prepare') }}
           </button>
         </div>
 
@@ -59,31 +59,40 @@
           </div>
         </div>
 
-        <div v-if="isPlaying" class="space-y-8">
-          <div class="bg-pastel-dun rounded-lg p-8 min-h-[150px] flex items-center justify-center border border-pastel-cinereous">
-            <p class="text-2xl text-gray-900 leading-relaxed font-crimson">
-              {{ $t('session.playing_all_affirmations') }}
-            </p>
-          </div>
+        <!-- Natywny odtwarzacz HTML5 gdy audio jest gotowe -->
+        <div v-if="mergedAudioUrl && !isPreparingMergedAudio" class="space-y-6">
+          <h2 class="text-2xl font-bold text-gray-900 font-crimson">Audio gotowe do odtwarzania</h2>
           
-          <!-- Kontrolki - unified dla wszystkich urządzeń -->
-          <div class="flex justify-center gap-4">
-            <button
-              @click="stopSession"
-              class="bg-red-500 hover:bg-red-600 text-white px-8 py-4 rounded-full font-medium flex items-center gap-2 border-2 border-red-500 hover:border-white"
+          <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+            <p class="text-green-800 mb-4 text-center">
+              ✅ Wszystkie afirmacje zostały połączone w jeden plik audio
+            </p>
+            
+            <!-- Natywny odtwarzacz HTML5 z kontrolkami -->
+            <audio 
+              :src="mergedAudioUrl" 
+              controls 
+              preload="metadata"
+              class="w-full max-w-md mx-auto"
+              style="height: 54px;"
             >
-              <Square class="w-5 h-5" /> {{ $t('common.stop') }}
-            </button>
-          </div>
-          
-          <!-- Info o merged audio -->
-          <div class="mt-4">
-            <p class="text-sm text-gray-600">
-              🎵 {{ $t('session.playing_merged_audio') }}
+              Twoja przeglądarka nie obsługuje odtwarzacza audio.
+            </audio>
+            
+            <p class="text-sm text-green-600 mt-4 text-center">
+              💡 Odtwarzacz działa w tle nawet po wygaszeniu ekranu
             </p>
           </div>
+          
+          <button
+            @click="stopSession"
+            class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-full font-medium mx-auto flex items-center gap-2"
+          >
+            🔄 Przygotuj nową sesję
+          </button>
         </div>
 
+        <!-- Sekcja zakończenia - opcjonalnie można zachować -->
         <div v-if="isFinished" class="space-y-6">
           <h2 class="text-3xl font-bold text-gray-900 font-crimson">{{ $t('session.finished_title') }}</h2>
           <p class="text-gray-600">
@@ -99,19 +108,7 @@
       </div>
     </main>
 
-    <footer v-if="isPlaying" class="p-4">
-      <div class="max-w-2xl mx-auto">
-        <div class="text-sm text-gray-600 mb-2 text-center">
-          {{ $t('session.progress', { current: currentIndex + 1, total: activeAffirmations?.length || 0 }) }}
-        </div>
-        <div class="w-full bg-gray-200 rounded-full h-2.5">
-          <div 
-            class="bg-pastel-purple h-2.5 rounded-full transition-all duration-300"
-            :style="{ width: `${progress}%` }"
-          ></div>
-        </div>
-      </div>
-    </footer>
+    <!-- Footer usunięty - teraz używamy natywnego odtwarzacza -->
     
     <!-- Background Audio Controls - now using unified audio -->
     <BackgroundAudioControls :show-debug-info="true" />
@@ -142,8 +139,9 @@ const {
   isFinished,
   isPreparingMergedAudio,
   activeAffirmations: sessionAffirmations,
+  mergedAudioUrl,
   progress,
-  startSession,
+  prepareSession,
   stopSession,
   isAudioContextSupported
 } = unifiedAudioSession
@@ -221,21 +219,19 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  // Stop any active audio session
-  if (isPlaying.value) {
-    stopAudioSession()
-  }
+  // Cleanup merged audio URL when leaving
+  stopSession()
 })
 
-// Handler for starting session with unified audio
-const handleStartSession = async () => {
+// Handler for preparing session with unified audio
+const handlePrepareSession = async () => {
   if (!activeAffirmations.value?.length) {
-    console.warn('No active affirmations to start session')
+    console.warn('No active affirmations to prepare session')
     return
   }
 
   try {
-    console.log('Starting unified audio session', {
+    console.log('Preparing unified audio session', {
       projectId: projectId,
       affirmationsCount: activeAffirmations.value.length
     })
@@ -248,9 +244,9 @@ const handleStartSession = async () => {
       ...project.value?.sessionSettings
     }
 
-    await startSession(activeAffirmations.value, sessionSettings)
+    await prepareSession(activeAffirmations.value, sessionSettings)
   } catch (error) {
-    console.error('Failed to start unified session:', error)
+    console.error('Failed to prepare unified session:', error)
   }
 }
 

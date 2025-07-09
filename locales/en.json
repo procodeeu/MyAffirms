@@ -258,7 +258,8 @@
     "audio_context_not_supported": "Audio merging not supported",
     "audio_context_help": "Your browser doesn't support AudioContext. Please try a modern browser.",
     "affirmations_merged": "affirmations merged",
-    "unified_mode": "Unified mode"
+    "unified_mode": "Unified mode",
+    "prepare": "Prepare Audio"
   },
   "subscription": {
     "usage_resets": "Usage resets"
