@@ -52,7 +52,7 @@ export const useAudioPlayback = () => {
       }
 
       // Załaduj i odtwórz - dodaj timestamp żeby uniknąć cache
-      const urlWithTimestamp = audioUrl + '?t=' + Date.now()
+      const urlWithTimestamp = audioUrl.startsWith('blob:') ? audioUrl : audioUrl + '?t=' + Date.now()
       audio.src = urlWithTimestamp
       audio.load()
 
