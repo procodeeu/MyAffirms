@@ -1,5 +1,5 @@
 // Group Manager - zarządzanie grupami projektów (business logic)
-import { useFirestore } from './useFirestore'
+import { useFirestore } from '@my-affirms/shared'
 
 export const useGroupManager = () => {
   const { 

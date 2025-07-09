@@ -10,17 +10,18 @@ import {
   orderBy,
   onSnapshot
 } from 'firebase/firestore'
+import { COLLECTIONS, STORAGE_PATHS } from '@my-affirms/shared'
 
 export const useFirestore = () => {
   const { $firebase } = useNuxtApp()
   const { user } = useAuth()
 
   const projectsCollection = computed(() => 
-    collection($firebase.db, 'projects')
+    collection($firebase.db, COLLECTIONS.PROJECTS)
   )
 
   const groupsCollection = computed(() => 
-    collection($firebase.db, 'groups')
+    collection($firebase.db, COLLECTIONS.GROUPS)
   )
 
   const getUserProjects = async () => {
