@@ -29,7 +29,7 @@ export const useUnifiedAudioSession = () => {
 
     // Sprawdz czy AudioContext jest dostepny
     if (!isAudioContextSupported.value) {
-      throw new Error('AudioContext not supported - cannot merge audio')
+      throw new Error('AudioContext not supported - cannot merge audio. Device may not support audio merging.')
     }
 
     isPreparingMergedAudio.value = true
@@ -104,6 +104,11 @@ export const useUnifiedAudioSession = () => {
     })
 
     try {
+      // Sprawdz czy AudioContext jest dostepny
+      if (!isAudioContextSupported.value) {
+        throw new Error('AudioContext not supported - falling back to sequential playback')
+      }
+
       // Tylko przygotuj merged audio
       const result = await prepareMergedAudio(affirmations, settings)
       console.log('Session prepared successfully - ready for native player')
@@ -111,6 +116,12 @@ export const useUnifiedAudioSession = () => {
 
     } catch (error) {
       console.error('Failed to prepare session:', error)
+      
+      // Jesli to problem z AudioContext, zasugeruj fallback
+      if (error.message.includes('AudioContext') || error.message.includes('decode')) {
+        throw new Error('Audio merging failed on this device. This is common on some mobile devices. Please try using individual affirmation playback instead.')
+      }
+      
       throw error
     }
   }

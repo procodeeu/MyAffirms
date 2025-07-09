@@ -32,7 +32,26 @@ export const useAudioMerger = () => {
       
       const arrayBuffer = await response.arrayBuffer()
       
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
+      // Sprobuj zdekodowac audio z obsluga bledow dla mobilnych urzadzen
+      let audioBuffer
+      try {
+        // Nowoczesna metoda Promise-based
+        audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
+      } catch (decodeError) {
+        console.warn('Modern decodeAudioData failed, trying legacy callback method:', decodeError)
+        
+        // Fallback dla starszych urzadzen - callback-based
+        audioBuffer = await new Promise((resolve, reject) => {
+          audioContext.decodeAudioData(
+            arrayBuffer.slice(), // Klonuj buffer
+            (decodedData) => resolve(decodedData),
+            (error) => {
+              console.error('Legacy decodeAudioData also failed:', error)
+              reject(new Error(`Audio decoding failed: ${error?.message || 'Unknown error'}`))
+            }
+          )
+        })
+      }
       
       console.log('Audio decoded:', {
         duration: audioBuffer.duration,
@@ -43,6 +62,13 @@ export const useAudioMerger = () => {
       return audioBuffer
     } catch (err) {
       console.error('Error fetching/decoding audio:', err)
+      
+      // Jesli to problem z dekodowaniem, sprobuj inne podejscie
+      if (err.name === 'EncodingError' || err.message.includes('decode')) {
+        console.warn('Audio decoding failed, this might be due to unsupported format or corrupted file')
+        throw new Error(`Audio file cannot be decoded. This may be due to an unsupported format or corrupted file. Original error: ${err.message}`)
+      }
+      
       throw err
     }
   }
@@ -185,12 +211,31 @@ export const useAudioMerger = () => {
 
       // Pobierz i zdekoduj wszystkie pliki audio
       const audioBuffers = []
+      const failedUrls = []
+      
       for (let i = 0; i < urls.length; i++) {
         const url = urls[i]
-        const audioBuffer = await fetchAndDecodeAudio(audioContext, url)
-        audioBuffers.push(audioBuffer)
+        try {
+          const audioBuffer = await fetchAndDecodeAudio(audioContext, url)
+          audioBuffers.push(audioBuffer)
+        } catch (decodeError) {
+          console.warn(`Failed to decode audio ${i + 1}/${urls.length}:`, decodeError)
+          failedUrls.push({ url, error: decodeError.message })
+          // Kontynuuj z nastepnym plikiem zamiast przerywac caly proces
+        }
         
         progress.value = ((i + 1) / urls.length) * 50 // 50% za pobieranie
+      }
+      
+      // Sprawdz czy udalo sie zdekodowac chociaz jeden plik
+      if (audioBuffers.length === 0) {
+        const errorMessage = `No audio files could be decoded. Failed files: ${failedUrls.length}`
+        console.error(errorMessage, failedUrls)
+        throw new Error(`${errorMessage}. This may be due to unsupported audio format or device limitations.`)
+      }
+      
+      if (failedUrls.length > 0) {
+        console.warn(`${failedUrls.length} audio files failed to decode but continuing with ${audioBuffers.length} successful files`)
       }
 
       console.log('All audio files decoded, starting merge...')

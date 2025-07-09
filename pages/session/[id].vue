@@ -34,6 +34,9 @@
             <p class="text-sm text-blue-800">
               🎵 {{ $t('session.merging_all_affirmations') }}
             </p>
+            <p class="text-xs text-blue-600 mt-2" v-if="!isAudioContextSupported">
+              ⚠️ Audio merging may not work on this device. If it fails, please use individual playback from the project page.
+            </p>
           </div>
           
           <button
@@ -247,6 +250,13 @@ const handlePrepareSession = async () => {
     await prepareSession(activeAffirmations.value, sessionSettings)
   } catch (error) {
     console.error('Failed to prepare unified session:', error)
+    
+    // Pokaz uzytkownikowi przyjazny komunikat o bledzie
+    if (error.message.includes('decode') || error.message.includes('AudioContext')) {
+      alert('Audio merging is not supported on this device. Please go back to the project page and use individual affirmation playback instead.')
+    } else {
+      alert(`Failed to prepare audio session: ${error.message}`)
+    }
   }
 }
 
