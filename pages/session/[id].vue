@@ -62,11 +62,11 @@
         <div v-if="isPlaying" class="space-y-8">
           <div class="bg-pastel-dun rounded-lg p-8 min-h-[150px] flex items-center justify-center border border-pastel-cinereous">
             <p class="text-2xl text-gray-900 leading-relaxed font-crimson">
-              {{ currentAffirmation?.text }}
+              {{ $t('session.playing_all_affirmations') }}
             </p>
           </div>
           
-          <!-- Kontrolki - różne dla desktop i mobile -->
+          <!-- Kontrolki - unified dla wszystkich urządzeń -->
           <div class="flex justify-center gap-4">
             <button
               @click="stopSession"
@@ -74,21 +74,12 @@
             >
               <Square class="w-5 h-5" /> {{ $t('common.stop') }}
             </button>
-            
-            <!-- Przycisk Next tylko na desktop -->
-            <button
-              v-if="sessionMode === 'desktop'"
-              @click="nextAffirmation"
-              class="bg-gray-600 hover:bg-gray-700 text-white px-8 py-4 rounded-full font-medium flex items-center gap-2 border-2 border-gray-600 hover:border-white"
-            >
-              <SkipForward class="w-5 h-5" /> {{ $t('common.next') }}
-            </button>
           </div>
           
-          <!-- Info o trybie na mobile -->
-          <div v-if="isMobile" class="mt-4">
+          <!-- Info o merged audio -->
+          <div class="mt-4">
             <p class="text-sm text-gray-600">
-              🎵 {{ sessionMode === 'mobile-merged' ? 'Odtwarzanie połączonego audio' : 'Odtwarzanie sekwencji' }}
+              🎵 {{ $t('session.playing_merged_audio') }}
             </p>
           </div>
         </div>
@@ -147,20 +138,16 @@ const projectId = route.params.id
 
 const project = ref(null)
 
-// Use unified audio session (smart desktop/mobile switching)
+// Use unified audio session (merged audio dla wszystkich urządzeń)
 const { 
   isPlaying, 
   isFinished,
   isPreparingMergedAudio,
-  currentAffirmation, 
-  currentIndex, 
-  progress,
   activeAffirmations: sessionAffirmations,
+  progress,
   startSession,
   stopSession,
-  nextAffirmation,
-  sessionMode,
-  isMobile
+  isAudioContextSupported
 } = unifiedAudioSession
 
 // Helper function - define before use

@@ -250,7 +250,13 @@
     "foregroundMode": "Foreground Mode",
     "backgroundSupported": "Background audio supported",
     "foregroundOnly": "Foreground only",
-    "technicalInfo": "Technical Information"
+    "technicalInfo": "Technical Information",
+    "preparing_merged_audio": "Preparing merged audio...",
+    "merging_all_affirmations": "Merging all affirmations into one audio file",
+    "playing_merged_audio": "Playing merged audio",
+    "playing_all_affirmations": "Playing all your affirmations",
+    "audio_context_not_supported": "Audio merging not supported",
+    "audio_context_help": "Your browser doesn't support AudioContext. Please try a modern browser."
   },
   "subscription": {
     "usage_resets": "Usage resets"

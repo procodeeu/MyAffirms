@@ -274,7 +274,13 @@
     "foregroundMode": "Tryb na pierwszym planie",
     "backgroundSupported": "Audio w tle obsługiwane",
     "foregroundOnly": "Tylko na pierwszym planie",
-    "technicalInfo": "Informacje techniczne"
+    "technicalInfo": "Informacje techniczne",
+    "preparing_merged_audio": "Przygotowywanie połączonego audio...",
+    "merging_all_affirmations": "Łączenie wszystkich afirmacji w jeden plik audio",
+    "playing_merged_audio": "Odtwarzanie połączonego audio",
+    "playing_all_affirmations": "Odtwarzanie wszystkich twoich afirmacji",
+    "audio_context_not_supported": "Łączenie audio nie jest obsługiwane",
+    "audio_context_help": "Twoja przeglądarka nie obsługuje AudioContext. Spróbuj nowoczesnej przeglądarki."
   },
   "subscription": {
     "usage_resets": "Resetuje się użycie"
