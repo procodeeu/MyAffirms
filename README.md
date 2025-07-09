@@ -1,57 +1,179 @@
-# My Affirms
+# My Affirms - Aplikacja do Afirmacji Pozytywnych
 
-My Affirms is a web application for creating, organizing and playing positive affirmations to strengthen self-confidence and motivation.
+**My Affirms** to nowoczesna aplikacja webowa do tworzenia, organizowania i odtwarzania pozytywnych afirmacji, wspierająca rozwój osobisty i wzmacnianie pewności siebie.
 
-## Business Idea
+## 🎯 Cel Biznesowy
 
-The application was created in response to growing demand for tools supporting personal development and wellbeing. My Affirms enables users to:
+Aplikacja została stworzona w odpowiedzi na rosnące zapotrzebowanie na narzędzia wspierające rozwój osobisty i wellbeing. My Affirms umożliwia użytkownikom:
 
-- **Personalize affirmation practice** - everyone can create affirmations tailored to their goals
-- **Systematic practice** - organizing affirmations into thematic projects facilitates regular exercises
-- **Accessibility** - the app works in browser and can be installed as PWA on mobile
-- **Privacy** - user data is stored securely in Firebase
+### 🌟 Kluczowe Korzyści
+- **Personalizacja praktyki afirmacji** - każdy może tworzyć afirmacje dopasowane do swoich celów
+- **Systematyczna praktyka** - organizowanie afirmacji w projekty tematyczne ułatwia regularne ćwiczenia
+- **Dostępność** - aplikacja działa w przeglądarce i może być zainstalowana jako PWA na urządzeniach mobilnych
+- **Prywatność** - dane użytkowników są bezpiecznie przechowywane w Firebase
+- **Wielojęzyczność** - obsługa 25+ języków europejskich
+- **Zaawansowane TTS** - integracja z Google Cloud Text-to-Speech dla najwyższej jakości głosów
 
-The application has monetization potential through:
-- Freemium model (basic features free, advanced paid)
-- Premium subscriptions with additional features (more projects, analytics, export)
-- Integrations with other wellness applications
+### 💰 Model Monetyzacji
+- **Freemium** - podstawowe funkcje dostępne za darmo
+- **Premium (30 PLN/miesiąc)** - zaawansowane funkcje:
+  - Dostęp do głosów Neural/WaveNet (najwyższa jakość AI)
+  - 300,000 znaków premium miesięcznie
+  - 1,200,000 znaków standard miesięcznie
+  - Brak ograniczeń w liczbie projektów
+  - Eksport danych
+- **Integracje** z innymi aplikacjami wellness
 
-## Features
+## 🚀 Funkcjonalności
 
-### Project Management
-- Create thematic projects (e.g. "Self-confidence", "Career", "Health")
-- Edit project names
-- Copy projects
-- Delete projects with confirmation
+### 📁 Zarządzanie Projektami
+- **Tworzenie projektów tematycznych** (np. "Pewność siebie", "Kariera", "Zdrowie")
+- **Grupy projektów** - organizacja projektów w kategorie
+- **Edycja i kopiowanie** projektów
+- **Import/Export** danych w formacie JSON
+- **Usuwanie z potwierdzeniem** - bezpieczne zarządzanie danymi
 
-### Affirmations
-- Add custom affirmations to projects
-- Edit and delete affirmations
-- View all affirmations in project
+### ✨ System Afirmacji
+- **Dodawanie niestandardowych afirmacji** do projektów
+- **Edycja i usuwanie** afirmacji w czasie rzeczywistym
+- **Aktywacja/dezaktywacja** poszczególnych afirmacji
+- **Reorderowanie** afirmacji metodą drag & drop
+- **Operacje grupowe** - masowe włączanie/wyłączanie afirmacji
+- **Walidacja tekstu** - kontrola długości i poprawności
 
-### Playback Sessions
-- Play affirmations using Web Speech API or Google Cloud TTS (Premium)
-- Configure speed and pauses between affirmations
-- AI voice selection with different characters (Premium)
-- Random or sequential mode
-- Pause and resume sessions
+### 🎵 Sesje Odtwarzania
+- **Dual TTS Engine**:
+  - Web Speech API (darmowy)
+  - Google Cloud TTS (Premium) - najwyższa jakość AI
+- **Konfiguracja odtwarzania**:
+  - Prędkość mowy (0.5x - 2.0x)
+  - Pauzy między zdaniami (0-10 sekund)
+  - Tryb losowy lub sekwencyjny
+  - Pauza i wznowienie sesji
+- **Wybór głosów AI** (Premium):
+  - Zofia, Marek, Agnieszka (Neural/WaveNet)
+  - Obsługa 25+ języków europejskich
+  - Test głosów przed wyborem
 
-### Technical Features
-- User authentication via Google
-- Data synchronization between devices
-- Premium user management system
-- Google Cloud Text-to-Speech integration
-- Offline mode with local storage
-- Progressive Web App (PWA) - mobile installation
-- Responsive design
+### 🎧 Zaawansowany System Audio
+- **Generowanie audio** w tle z automatycznym cache'owaniem
+- **Merge audio** - łączenie wielu afirmacji w jeden plik
+- **Metadata tracking** - śledzenie wygenerowanych plików
+- **Storage management** - automatyczne czyszczenie starych plików
+- **Background music** - opcjonalna muzyka relaksacyjna
 
-## Technology Stack
+### 👥 Zarządzanie Użytkownikami
+- **Autentykacja Google** - bezpieczne logowanie
+- **Profile użytkowników** - personalizacja ustawień
+- **Synchronizacja między urządzeniami** - dostęp z każdego miejsca
+- **System premium** - zarządzanie subskrypcjami Paddle
+- **Tracking użycia** - monitorowanie limitów znaków
 
-- **Frontend**: Vue.js 3 + Nuxt 3
-- **Styling**: Tailwind CSS
-- **Backend**: Firebase (Firestore + Authentication)
-- **Hosting**: Netlify
-- **PWA**: Vite PWA plugin
+### 🌍 Wielojęzyczność i Dostępność
+- **25+ języków europejskich** (Polski, Angielski, Niemiecki, Francuski, itp.)
+- **Progressive Web App (PWA)** - instalacja na urządzeniach mobilnych
+- **Responsive design** - optymalizacja dla wszystkich ekranów
+- **Offline mode** - podstawowe funkcje bez internetu
+- **Accessibility** - wsparcie dla czytników ekranu
+
+### ⚙️ Funkcje Techniczne
+- **Real-time synchronizacja** z Firebase Firestore
+- **Bezpieczne przechowywanie** w Firebase Storage
+- **Admin panel** - zarządzanie aplikacją
+- **Monitoring i logi** - śledzenie błędów i wydajności
+- **Automatyczne backup** - ochrona przed utratą danych
+- **Version control** - śledzenie wersji aplikacji
+
+## 🛠️ Stack Technologiczny
+
+### Frontend
+- **Vue.js 3** - reaktywny framework JavaScript
+- **Nuxt 3** - full-stack framework z SSR/SPA
+- **Tailwind CSS** - utility-first CSS framework
+- **Pinia** - state management
+- **Vue I18n** - internationalization
+- **Lucide Vue** - ikony SVG
+
+### Backend & Services
+- **Firebase Firestore** - baza danych NoSQL w czasie rzeczywistym
+- **Firebase Authentication** - system logowania Google
+- **Firebase Storage** - przechowywanie plików audio
+- **Google Cloud Text-to-Speech** - generowanie mowy AI
+- **Paddle** - system płatności i subskrypcji
+
+### DevOps & Deployment
+- **Nuxt 3 SPA** - Single Page Application
+- **Firebase Hosting** - hosting statyczny
+- **GitHub Actions** - CI/CD (opcjonalnie)
+- **Firebase Emulators** - lokalne środowisko deweloperskie
+
+### Narzędzia Deweloperskie
+- **Playwright** - testy end-to-end
+- **ESLint** - linting kodu JavaScript
+- **Prettier** - formatowanie kodu
+- **Firebase Tools** - zarządzanie projektem Firebase
+
+## 📋 Architektura Aplikacji
+
+### 🏗️ Struktura Projektu
+```
+my-affirms/
+├── components/          # Komponenty Vue.js
+│   ├── AudioControls/   # Kontrolki audio
+│   ├── SessionSettings/ # Ustawienia sesji
+│   └── UI/             # Komponenty interfejsu
+├── composables/        # Logika biznesowa (Composition API)
+│   ├── useAffirmationManager.js  # Zarządzanie afirmacjami
+│   ├── useAudioManager.js        # System audio
+│   ├── useTextToSpeech.js        # TTS engine
+│   ├── useAuth.js               # Autentykacja
+│   ├── useFirestore.js          # Baza danych
+│   └── useSubscription.js       # System premium
+├── pages/              # Strony aplikacji (Nuxt routing)
+│   ├── app.vue         # Główna aplikacja
+│   ├── session/[id].vue # Sesja afirmacji
+│   ├── admin.vue       # Panel administracyjny
+│   └── subscription.vue # Zarządzanie subskrypcją
+├── server/api/         # API endpoints (Nuxt server)
+│   ├── tts.post.js     # Google Cloud TTS
+│   ├── audio/          # Operacje audio
+│   └── subscription/   # Paddle webhooks
+├── locales/           # Pliki tłumaczeń (25+ języków)
+└── public/            # Zasoby statyczne
+```
+
+### 🔄 Przepływ Danych
+1. **Autentykacja** → Google OAuth → Firebase Auth
+2. **Dane użytkownika** → Firestore (projekty, afirmacje, ustawienia)
+3. **Audio** → Google Cloud TTS → Firebase Storage
+4. **Płatności** → Paddle → Webhook → Firestore (subskrypcje)
+5. **Synchronizacja** → Real-time listeners → Reactive UI
+
+### 🎯 Kluczowe Composables
+
+#### `useAffirmationManager`
+- Zarządzanie CRUD operacjami na afirmacjach
+- Walidacja danych wejściowych
+- Automatyczne generowanie audio w tle
+- Operacje grupowe (bulk operations)
+
+#### `useAudioManager` 
+- Generowanie plików audio z tekstu
+- Cache'owanie i optymalizacja storage
+- Merge wielu afirmacji w jeden plik
+- Metadata tracking i cleanup
+
+#### `useTextToSpeech`
+- Dual engine: Web Speech API + Google Cloud TTS
+- Obsługa 25+ języków i głosów AI
+- Fallback mechanisms i error handling
+- Usage tracking dla systemu premium
+
+#### `useSubscription`
+- Integracja z Paddle payment system
+- Monitoring limitów użycia (znaki TTS)
+- Premium features gating
+- Webhook handling dla statusu subskrypcji
 
 ## Project Structure
 

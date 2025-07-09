@@ -1,6 +1,8 @@
 # 🧹 Clean Users Data Script
 
-Uniwersalny skrypt do czyszczenia danych audio użytkowników z Firebase.
+**Uniwersalny skrypt do zarządzania i czyszczenia danych użytkowników w Firebase.**
+
+Ten skrypt jest kluczowym narzędziem deweloperskim do zarządzania danymi w środowisku My Affirms. Umożliwia bezpieczne czyszczenie danych testowych oraz reset środowiska deweloperskiego.
 
 ## 📋 Opis
 
