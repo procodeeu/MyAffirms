@@ -6,7 +6,7 @@ import { useAudioStorage } from "./audio/useAudioStorage.js"
 export const useUnifiedAudioSession = () => {
   const { mergeAudioFromUrls, isAudioContextSupported } = useAudioMerger()
   const { playAudioFromUrl, stopAllAudio, resetStoppedFlag } = useAudioPlayback()
-  const { getAffirmationAudioUrls } = useAudioStorage()
+  const { getBatchAudioUrls } = useAudioStorage()
   
   const isPlaying = ref(false)
   const isFinished = ref(false)
@@ -35,16 +35,25 @@ export const useUnifiedAudioSession = () => {
     isPreparingMergedAudio.value = true
     
     try {
-      console.log('🎵 Preparing merged audio...', {
+      console.log('Preparing merged audio...', {
         affirmations: affirmations.length
       })
 
       // Pobierz URL-e wszystkich audio
       const audioUrls = []
       for (const affirmation of affirmations) {
-        const urls = await getAffirmationAudioUrls(affirmation.id)
-        if (urls?.length) {
-          audioUrls.push(...urls)
+        if (affirmation.sentenceIds && affirmation.sentenceIds.length > 0) {
+          // Uzyj przechowywanych sentence IDs
+          const urls = await getBatchAudioUrls(affirmation.sentenceIds)
+          const affirmationUrls = affirmation.sentenceIds.map(id => urls[id]).filter(Boolean)
+          audioUrls.push(...affirmationUrls)
+        } else {
+          // Fallback - sprobuj znalezc audio zdan
+          const sentences = affirmation.text.split(/[.!?]+/).filter(s => s.trim().length > 0)
+          const sentenceIds = sentences.map((_, i) => `${affirmation.id}_sentence_${i}`)
+          const urls = await getBatchAudioUrls(sentenceIds)
+          const affirmationUrls = sentenceIds.map(id => urls[id]).filter(Boolean)
+          audioUrls.push(...affirmationUrls)
         }
       }
 
@@ -52,7 +61,7 @@ export const useUnifiedAudioSession = () => {
         throw new Error('No audio files found for affirmations')
       }
 
-      console.log('🎵 Found audio URLs:', audioUrls.length)
+      console.log('Found audio URLs:', audioUrls.length)
 
       // Polacz audio z pauzami miedzy afirmacjami
       const pauseBetween = settings?.affirmationPause || 2.0
@@ -63,7 +72,7 @@ export const useUnifiedAudioSession = () => {
 
       mergedAudioUrl.value = result.url
       
-      console.log('✅ Merged audio prepared:', {
+      console.log('Merged audio prepared:', {
         duration: result.duration,
         size: result.size,
         url: result.url
@@ -72,7 +81,7 @@ export const useUnifiedAudioSession = () => {
       return result
 
     } catch (error) {
-      console.error('❌ Failed to prepare merged audio:', error)
+      console.error('Failed to prepare merged audio:', error)
       throw error
     } finally {
       isPreparingMergedAudio.value = false
@@ -89,7 +98,7 @@ export const useUnifiedAudioSession = () => {
     stopSession()
     activeAffirmations.value = affirmations
 
-    console.log('🎵 Starting unified audio session:', {
+    console.log('Starting unified audio session:', {
       affirmations: affirmations.length,
       audioContextSupported: isAudioContextSupported.value
     })
@@ -100,7 +109,7 @@ export const useUnifiedAudioSession = () => {
       await playMergedAudio()
 
     } catch (error) {
-      console.error('❌ Failed to start session:', error)
+      console.error('Failed to start session:', error)
       throw error
     }
   }
@@ -115,7 +124,7 @@ export const useUnifiedAudioSession = () => {
     resetStoppedFlag()
 
     try {
-      console.log('🎵 Playing merged audio...')
+      console.log('Playing merged audio...')
       
       // Uzyj natywnego odtwarzacza HTML5
       await playAudioFromUrl(mergedAudioUrl.value, {
@@ -127,11 +136,11 @@ export const useUnifiedAudioSession = () => {
       isPlaying.value = false
       isFinished.value = true
       
-      console.log('✅ Merged audio session completed')
+      console.log('Merged audio session completed')
 
     } catch (error) {
       isPlaying.value = false
-      console.error('❌ Merged audio playback failed:', error)
+      console.error('Merged audio playback failed:', error)
       throw error
     }
   }
