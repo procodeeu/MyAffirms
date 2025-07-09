@@ -1,0 +1,113 @@
+{
+  "auth": {
+    "login": "Přihlásit se",
+    "logout": "Odhlásit se",
+    "register": "Registrovat",
+    "email": "E-mail",
+    "password": "Heslo",
+    "confirm_password": "Potvrdit heslo",
+    "login_title": "Přihlaste se ke svému účtu",
+    "register_title": "Vytvořit nový účet",
+    "forgot_password": "Zapomenuté heslo?",
+    "no_account": "Ještě nemáte účet?",
+    "already_have_account": "Už máte účet?",
+    "login_error": "Chyba přihlášení",
+    "register_error": "Chyba registrace",
+    "logout_error": "Chyba odhlášení"
+  },
+  "common": {
+    "save": "Uložit",
+    "cancel": "Zrušit",
+    "delete": "Smazat",
+    "edit": "Upravit",
+    "add": "Přidat",
+    "close": "Zavřít",
+    "loading": "Načítání...",
+    "error": "Chyba",
+    "success": "Úspěch",
+    "confirm": "Potvrdit",
+    "back": "Zpět",
+    "next": "Další",
+    "previous": "Předchozí",
+    "search": "Hledat",
+    "filter": "Filtr",
+    "sort": "Třídit",
+    "clear": "Vymazat",
+    "select": "Vybrat",
+    "upload": "Nahrát",
+    "download": "Stáhnout",
+    "copy": "Kopírovat",
+    "share": "Sdílet",
+    "print": "Tisknout",
+    "export": "Exportovat",
+    "import": "Importovat",
+    "refresh": "Obnovit",
+    "settings": "Nastavení",
+    "help": "Nápověda",
+    "about": "O aplikaci",
+    "contact": "Kontakt",
+    "privacy": "Soukromí",
+    "terms": "Podmínky použití",
+    "yes": "Ano",
+    "no": "Ne",
+    "ok": "OK",
+    "active": "Aktivní",
+    "inactive": "Neaktivní",
+    "stop": "Zastavit"
+  },
+  "app": {
+    "tagline": "Afirmace, které odhalují, nejen léčí",
+    "welcome": "Vítejte,",
+    "user_placeholder": "Uživatel",
+    "page_title": "Moje projekty - My affirms",
+    "projects": {
+      "title": "Vaše projekty",
+      "description": "Organizujte afirmace do tematických kolekcí",
+      "new_project": "Nový projekt",
+      "new_group": "Nová skupina",
+      "projects_in_group": "{count} projektů ve skupině",
+      "group_settings": "Nastavení skupiny",
+      "start_group_session": "Spustit skupinovou relaci",
+      "start_session": "Spustit relaci",
+      "affirmations_count": "{count} afirmací"
+    }
+  },
+  "project": {
+    "affirmations_list_title": "Seznam afirmací",
+    "affirmations_list_description": "Spravujte své afirmace",
+    "add_affirmation": "Přidat afirmaci",
+    "no_affirmations_title": "Žádné afirmace",
+    "no_affirmations_description": "Přidejte svou první afirmaci a začněte",
+    "session_settings_title": "Nastavení relace",
+    "session_settings": {
+      "speech_rate": "Rychlost řeči: {rate}x",
+      "pause_duration": "Pauza mezi afirmacemi: {duration}s",
+      "sentence_pause": "Pauza mezi větami: {pause}s",
+      "repeat_affirmation": "Opakovat každou afirmaci podruhé",
+      "repeat_delay": "Zpoždění před opakováním: {delay}s",
+      "voice_selection": "Výběr hlasu"
+    },
+    "modals": {
+      "edit_affirmation": "Upravit afirmaci",
+      "new_affirmation": "Nová afirmace",
+      "affirmation_placeholder": "Zadejte text afirmace..."
+    },
+    "alerts": {
+      "save_affirmation_failed": "Nepodařilo se uložit afirmaci",
+      "delete_affirmation_failed": "Nepodařilo se smazat afirmaci",
+      "confirm_delete_affirmation": "Opravdu chcete smazat tuto afirmaci?"
+    },
+    "page_title": "{name} - My affirms"
+  },
+  "session": {
+    "title": "Relace",
+    "ready_to_start": "Připraveno k zahájení",
+    "session_contains_affirmations": "Tato relace obsahuje {count} afirmací",
+    "start": "Spustit",
+    "finished_title": "Relace dokončena",
+    "finished_description": "Výborně! Dokončili jste svou afirmační relaci.",
+    "finish": "Dokončit",
+    "progress": "Pokrok: {current} z {total}",
+    "page_title": "Relace: {name} - My affirms"
+  }
+}

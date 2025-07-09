@@ -1,0 +1,113 @@
+{
+  "auth": {
+    "login": "Inloggen",
+    "logout": "Uitloggen",
+    "register": "Registreren",
+    "email": "E-mail",
+    "password": "Wachtwoord",
+    "confirm_password": "Wachtwoord bevestigen",
+    "login_title": "Inloggen op uw account",
+    "register_title": "Nieuw account aanmaken",
+    "forgot_password": "Wachtwoord vergeten?",
+    "no_account": "Nog geen account?",
+    "already_have_account": "Al een account?",
+    "login_error": "Inlogfout",
+    "register_error": "Registratiefout",
+    "logout_error": "Uitlogfout"
+  },
+  "common": {
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "delete": "Verwijderen",
+    "edit": "Bewerken",
+    "add": "Toevoegen",
+    "close": "Sluiten",
+    "loading": "Laden...",
+    "error": "Fout",
+    "success": "Succes",
+    "confirm": "Bevestigen",
+    "back": "Terug",
+    "next": "Volgende",
+    "previous": "Vorige",
+    "search": "Zoeken",
+    "filter": "Filter",
+    "sort": "Sorteren",
+    "clear": "Wissen",
+    "select": "Selecteren",
+    "upload": "Uploaden",
+    "download": "Downloaden",
+    "copy": "Kopiëren",
+    "share": "Delen",
+    "print": "Afdrukken",
+    "export": "Exporteren",
+    "import": "Importeren",
+    "refresh": "Verversen",
+    "settings": "Instellingen",
+    "help": "Help",
+    "about": "Over",
+    "contact": "Contact",
+    "privacy": "Privacy",
+    "terms": "Gebruiksvoorwaarden",
+    "yes": "Ja",
+    "no": "Nee",
+    "ok": "OK",
+    "active": "Actief",
+    "inactive": "Inactief",
+    "stop": "Stop"
+  },
+  "app": {
+    "tagline": "Affirmaties die onthullen, niet alleen genezen",
+    "welcome": "Welkom,",
+    "user_placeholder": "Gebruiker",
+    "page_title": "Mijn projecten - My affirms",
+    "projects": {
+      "title": "Uw projecten",
+      "description": "Organiseer affirmaties in thematische collecties",
+      "new_project": "Nieuw project",
+      "new_group": "Nieuwe groep",
+      "projects_in_group": "{count} projecten in de groep",
+      "group_settings": "Groepsinstellingen",
+      "start_group_session": "Groepssessie starten",
+      "start_session": "Sessie starten",
+      "affirmations_count": "{count} affirmaties"
+    }
+  },
+  "project": {
+    "affirmations_list_title": "Affirmatielijst",
+    "affirmations_list_description": "Beheer uw affirmaties",
+    "add_affirmation": "Affirmatie toevoegen",
+    "no_affirmations_title": "Geen affirmaties",
+    "no_affirmations_description": "Voeg uw eerste affirmatie toe om te beginnen",
+    "session_settings_title": "Sessie-instellingen",
+    "session_settings": {
+      "speech_rate": "Spreeksnelheid: {rate}x",
+      "pause_duration": "Pauze tussen affirmaties: {duration}s",
+      "sentence_pause": "Pauze tussen zinnen: {pause}s",
+      "repeat_affirmation": "Elke affirmatie een tweede keer herhalen",
+      "repeat_delay": "Vertraging voor herhaling: {delay}s",
+      "voice_selection": "Stem selectie"
+    },
+    "modals": {
+      "edit_affirmation": "Affirmatie bewerken",
+      "new_affirmation": "Nieuwe affirmatie",
+      "affirmation_placeholder": "Voer affirmatie tekst in..."
+    },
+    "alerts": {
+      "save_affirmation_failed": "Kon affirmatie niet opslaan",
+      "delete_affirmation_failed": "Kon affirmatie niet verwijderen",
+      "confirm_delete_affirmation": "Weet u zeker dat u deze affirmatie wilt verwijderen?"
+    },
+    "page_title": "{name} - My affirms"
+  },
+  "session": {
+    "title": "Sessie",
+    "ready_to_start": "Klaar om te beginnen",
+    "session_contains_affirmations": "Deze sessie bevat {count} affirmaties",
+    "start": "Start",
+    "finished_title": "Sessie voltooid",
+    "finished_description": "Uitstekend! U heeft uw affirmatie sessie voltooid.",
+    "finish": "Voltooien",
+    "progress": "Voortgang: {current} van {total}",
+    "page_title": "Sessie: {name} - My affirms"
+  }
+}

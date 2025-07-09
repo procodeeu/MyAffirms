@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Debug Test</title>
+</head>
+<body>
+    <h1>Audio Debug Test</h1>
+    <p>Paste the download URLs from the console logs below and test them directly:</p>
+    
+    <div>
+        <h3>Audio 1 (should be Marek - male voice):</h3>
+        <input type="text" id="url1" placeholder="Paste first audio URL here" style="width: 500px;">
+        <button onclick="playAudio1()">Play Audio 1</button>
+        <audio id="audio1" controls style="display: block; margin: 10px 0;"></audio>
+    </div>
+    
+    <div>
+        <h3>Audio 2 (should be Agnieszka - female voice):</h3>
+        <input type="text" id="url2" placeholder="Paste second audio URL here" style="width: 500px;">
+        <button onclick="playAudio2()">Play Audio 2</button>
+        <audio id="audio2" controls style="display: block; margin: 10px 0;"></audio>
+    </div>
+    
+    <script>
+        function playAudio1() {
+            const url = document.getElementById('url1').value;
+            const audio = document.getElementById('audio1');
+            if (url) {
+                audio.src = url + '?t=' + Date.now();
+                audio.load();
+            }
+        }
+        
+        function playAudio2() {
+            const url = document.getElementById('url2').value;
+            const audio = document.getElementById('audio2');
+            if (url) {
+                audio.src = url + '?t=' + Date.now();
+                audio.load();
+            }
+        }
+    </script>
+</body>
+</html>

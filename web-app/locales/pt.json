@@ -1,0 +1,113 @@
+{
+  "auth": {
+    "login": "Entrar",
+    "logout": "Sair",
+    "register": "Registrar",
+    "email": "E-mail",
+    "password": "Senha",
+    "confirm_password": "Confirmar senha",
+    "login_title": "Faça login em sua conta",
+    "register_title": "Criar nova conta",
+    "forgot_password": "Esqueceu a senha?",
+    "no_account": "Ainda não tem uma conta?",
+    "already_have_account": "Já tem uma conta?",
+    "login_error": "Erro de login",
+    "register_error": "Erro de registro",
+    "logout_error": "Erro ao sair"
+  },
+  "common": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "add": "Adicionar",
+    "close": "Fechar",
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "confirm": "Confirmar",
+    "back": "Voltar",
+    "next": "Próximo",
+    "previous": "Anterior",
+    "search": "Pesquisar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "clear": "Limpar",
+    "select": "Selecionar",
+    "upload": "Carregar",
+    "download": "Baixar",
+    "copy": "Copiar",
+    "share": "Compartilhar",
+    "print": "Imprimir",
+    "export": "Exportar",
+    "import": "Importar",
+    "refresh": "Atualizar",
+    "settings": "Configurações",
+    "help": "Ajuda",
+    "about": "Sobre",
+    "contact": "Contato",
+    "privacy": "Privacidade",
+    "terms": "Termos de uso",
+    "yes": "Sim",
+    "no": "Não",
+    "ok": "OK",
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "stop": "Parar"
+  },
+  "app": {
+    "tagline": "Afirmações que revelam, não apenas curam",
+    "welcome": "Bem-vindo,",
+    "user_placeholder": "Usuário",
+    "page_title": "Meus projetos - My affirms",
+    "projects": {
+      "title": "Seus projetos",
+      "description": "Organize afirmações em coleções temáticas",
+      "new_project": "Novo projeto",
+      "new_group": "Novo grupo",
+      "projects_in_group": "{count} projetos no grupo",
+      "group_settings": "Configurações do grupo",
+      "start_group_session": "Iniciar sessão em grupo",
+      "start_session": "Iniciar sessão",
+      "affirmations_count": "{count} afirmações"
+    }
+  },
+  "project": {
+    "affirmations_list_title": "Lista de afirmações",
+    "affirmations_list_description": "Gerencie suas afirmações",
+    "add_affirmation": "Adicionar afirmação",
+    "no_affirmations_title": "Nenhuma afirmação",
+    "no_affirmations_description": "Adicione sua primeira afirmação para começar",
+    "session_settings_title": "Configurações da sessão",
+    "session_settings": {
+      "speech_rate": "Velocidade da fala: {rate}x",
+      "pause_duration": "Pausa entre afirmações: {duration}s",
+      "sentence_pause": "Pausa entre frases: {pause}s",
+      "repeat_affirmation": "Repetir cada afirmação uma segunda vez",
+      "repeat_delay": "Atraso antes da repetição: {delay}s",
+      "voice_selection": "Seleção de voz"
+    },
+    "modals": {
+      "edit_affirmation": "Editar afirmação",
+      "new_affirmation": "Nova afirmação",
+      "affirmation_placeholder": "Digite o texto da afirmação..."
+    },
+    "alerts": {
+      "save_affirmation_failed": "Não foi possível salvar a afirmação",
+      "delete_affirmation_failed": "Não foi possível excluir a afirmação",
+      "confirm_delete_affirmation": "Tem certeza de que deseja excluir esta afirmação?"
+    },
+    "page_title": "{name} - My affirms"
+  },
+  "session": {
+    "title": "Sessão",
+    "ready_to_start": "Pronto para começar",
+    "session_contains_affirmations": "Esta sessão contém {count} afirmações",
+    "start": "Iniciar",
+    "finished_title": "Sessão concluída",
+    "finished_description": "Excelente! Você completou sua sessão de afirmação.",
+    "finish": "Finalizar",
+    "progress": "Progresso: {current} de {total}",
+    "page_title": "Sessão: {name} - My affirms"
+  }
+}

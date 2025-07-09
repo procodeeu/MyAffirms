@@ -1,0 +1,27 @@
+{
+  "auth": {
+    "login": "Logg inn",
+    "logout": "Logg ut",
+    "email": "E-post",
+    "password": "Passord",
+    "register": "Registrer"
+  },
+  "common": {
+    "save": "Lagre",
+    "cancel": "Avbryt",
+    "delete": "Slett",
+    "edit": "Rediger",
+    "add": "Legg til",
+    "loading": "Laster...",
+    "error": "Feil",
+    "success": "Suksess"
+  },
+  "app": {
+    "welcome": "Velkommen,",
+    "user_placeholder": "Bruker",
+    "projects": {
+      "title": "Dine prosjekter",
+      "new_project": "Nytt prosjekt"
+    }
+  }
+}

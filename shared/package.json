@@ -1,0 +1,32 @@
+{
+  "name": "@my-affirms/shared",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": "./index.js",
+    "./firebase": "./firebase/index.js",
+    "./tts": "./tts/index.js",
+    "./validators": "./validators/index.js",
+    "./utils": "./utils/index.js",
+    "./types": "./types/index.js",
+    "./config": "./config/index.js"
+  },
+  "scripts": {
+    "build": "echo 'Shared library - no build needed'",
+    "lint": "eslint . --ext .js,.ts,.vue",
+    "lint:fix": "eslint . --ext .js,.ts,.vue --fix",
+    "test": "echo 'Shared tests would go here'"
+  },
+  "dependencies": {
+    "firebase": "^11.9.1",
+    "firebase-admin": "^13.4.0"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.57.0"
+  }
+}

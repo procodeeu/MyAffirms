@@ -1,0 +1,113 @@
+{
+  "auth": {
+    "login": "Logga in",
+    "logout": "Logga ut",
+    "register": "Registrera",
+    "email": "E-post",
+    "password": "Lösenord",
+    "confirm_password": "Bekräfta lösenord",
+    "login_title": "Logga in på ditt konto",
+    "register_title": "Skapa nytt konto",
+    "forgot_password": "Glömt lösenord?",
+    "no_account": "Inget konto än?",
+    "already_have_account": "Har du redan ett konto?",
+    "login_error": "Inloggningsfel",
+    "register_error": "Registreringsfel",
+    "logout_error": "Utloggningsfel"
+  },
+  "common": {
+    "save": "Spara",
+    "cancel": "Avbryt",
+    "delete": "Radera",
+    "edit": "Redigera",
+    "add": "Lägg till",
+    "close": "Stäng",
+    "loading": "Laddar...",
+    "error": "Fel",
+    "success": "Framgång",
+    "confirm": "Bekräfta",
+    "back": "Tillbaka",
+    "next": "Nästa",
+    "previous": "Föregående",
+    "search": "Sök",
+    "filter": "Filter",
+    "sort": "Sortera",
+    "clear": "Rensa",
+    "select": "Välj",
+    "upload": "Ladda upp",
+    "download": "Ladda ner",
+    "copy": "Kopiera",
+    "share": "Dela",
+    "print": "Skriv ut",
+    "export": "Exportera",
+    "import": "Importera",
+    "refresh": "Uppdatera",
+    "settings": "Inställningar",
+    "help": "Hjälp",
+    "about": "Om",
+    "contact": "Kontakt",
+    "privacy": "Sekretess",
+    "terms": "Användarvillkor",
+    "yes": "Ja",
+    "no": "Nej",
+    "ok": "OK",
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "stop": "Stoppa"
+  },
+  "app": {
+    "tagline": "Affirmationer som avslöjar, inte bara helar",
+    "welcome": "Välkommen,",
+    "user_placeholder": "Användare",
+    "page_title": "Mina projekt - My affirms",
+    "projects": {
+      "title": "Dina projekt",
+      "description": "Organisera affirmationer i tematiska samlingar",
+      "new_project": "Nytt projekt",
+      "new_group": "Ny grupp",
+      "projects_in_group": "{count} projekt i gruppen",
+      "group_settings": "Gruppinställningar",
+      "start_group_session": "Starta gruppsession",
+      "start_session": "Starta session",
+      "affirmations_count": "{count} affirmationer"
+    }
+  },
+  "project": {
+    "affirmations_list_title": "Affirmationslista",
+    "affirmations_list_description": "Hantera dina affirmationer",
+    "add_affirmation": "Lägg till affirmation",
+    "no_affirmations_title": "Inga affirmationer",
+    "no_affirmations_description": "Lägg till din första affirmation för att komma igång",
+    "session_settings_title": "Sessionsinställningar",
+    "session_settings": {
+      "speech_rate": "Talhastighet: {rate}x",
+      "pause_duration": "Paus mellan affirmationer: {duration}s",
+      "sentence_pause": "Paus mellan meningar: {pause}s",
+      "repeat_affirmation": "Upprepa varje affirmation en andra gång",
+      "repeat_delay": "Fördröjning före upprepning: {delay}s",
+      "voice_selection": "Röstval"
+    },
+    "modals": {
+      "edit_affirmation": "Redigera affirmation",
+      "new_affirmation": "Ny affirmation",
+      "affirmation_placeholder": "Ange affirmationstext..."
+    },
+    "alerts": {
+      "save_affirmation_failed": "Kunde inte spara affirmation",
+      "delete_affirmation_failed": "Kunde inte radera affirmation",
+      "confirm_delete_affirmation": "Är du säker på att du vill radera denna affirmation?"
+    },
+    "page_title": "{name} - My affirms"
+  },
+  "session": {
+    "title": "Session",
+    "ready_to_start": "Redo att börja",
+    "session_contains_affirmations": "Denna session innehåller {count} affirmationer",
+    "start": "Starta",
+    "finished_title": "Session slutförd",
+    "finished_description": "Utmärkt! Du har slutfört din affirmationssession.",
+    "finish": "Avsluta",
+    "progress": "Framsteg: {current} av {total}",
+    "page_title": "Session: {name} - My affirms"
+  }
+}

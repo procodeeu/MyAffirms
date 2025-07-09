@@ -1,0 +1,63 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Nuxt build
+.nuxt/
+.output/
+dist/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# Firebase
+.firebase/
+.firebaserc
+
+# Temporary folders
+tmp/
+temp/
+
+playwright-report/
+test-results/
+.branding/
+README.md
+
+# Audio files (exclude actual music files, keep placeholders)
+public/audio/*.mp3
+public/audio/*.wav
+public/audio/*.ogg
+public/audio/*.m4a
+!public/audio/*.example
+
+# Generated TTS audio files
+storage/audio/*.mp3
+storage/audio/*.wav
