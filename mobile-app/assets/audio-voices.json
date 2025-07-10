@@ -1,0 +1,90 @@
+{
+  "female": {
+    "name": "Kobieta",
+    "affirmations": [
+      {
+        "id": 0,
+        "text": "Jestem pewny siebie i zdolny",
+        "url": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Jestem%20pewny%20siebie%20i%20zdolny&ttsspeed=0.8"
+      },
+      {
+        "id": 1,
+        "text": "Przyciagam sukces we wszystkim co robie",
+        "url": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Przyciagam%20sukces%20we%20wszystkim%20co%20robie&ttsspeed=0.8"
+      },
+      {
+        "id": 2,
+        "text": "Jestem godny milosci i szacunku",
+        "url": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Jestem%20godny%20milosci%20i%20szacunku&ttsspeed=0.8"
+      },
+      {
+        "id": 3,
+        "text": "Ufam w swoja zdolnosc do pokonywania wyzwan",
+        "url": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Ufam%20w%20swoja%20zdolnosc%20do%20pokonywania%20wyzwan&ttsspeed=0.8"
+      },
+      {
+        "id": 4,
+        "text": "Jestem wdzieczny za wszystkie mozliwosci w moim zyciu",
+        "url": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Jestem%20wdzieczny%20za%20wszystkie%20mozliwosci%20w%20moim%20zyciu&ttsspeed=0.8"
+      },
+      {
+        "id": 5,
+        "text": "Kazdy dzien przynosi mi nowe okazje do rozwoju",
+        "url": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Kazdy%20dzien%20przynosi%20mi%20nowe%20okazje%20do%20rozwoju&ttsspeed=0.8"
+      },
+      {
+        "id": 6,
+        "text": "Mam w sobie sile do osiagniecia wszystkich swoich celow",
+        "url": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Mam%20w%20sobie%20sile%20do%20osiagniecia%20wszystkich%20swoich%20celow&ttsspeed=0.8"
+      }
+    ],
+    "combinedUrl": {
+      "part1": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Jestem%20pewny%20siebie%20i%20zdolny.%20Przyciagam%20sukces%20we%20wszystkim%20co%20robie.%20Jestem%20godny%20milosci%20i%20szacunku&ttsspeed=0.8",
+      "part2": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Ufam%20w%20swoja%20zdolnosc%20do%20pokonywania%20wyzwan.%20Jestem%20wdzieczny%20za%20wszystkie%20mozliwosci%20w%20moim%20zyciu.%20Kazdy%20dzien%20przynosi%20mi%20nowe%20okazje%20do%20rozwoju.%20Mam%20w%20sobie%20sile%20do%20osiagniecia%20wszystkich%20swoich%20celow&ttsspeed=0.8"
+    }
+  },
+  "male": {
+    "name": "Mężczyzna",
+    "affirmations": [
+      {
+        "id": 0,
+        "text": "Jestem pewny siebie i zdolny",
+        "url": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Jestem%20pewny%20siebie%20i%20zdolny&ttsspeed=0.8"
+      },
+      {
+        "id": 1,
+        "text": "Przyciagam sukces we wszystkim co robie",
+        "url": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Przyciagam%20sukces%20we%20wszystkim%20co%20robie&ttsspeed=0.8"
+      },
+      {
+        "id": 2,
+        "text": "Jestem godny milosci i szacunku",
+        "url": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Jestem%20godny%20milosci%20i%20szacunku&ttsspeed=0.8"
+      },
+      {
+        "id": 3,
+        "text": "Ufam w swoja zdolnosc do pokonywania wyzwan",
+        "url": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Ufam%20w%20swoja%20zdolnosc%20do%20pokonywania%20wyzwan&ttsspeed=0.8"
+      },
+      {
+        "id": 4,
+        "text": "Jestem wdzieczny za wszystkie mozliwosci w moim zyciu",
+        "url": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Jestem%20wdzieczny%20za%20wszystkie%20mozliwosci%20w%20moim%20zyciu&ttsspeed=0.8"
+      },
+      {
+        "id": 5,
+        "text": "Kazdy dzien przynosi mi nowe okazje do rozwoju",
+        "url": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Kazdy%20dzien%20przynosi%20mi%20nowe%20okazje%20do%20rozwoju&ttsspeed=0.8"
+      },
+      {
+        "id": 6,
+        "text": "Mam w sobie sile do osiagniecia wszystkich swoich celow",
+        "url": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Mam%20w%20sobie%20sile%20do%20osiagniecia%20wszystkich%20swoich%20celow&ttsspeed=0.8"
+      }
+    ],
+    "combinedUrl": {
+      "part1": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Jestem%20pewny%20siebie%20i%20zdolny.%20Przyciagam%20sukces%20we%20wszystkim%20co%20robie.%20Jestem%20godny%20milosci%20i%20szacunku&ttsspeed=0.8",
+      "part2": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Ufam%20w%20swoja%20zdolnosc%20do%20pokonywania%20wyzwan.%20Jestem%20wdzieczny%20za%20wszystkie%20mozliwosci%20w%20moim%20zyciu.%20Kazdy%20dzien%20przynosi%20mi%20nowe%20okazje%20do%20rozwoju.%20Mam%20w%20sobie%20sile%20do%20osiagniecia%20wszystkich%20swoich%20celow&ttsspeed=0.8"
+    }
+  }
+}

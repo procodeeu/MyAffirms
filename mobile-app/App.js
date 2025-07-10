@@ -6,7 +6,7 @@ import { Audio } from 'expo-av';
 import * as Notifications from 'expo-notifications';
 import * as TaskManager from 'expo-task-manager';
 import * as BackgroundFetch from 'expo-background-fetch';
-import audioConfig from './assets/audio-config.json';
+import audioVoices from './assets/audio-voices.json';
 
 // Define background task
 const BACKGROUND_AFFIRMATION_TASK = 'background-affirmation-task';
@@ -27,6 +27,8 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [pauseBetween, setPauseBetween] = useState(3);
+  const [selectedVoice, setSelectedVoice] = useState('female');
+  const [useCombinedAudio, setUseCombinedAudio] = useState(true);
   const sessionRef = useRef({ isActive: false, currentIndex: 0 });
   const intervalRef = useRef(null);
   const soundRef = useRef(null);
@@ -35,7 +37,6 @@ export default function App() {
   useEffect(() => {
     const setupApp = async () => {
       try {
-        // Audio setup for background playback
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: false,
           staysActiveInBackground: true,
@@ -44,7 +45,6 @@ export default function App() {
           playThroughEarpieceAndroid: false,
         });
         
-        // Notifications setup
         await Notifications.setNotificationHandler({
           handleNotification: async () => ({
             shouldShowAlert: true,
@@ -56,10 +56,9 @@ export default function App() {
         const { status } = await Notifications.requestPermissionsAsync();
         console.log('Notification permission status:', status);
         
-        // Register background task for keeping app alive
         try {
           await BackgroundFetch.registerTaskAsync(BACKGROUND_AFFIRMATION_TASK, {
-            minimumInterval: 15000, // 15 seconds minimum
+            minimumInterval: 15000,
             stopOnTerminate: false,
             startOnBoot: true,
           });
@@ -75,7 +74,8 @@ export default function App() {
     setupApp();
   }, []);
 
-  const affirmations = audioConfig.affirmations;
+  const affirmations = audioVoices[selectedVoice].affirmations;
+  const combinedAudioUrl = audioVoices[selectedVoice].combinedUrl;
 
   const projects = [
     { id: 1, name: 'Pewnosc Siebie', count: 7 },
@@ -83,21 +83,139 @@ export default function App() {
     { id: 3, name: 'Zdrowie i Wellness', count: 3 }
   ];
 
-  const playCurrentAffirmation = async () => {
+  const playCombinedSession = async () => {
     try {
-      console.log('Playing affirmation:', currentAffirmation, affirmations[currentAffirmation].text);
+      console.log('Playing combined session with voice:', selectedVoice);
       setIsPlaying(true);
       
-      // Vibrate at start
-      Vibration.vibrate(200);
+      Vibration.vibrate(800);
       
-      // Unload previous sound
       if (soundRef.current) {
         await soundRef.current.unloadAsync();
         soundRef.current = null;
       }
       
-      // Load and play audio
+      // Check if combinedUrl is split into parts
+      const isMultiPart = typeof combinedAudioUrl === 'object' && combinedAudioUrl.part1;
+      
+      if (isMultiPart) {
+        console.log('Playing multi-part combined session');
+        await playMultiPartSession();
+      } else {
+        console.log('Playing single combined session');
+        await playSingleCombinedSession();
+      }
+      
+    } catch (error) {
+      console.log('Combined audio loading error:', error);
+      setIsPlaying(false);
+      stopSession();
+    }
+  };
+
+  const playMultiPartSession = async () => {
+    // Play part 1 first
+    const { sound: sound1 } = await Audio.Sound.createAsync(
+      { uri: combinedAudioUrl.part1 },
+      { 
+        shouldPlay: true,
+        isLooping: false,
+        volume: 1.0
+      }
+    );
+    
+    soundRef.current = sound1;
+    
+    sound1.setOnPlaybackStatusUpdate(async (status) => {
+      if (status.didJustFinish) {
+        console.log('Part 1 finished, playing part 2');
+        
+        try {
+          // Unload part 1
+          await sound1.unloadAsync();
+          
+          // Play part 2
+          const { sound: sound2 } = await Audio.Sound.createAsync(
+            { uri: combinedAudioUrl.part2 },
+            { 
+              shouldPlay: true,
+              isLooping: false,
+              volume: 1.0
+            }
+          );
+          
+          soundRef.current = sound2;
+          
+          sound2.setOnPlaybackStatusUpdate((status2) => {
+            if (status2.didJustFinish) {
+              console.log('Combined session finished (part 2)');
+              setIsPlaying(false);
+              Vibration.vibrate([200, 100, 200, 100, 200]);
+              stopSession();
+            }
+            
+            if (status2.error) {
+              console.log('Audio error part 2:', status2.error);
+              setIsPlaying(false);
+              stopSession();
+            }
+          });
+          
+        } catch (error) {
+          console.log('Error playing part 2:', error);
+          setIsPlaying(false);
+          stopSession();
+        }
+      }
+      
+      if (status.error) {
+        console.log('Audio error part 1:', status.error);
+        setIsPlaying(false);
+        stopSession();
+      }
+    });
+  };
+
+  const playSingleCombinedSession = async () => {
+    const { sound } = await Audio.Sound.createAsync(
+      { uri: combinedAudioUrl },
+      { 
+        shouldPlay: true,
+        isLooping: false,
+        volume: 1.0
+      }
+    );
+    
+    soundRef.current = sound;
+    
+    sound.setOnPlaybackStatusUpdate((status) => {
+      if (status.didJustFinish) {
+        console.log('Combined session finished');
+        setIsPlaying(false);
+        Vibration.vibrate([200, 100, 200, 100, 200]);
+        stopSession();
+      }
+      
+      if (status.error) {
+        console.log('Audio error:', status.error);
+        setIsPlaying(false);
+        stopSession();
+      }
+    });
+  };
+
+  const playCurrentAffirmation = async () => {
+    try {
+      console.log('Playing individual affirmation:', currentAffirmation, affirmations[currentAffirmation].text);
+      setIsPlaying(true);
+      
+      Vibration.vibrate(200);
+      
+      if (soundRef.current) {
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+      
       const { sound } = await Audio.Sound.createAsync(
         { uri: affirmations[currentAffirmation].url },
         { 
@@ -109,10 +227,9 @@ export default function App() {
       
       soundRef.current = sound;
       
-      // Handle playback completion
       sound.setOnPlaybackStatusUpdate((status) => {
         if (status.didJustFinish) {
-          console.log('Audio finished, session active:', sessionRef.current.isActive);
+          console.log('Individual audio finished, session active:', sessionRef.current.isActive);
           setIsPlaying(false);
           
           if (sessionRef.current.isActive) {
@@ -157,7 +274,6 @@ export default function App() {
     setIsSessionActive(false);
     setIsPlaying(false);
     
-    // Stop audio
     if (soundRef.current) {
       try {
         await soundRef.current.stopAsync();
@@ -168,13 +284,11 @@ export default function App() {
       }
     }
     
-    // Clear intervals
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
     
-    // Cancel notifications
     await Notifications.cancelAllScheduledNotificationsAsync();
     deactivateKeepAwake();
   };
@@ -183,13 +297,11 @@ export default function App() {
     if (isSessionActive || isPlaying) {
       stopSession();
     } else {
-      // Start session
       sessionRef.current.isActive = true;
       sessionRef.current.currentIndex = currentAffirmation;
       setIsSessionActive(true);
       activateKeepAwakeAsync();
       
-      // Show persistent notification to keep app in foreground
       await Notifications.scheduleNotificationAsync({
         content: {
           title: "Sesja Afirmacji Aktywna",
@@ -200,19 +312,21 @@ export default function App() {
         trigger: null,
       });
       
-      Vibration.vibrate(800);
-      playCurrentAffirmation();
+      if (useCombinedAudio) {
+        playCombinedSession();
+      } else {
+        playCurrentAffirmation();
+      }
     }
   };
 
-  // Auto-play when affirmation changes
+  // Auto-play when affirmation changes (only for individual mode)
   useEffect(() => {
-    console.log('useEffect triggered - currentAffirmation:', currentAffirmation, 'isSessionActive:', isSessionActive, 'isPlaying:', isPlaying);
-    if (isSessionActive && !isPlaying && sessionRef.current.isActive) {
+    if (!useCombinedAudio && isSessionActive && !isPlaying && sessionRef.current.isActive) {
       console.log('Auto-playing next affirmation');
       playCurrentAffirmation();
     }
-  }, [currentAffirmation]);
+  }, [currentAffirmation, useCombinedAudio]);
 
   // Handle app state changes
   useEffect(() => {
@@ -300,18 +414,18 @@ export default function App() {
       
       <View style={styles.affirmationCard}>
         <Text style={styles.counter}>
-          {currentAffirmation + 1} z {affirmations.length}
+          {useCombinedAudio ? `Cala sesja (${affirmations.length} afirmacji)` : `${currentAffirmation + 1} z ${affirmations.length}`}
         </Text>
         <Text style={styles.affirmationText}>
-          {affirmations[currentAffirmation].text}
+          {useCombinedAudio ? "Wszystkie afirmacje w jednym pliku" : affirmations[currentAffirmation].text}
         </Text>
       </View>
 
       <View style={styles.controls}>
         <TouchableOpacity 
-          style={[styles.controlButton, currentAffirmation === 0 && styles.disabled]}
+          style={[styles.controlButton, (currentAffirmation === 0 || useCombinedAudio) && styles.disabled]}
           onPress={() => {
-            if (currentAffirmation > 0) {
+            if (!useCombinedAudio && currentAffirmation > 0) {
               setCurrentAffirmation(currentAffirmation - 1);
               sessionRef.current.currentIndex = currentAffirmation - 1;
             }
@@ -330,9 +444,9 @@ export default function App() {
         </TouchableOpacity>
 
         <TouchableOpacity 
-          style={[styles.controlButton, currentAffirmation === affirmations.length - 1 && styles.disabled]}
+          style={[styles.controlButton, (currentAffirmation === affirmations.length - 1 || useCombinedAudio) && styles.disabled]}
           onPress={() => {
-            if (currentAffirmation < affirmations.length - 1) {
+            if (!useCombinedAudio && currentAffirmation < affirmations.length - 1) {
               setCurrentAffirmation(currentAffirmation + 1);
               sessionRef.current.currentIndex = currentAffirmation + 1;
             }
@@ -344,27 +458,65 @@ export default function App() {
 
       <View style={styles.settings}>
         <Text style={styles.settingsTitle}>Ustawienia Sesji</Text>
-        <Text style={styles.settingItem}>Predkosc: Normalna</Text>
+        
         <View style={styles.settingRow}>
-          <Text style={styles.settingItem}>Pauza miedzy: {pauseBetween}s</Text>
-          <View style={styles.pauseControls}>
+          <Text style={styles.settingItem}>Glos:</Text>
+          <View style={styles.voiceControls}>
             <TouchableOpacity 
-              style={styles.pauseButton}
-              onPress={() => setPauseBetween(Math.max(1, pauseBetween - 1))}
+              style={[styles.voiceButton, selectedVoice === 'female' && styles.voiceButtonActive]}
+              onPress={() => setSelectedVoice('female')}
             >
-              <Text style={styles.pauseButtonText}>-</Text>
+              <Text style={[styles.voiceButtonText, selectedVoice === 'female' && styles.voiceButtonTextActive]}>Kobieta</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={styles.pauseButton}
-              onPress={() => setPauseBetween(Math.min(10, pauseBetween + 1))}
+              style={[styles.voiceButton, selectedVoice === 'male' && styles.voiceButtonActive]}
+              onPress={() => setSelectedVoice('male')}
             >
-              <Text style={styles.pauseButtonText}>+</Text>
+              <Text style={[styles.voiceButtonText, selectedVoice === 'male' && styles.voiceButtonTextActive]}>Mezczyzna</Text>
             </TouchableOpacity>
           </View>
         </View>
-        <Text style={styles.settingItem}>Glos: Google TTS</Text>
+        
+        <View style={styles.settingRow}>
+          <Text style={styles.settingItem}>Tryb:</Text>
+          <View style={styles.voiceControls}>
+            <TouchableOpacity 
+              style={[styles.voiceButton, useCombinedAudio && styles.voiceButtonActive]}
+              onPress={() => setUseCombinedAudio(true)}
+            >
+              <Text style={[styles.voiceButtonText, useCombinedAudio && styles.voiceButtonTextActive]}>Cala sesja</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.voiceButton, !useCombinedAudio && styles.voiceButtonActive]}
+              onPress={() => setUseCombinedAudio(false)}
+            >
+              <Text style={[styles.voiceButtonText, !useCombinedAudio && styles.voiceButtonTextActive]}>Pojedyncze</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        {!useCombinedAudio && (
+          <View style={styles.settingRow}>
+            <Text style={styles.settingItem}>Pauza miedzy: {pauseBetween}s</Text>
+            <View style={styles.pauseControls}>
+              <TouchableOpacity 
+                style={styles.pauseButton}
+                onPress={() => setPauseBetween(Math.max(1, pauseBetween - 1))}
+              >
+                <Text style={styles.pauseButtonText}>-</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.pauseButton}
+                onPress={() => setPauseBetween(Math.min(10, pauseBetween + 1))}
+              >
+                <Text style={styles.pauseButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        
         {isSessionActive && (
-          <Text style={styles.sessionStatus}>🔄 Auto-sesja aktywna</Text>
+          <Text style={styles.sessionStatus}>Auto-sesja aktywna</Text>
         )}
       </View>
 
@@ -559,7 +711,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   pauseControls: {
     flexDirection: 'row',
@@ -583,5 +735,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginTop: 8,
+  },
+  voiceControls: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  voiceButton: {
+    backgroundColor: '#444444',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    minWidth: 60,
+  },
+  voiceButtonActive: {
+    backgroundColor: '#BB86FC',
+  },
+  voiceButtonText: {
+    color: '#E0E0E0',
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  voiceButtonTextActive: {
+    color: '#000000',
+    fontWeight: 'bold',
   },
 });
