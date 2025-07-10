@@ -95,21 +95,29 @@ export default function App() {
         soundRef.current = null;
       }
       
+      const voiceConfig = audioVoices[selectedVoice];
+      const combinedAudioUrl = voiceConfig.combinedUrl;
+      
+      if (!combinedAudioUrl) {
+        throw new Error('No combined audio URL available');
+      }
+      
       // Check if combinedUrl is split into parts
       const isMultiPart = typeof combinedAudioUrl === 'object' && combinedAudioUrl.part1;
       
       if (isMultiPart) {
-        console.log('Playing multi-part combined session');
-        await playMultiPartSession();
+        console.log('Multi-part session detected, falling back to individual affirmations');
+        // Fallback to individual affirmations instead of problematic multi-part
+        await playSession();
       } else {
         console.log('Playing single combined session');
         await playSingleCombinedSession();
       }
       
     } catch (error) {
-      console.log('Combined audio loading error:', error);
-      setIsPlaying(false);
-      stopSession();
+      console.log('Combined audio loading error, falling back to individual:', error);
+      // Fallback to individual affirmations
+      await playSession();
     }
   };
 

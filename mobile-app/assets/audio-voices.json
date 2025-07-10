@@ -38,10 +38,7 @@
         "url": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Mam%20w%20sobie%20sile%20do%20osiagniecia%20wszystkich%20swoich%20celow&ttsspeed=0.8"
       }
     ],
-    "combinedUrl": {
-      "part1": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Jestem%20pewny%20siebie%20i%20zdolny.%20Przyciagam%20sukces%20we%20wszystkim%20co%20robie.%20Jestem%20godny%20milosci%20i%20szacunku&ttsspeed=0.8",
-      "part2": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Ufam%20w%20swoja%20zdolnosc%20do%20pokonywania%20wyzwan.%20Jestem%20wdzieczny%20za%20wszystkie%20mozliwosci%20w%20moim%20zyciu.%20Kazdy%20dzien%20przynosi%20mi%20nowe%20okazje%20do%20rozwoju.%20Mam%20w%20sobie%20sile%20do%20osiagniecia%20wszystkich%20swoich%20celow&ttsspeed=0.8"
-    }
+    "combinedUrl": null
   },
   "male": {
     "name": "Mężczyzna",
@@ -82,9 +79,6 @@
         "url": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Mam%20w%20sobie%20sile%20do%20osiagniecia%20wszystkich%20swoich%20celow&ttsspeed=0.8"
       }
     ],
-    "combinedUrl": {
-      "part1": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Jestem%20pewny%20siebie%20i%20zdolny.%20Przyciagam%20sukces%20we%20wszystkim%20co%20robie.%20Jestem%20godny%20milosci%20i%20szacunku&ttsspeed=0.8",
-      "part2": "https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=Ufam%20w%20swoja%20zdolnosc%20do%20pokonywania%20wyzwan.%20Jestem%20wdzieczny%20za%20wszystkie%20mozliwosci%20w%20moim%20zyciu.%20Kazdy%20dzien%20przynosi%20mi%20nowe%20okazje%20do%20rozwoju.%20Mam%20w%20sobie%20sile%20do%20osiagniecia%20wszystkich%20swoich%20celow&ttsspeed=0.8"
-    }
+    "combinedUrl": null
   }
 }

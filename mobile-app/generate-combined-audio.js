@@ -51,16 +51,17 @@ const generateCombinedUrl = (texts, voiceParams) => {
   
   // Check if URL is too long (Google TTS limit ~200 chars for text)
   if (encodedText.length > 200) {
-    console.log('Combined text too long:', encodedText.length, 'chars. Splitting...');
-    // Split into 2 parts
-    const mid = Math.floor(texts.length / 2);
-    const part1 = texts.slice(0, mid).join('. ');
-    const part2 = texts.slice(mid).join('. ');
+    console.log('Combined text too long:', encodedText.length, 'chars. Using shorter version...');
+    // Instead of splitting, use shorter pauses and fewer words
+    const shorterText = texts.map(text => text.substring(0, 50)).join(', '); // Shorter version
+    const shorterEncoded = encodeURIComponent(shorterText);
     
-    return {
-      part1: `https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=${encodeURIComponent(part1)}${voiceParams}`,
-      part2: `https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=${encodeURIComponent(part2)}${voiceParams}`
-    };
+    if (shorterEncoded.length <= 200) {
+      return `https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=${shorterEncoded}${voiceParams}`;
+    }
+    
+    // If still too long, return null to force individual playback
+    return null;
   }
   
   return `https://translate.google.com/translate_tts?ie=UTF-8&tl=pl&client=tw-ob&q=${encodedText}${voiceParams}`;

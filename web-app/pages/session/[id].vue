@@ -120,7 +120,8 @@ const {
 
 const activeAffirmations = computed(() => {
   if (!project.value || !project.value.affirmations) return []
-  return project.value.affirmations.filter(a => a.isActive !== false)
+  // Zwróć wszystkie afirmacje niezależnie od statusu isActive
+  return project.value.affirmations
 })
 
 const loadProject = async () => {
@@ -201,11 +202,38 @@ const startSession = async () => {
   const settings = project.value?.sessionSettings || {}
   
   try {
+    // Automatycznie wygeneruj brakujące audio przed rozpoczęciem sesji
+    await generateMissingAudioForSession()
+    
     await startAudioSession(activeAffirmations.value, settings)
   } catch (error) {
     console.error('Failed to start session:', error)
     // Optionally show user-friendly error message
   }
+}
+
+const generateMissingAudioForSession = async () => {
+  const { generateAudio, hasAudio } = useAffirmationAudio()
+  const voiceId = project.value?.sessionSettings?.voiceId || 'pl-PL-ZofiaStandard'
+  
+  console.log('🎵 Checking and generating missing audio for session...')
+  
+  for (const affirmation of activeAffirmations.value) {
+    try {
+      // Sprawdź czy afirmacja ma audio
+      const audioExists = await hasAudio(affirmation.id)
+      
+      if (!audioExists) {
+        console.log(`🎵 Generating missing audio for affirmation: ${affirmation.id}`)
+        await generateAudio(affirmation.id, affirmation.text, voiceId)
+      }
+    } catch (error) {
+      console.warn(`⚠️ Failed to generate audio for affirmation ${affirmation.id}:`, error)
+      // Kontynuuj z następną afirmacją
+    }
+  }
+  
+  console.log('✅ Audio generation check completed')
 }
 
 // Voice selection logic moved to Session Audio Manager
@@ -225,7 +253,8 @@ const nextAffirmation = async () => {
 }
 
 const goBack = () => {
-  router.push(`/project/${projectId}`)
+  // Powrót do głównego menu aplikacji zamiast do projektu
+  router.push('/app')
 }
 
 const logout = async () => {
