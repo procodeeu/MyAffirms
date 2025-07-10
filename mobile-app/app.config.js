@@ -32,6 +32,9 @@ export default {
           "icon": "./assets/icon.png",
           "color": "#BB86FC"
         }
+      ],
+      [
+        "expo-task-manager"
       ]
     ],
     notification: {

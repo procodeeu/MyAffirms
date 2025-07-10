@@ -4,22 +4,38 @@ import { StatusBar } from 'expo-status-bar';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { Audio } from 'expo-av';
 import * as Notifications from 'expo-notifications';
+import * as TaskManager from 'expo-task-manager';
+import * as BackgroundFetch from 'expo-background-fetch';
 import audioConfig from './assets/audio-config.json';
+
+// Define background task
+const BACKGROUND_AFFIRMATION_TASK = 'background-affirmation-task';
+
+TaskManager.defineTask(BACKGROUND_AFFIRMATION_TASK, async () => {
+  try {
+    console.log('Background task running - keeping app alive');
+    return BackgroundFetch.BackgroundFetchResult.NewData;
+  } catch (error) {
+    console.log('Background task error:', error);
+    return BackgroundFetch.BackgroundFetchResult.Failed;
+  }
+});
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('home');
   const [currentAffirmation, setCurrentAffirmation] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isSessionActive, setIsSessionActive] = useState(false);
-  const [pauseBetween, setPauseBetween] = useState(3); // seconds
+  const [pauseBetween, setPauseBetween] = useState(3);
   const sessionRef = useRef({ isActive: false, currentIndex: 0 });
   const intervalRef = useRef(null);
   const soundRef = useRef(null);
 
-  // Setup audio and notifications for background playback
+  // Setup audio, notifications and background tasks
   useEffect(() => {
-    const setupAudio = async () => {
+    const setupApp = async () => {
       try {
+        // Audio setup for background playback
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: false,
           staysActiveInBackground: true,
@@ -28,24 +44,35 @@ export default function App() {
           playThroughEarpieceAndroid: false,
         });
         
-        // Setup notifications
+        // Notifications setup
         await Notifications.setNotificationHandler({
           handleNotification: async () => ({
-            shouldShowAlert: false,
+            shouldShowAlert: true,
             shouldPlaySound: false,
             shouldSetBadge: false,
           }),
         });
         
-        // Request notification permissions
         const { status } = await Notifications.requestPermissionsAsync();
         console.log('Notification permission status:', status);
         
+        // Register background task for keeping app alive
+        try {
+          await BackgroundFetch.registerTaskAsync(BACKGROUND_AFFIRMATION_TASK, {
+            minimumInterval: 15000, // 15 seconds minimum
+            stopOnTerminate: false,
+            startOnBoot: true,
+          });
+          console.log('Background task registered successfully');
+        } catch (bgError) {
+          console.log('Background task registration failed:', bgError);
+        }
+        
       } catch (error) {
-        console.log('Audio/Notification setup error:', error);
+        console.log('App setup error:', error);
       }
     };
-    setupAudio();
+    setupApp();
   }, []);
 
   const affirmations = audioConfig.affirmations;
@@ -61,16 +88,16 @@ export default function App() {
       console.log('Playing affirmation:', currentAffirmation, affirmations[currentAffirmation].text);
       setIsPlaying(true);
       
-      // Vibrate at start of each affirmation
+      // Vibrate at start
       Vibration.vibrate(200);
       
-      // Unload previous sound if exists
+      // Unload previous sound
       if (soundRef.current) {
         await soundRef.current.unloadAsync();
         soundRef.current = null;
       }
       
-      // Load and play audio from URL
+      // Load and play audio
       const { sound } = await Audio.Sound.createAsync(
         { uri: affirmations[currentAffirmation].url },
         { 
@@ -82,7 +109,7 @@ export default function App() {
       
       soundRef.current = sound;
       
-      // Set up playback status listener
+      // Handle playback completion
       sound.setOnPlaybackStatusUpdate((status) => {
         if (status.didJustFinish) {
           console.log('Audio finished, session active:', sessionRef.current.isActive);
@@ -91,10 +118,8 @@ export default function App() {
           if (sessionRef.current.isActive) {
             if (currentAffirmation < affirmations.length - 1) {
               console.log('Moving to next affirmation after', pauseBetween, 'seconds');
-              // Add vibration to signal transition
-              Vibration.vibrate([500, 200, 500]); // vibrate-pause-vibrate pattern
+              Vibration.vibrate([500, 200, 500]);
               
-              // Use setInterval for better background support
               const intervalId = setInterval(() => {
                 if (sessionRef.current.isActive) {
                   clearInterval(intervalId);
@@ -106,8 +131,7 @@ export default function App() {
                 }
               }, pauseBetween * 1000);
             } else {
-              console.log('End of session reached');
-              // End session vibration - 3 short vibrations
+              console.log('Session completed');
               Vibration.vibrate([200, 100, 200, 100, 200]);
               stopSession();
             }
@@ -128,39 +152,12 @@ export default function App() {
     }
   };
 
-  const scheduleNotificationBackup = async () => {
-    try {
-      // Cancel any existing notifications
-      await Notifications.cancelAllScheduledNotificationsAsync();
-      
-      // Schedule notifications for remaining affirmations
-      const remainingTime = pauseBetween;
-      for (let i = currentAffirmation + 1; i < affirmations.length; i++) {
-        const delay = remainingTime + (i - currentAffirmation - 1) * (pauseBetween + 3); // 3s for speech
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: `Afirmacja ${i + 1}/${affirmations.length}`,
-            body: affirmations[i].text,
-            sound: false,
-            vibrate: [200],
-          },
-          trigger: {
-            seconds: delay,
-          },
-        });
-      }
-      console.log('Scheduled', affirmations.length - currentAffirmation - 1, 'notification backups');
-    } catch (error) {
-      console.log('Notification scheduling error:', error);
-    }
-  };
-
   const stopSession = async () => {
     sessionRef.current.isActive = false;
     setIsSessionActive(false);
     setIsPlaying(false);
     
-    // Stop and unload audio
+    // Stop audio
     if (soundRef.current) {
       try {
         await soundRef.current.stopAsync();
@@ -171,18 +168,19 @@ export default function App() {
       }
     }
     
+    // Clear intervals
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    // Cancel backup notifications
-    Notifications.cancelAllScheduledNotificationsAsync();
+    
+    // Cancel notifications
+    await Notifications.cancelAllScheduledNotificationsAsync();
     deactivateKeepAwake();
   };
 
   const playAffirmation = async () => {
     if (isSessionActive || isPlaying) {
-      // Stop session
       stopSession();
     } else {
       // Start session
@@ -191,21 +189,37 @@ export default function App() {
       setIsSessionActive(true);
       activateKeepAwakeAsync();
       
-      // Schedule notification backup in case app gets killed
-      scheduleNotificationBackup();
+      // Show persistent notification to keep app in foreground
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Sesja Afirmacji Aktywna",
+          body: "Aplikacja dziala w tle. Dotknij aby powrocic.",
+          sound: false,
+          priority: 'high',
+        },
+        trigger: null,
+      });
       
-      // Start session vibration - single long vibration
       Vibration.vibrate(800);
       playCurrentAffirmation();
     }
   };
 
-  // Handle app state changes (background/foreground)
+  // Auto-play when affirmation changes
+  useEffect(() => {
+    console.log('useEffect triggered - currentAffirmation:', currentAffirmation, 'isSessionActive:', isSessionActive, 'isPlaying:', isPlaying);
+    if (isSessionActive && !isPlaying && sessionRef.current.isActive) {
+      console.log('Auto-playing next affirmation');
+      playCurrentAffirmation();
+    }
+  }, [currentAffirmation]);
+
+  // Handle app state changes
   useEffect(() => {
     const handleAppStateChange = (nextAppState) => {
       console.log('App state changed to:', nextAppState);
       if (nextAppState === 'background' && isSessionActive) {
-        console.log('App backgrounded but session continues');
+        console.log('App backgrounded but session should continue');
       }
     };
 
@@ -213,22 +227,10 @@ export default function App() {
     return () => subscription?.remove();
   }, [isSessionActive]);
 
-  // Auto-play when affirmation changes during active session
-  useEffect(() => {
-    console.log('useEffect triggered - currentAffirmation:', currentAffirmation, 'isSessionActive:', isSessionActive, 'isPlaying:', isPlaying);
-    if (isSessionActive && !isPlaying && sessionRef.current.isActive) {
-      console.log('Conditions met, calling playCurrentAffirmation');
-      playCurrentAffirmation();
-    }
-  }, [currentAffirmation]);
-
-  // Cleanup on unmount
+  // Cleanup
   useEffect(() => {
     return () => {
       stopSession();
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
       if (soundRef.current) {
         soundRef.current.unloadAsync();
       }
@@ -360,7 +362,7 @@ export default function App() {
             </TouchableOpacity>
           </View>
         </View>
-        <Text style={styles.settingItem}>Glos: Domyslny</Text>
+        <Text style={styles.settingItem}>Glos: Google TTS</Text>
         {isSessionActive && (
           <Text style={styles.sessionStatus}>🔄 Auto-sesja aktywna</Text>
         )}
@@ -386,7 +388,7 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="light" backgroundColor="#121212" />
+      <StatusBar style="light" />
       {renderScreen()}
     </SafeAreaView>
   );
