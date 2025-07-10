@@ -30,9 +30,7 @@ export default {
       favicon: "./assets/favicon.png",
       bundler: "metro"
     },
-    plugins: [
-      "expo-router"
-    ],
+    plugins: [],
     scheme: "my-affirms",
     extra: {
       router: {
