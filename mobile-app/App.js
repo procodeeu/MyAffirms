@@ -1,11 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import * as Speech from 'expo-speech';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('home');
   const [currentAffirmation, setCurrentAffirmation] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  const playAffirmation = async () => {
+    if (isPlaying) {
+      Speech.stop();
+      setIsPlaying(false);
+    } else {
+      setIsPlaying(true);
+      Speech.speak(affirmations[currentAffirmation], {
+        language: 'en',
+        pitch: 1.0,
+        rate: 0.8,
+        onDone: () => setIsPlaying(false),
+        onStopped: () => setIsPlaying(false),
+        onError: () => setIsPlaying(false)
+      });
+    }
+  };
 
   const affirmations = [
     "I am confident and capable",
@@ -101,7 +120,7 @@ export default function App() {
 
         <TouchableOpacity 
           style={styles.playButton}
-          onPress={() => setIsPlaying(!isPlaying)}
+          onPress={playAffirmation}
         >
           <Text style={styles.playText}>{isPlaying ? '⏸' : '▶️'}</Text>
         </TouchableOpacity>
