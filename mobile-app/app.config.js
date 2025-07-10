@@ -19,7 +19,25 @@ export default {
     web: {
       bundler: "metro"
     },
-    plugins: [],
+    plugins: [
+      [
+        "expo-background-fetch",
+        {
+          "background-fetch": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#BB86FC"
+        }
+      ]
+    ],
+    notification: {
+      "icon": "./assets/icon.png",
+      "color": "#BB86FC"
+    },
     scheme: "my-affirms"
   }
 }

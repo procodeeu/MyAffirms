@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, SafeAreaView, AppState } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, SafeAreaView, AppState, Vibration, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import * as Speech from 'expo-speech';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { Audio } from 'expo-av';
+import * as Notifications from 'expo-notifications';
+import audioConfig from './assets/audio-config.json';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('home');
@@ -12,8 +13,10 @@ export default function App() {
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [pauseBetween, setPauseBetween] = useState(3); // seconds
   const sessionRef = useRef({ isActive: false, currentIndex: 0 });
+  const intervalRef = useRef(null);
+  const soundRef = useRef(null);
 
-  // Setup audio for background playback
+  // Setup audio and notifications for background playback
   useEffect(() => {
     const setupAudio = async () => {
       try {
@@ -24,22 +27,28 @@ export default function App() {
           shouldDuckAndroid: true,
           playThroughEarpieceAndroid: false,
         });
+        
+        // Setup notifications
+        await Notifications.setNotificationHandler({
+          handleNotification: async () => ({
+            shouldShowAlert: false,
+            shouldPlaySound: false,
+            shouldSetBadge: false,
+          }),
+        });
+        
+        // Request notification permissions
+        const { status } = await Notifications.requestPermissionsAsync();
+        console.log('Notification permission status:', status);
+        
       } catch (error) {
-        console.log('Audio setup error:', error);
+        console.log('Audio/Notification setup error:', error);
       }
     };
     setupAudio();
   }, []);
 
-  const affirmations = [
-    "Jestem pewny siebie i zdolny",
-    "Przyciagam sukces we wszystkim co robie",
-    "Jestem godny milosci i szacunku",
-    "Ufam w swoja zdolnosc do pokonywania wyzwan",
-    "Jestem wdzieczny za wszystkie mozliwosci w moim zyciu",
-    "Kazdy dzien przynosi mi nowe okazje do rozwoju",
-    "Mam w sobie sile do osiagniecia wszystkich swoich celow"
-  ];
+  const affirmations = audioConfig.affirmations;
 
   const projects = [
     { id: 1, name: 'Pewnosc Siebie', count: 7 },
@@ -47,59 +56,127 @@ export default function App() {
     { id: 3, name: 'Zdrowie i Wellness', count: 3 }
   ];
 
-  const playCurrentAffirmation = () => {
-    console.log('Playing affirmation:', currentAffirmation, affirmations[currentAffirmation]);
-    setIsPlaying(true);
-    
-    Speech.speak(affirmations[currentAffirmation], {
-      language: 'pl',
-      pitch: 1.0,
-      rate: 0.8,
-      onDone: () => {
-        console.log('Speech done, session active:', sessionRef.current.isActive);
-        setIsPlaying(false);
-        
-        if (sessionRef.current.isActive) {
-          if (currentAffirmation < affirmations.length - 1) {
-            console.log('Moving to next affirmation after', pauseBetween, 'seconds');
-            // Use direct state update instead of setTimeout for better background support
-            const nextIndex = currentAffirmation + 1;
-            sessionRef.current.currentIndex = nextIndex;
-            
-            // Delay before next affirmation
-            const startTime = Date.now();
-            const checkTime = () => {
-              if (sessionRef.current.isActive && Date.now() - startTime >= pauseBetween * 1000) {
-                setCurrentAffirmation(nextIndex);
-              } else if (sessionRef.current.isActive) {
-                requestAnimationFrame(checkTime);
-              }
-            };
-            requestAnimationFrame(checkTime);
-          } else {
-            console.log('End of session reached');
-            stopSession();
+  const playCurrentAffirmation = async () => {
+    try {
+      console.log('Playing affirmation:', currentAffirmation, affirmations[currentAffirmation].text);
+      setIsPlaying(true);
+      
+      // Vibrate at start of each affirmation
+      Vibration.vibrate(200);
+      
+      // Unload previous sound if exists
+      if (soundRef.current) {
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+      
+      // Load and play audio from URL
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: affirmations[currentAffirmation].url },
+        { 
+          shouldPlay: true,
+          isLooping: false,
+          volume: 1.0
+        }
+      );
+      
+      soundRef.current = sound;
+      
+      // Set up playback status listener
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.didJustFinish) {
+          console.log('Audio finished, session active:', sessionRef.current.isActive);
+          setIsPlaying(false);
+          
+          if (sessionRef.current.isActive) {
+            if (currentAffirmation < affirmations.length - 1) {
+              console.log('Moving to next affirmation after', pauseBetween, 'seconds');
+              // Add vibration to signal transition
+              Vibration.vibrate([500, 200, 500]); // vibrate-pause-vibrate pattern
+              
+              // Use setInterval for better background support
+              const intervalId = setInterval(() => {
+                if (sessionRef.current.isActive) {
+                  clearInterval(intervalId);
+                  const nextIndex = currentAffirmation + 1;
+                  sessionRef.current.currentIndex = nextIndex;
+                  setCurrentAffirmation(nextIndex);
+                } else {
+                  clearInterval(intervalId);
+                }
+              }, pauseBetween * 1000);
+            } else {
+              console.log('End of session reached');
+              // End session vibration - 3 short vibrations
+              Vibration.vibrate([200, 100, 200, 100, 200]);
+              stopSession();
+            }
           }
         }
-      },
-      onStopped: () => {
-        console.log('Speech stopped');
-        setIsPlaying(false);
-        stopSession();
-      },
-      onError: (error) => {
-        console.log('Speech error:', error);
-        setIsPlaying(false);
-        stopSession();
-      }
-    });
+        
+        if (status.error) {
+          console.log('Audio error:', status.error);
+          setIsPlaying(false);
+          stopSession();
+        }
+      });
+      
+    } catch (error) {
+      console.log('Audio loading error:', error);
+      setIsPlaying(false);
+      stopSession();
+    }
   };
 
-  const stopSession = () => {
+  const scheduleNotificationBackup = async () => {
+    try {
+      // Cancel any existing notifications
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      
+      // Schedule notifications for remaining affirmations
+      const remainingTime = pauseBetween;
+      for (let i = currentAffirmation + 1; i < affirmations.length; i++) {
+        const delay = remainingTime + (i - currentAffirmation - 1) * (pauseBetween + 3); // 3s for speech
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: `Afirmacja ${i + 1}/${affirmations.length}`,
+            body: affirmations[i].text,
+            sound: false,
+            vibrate: [200],
+          },
+          trigger: {
+            seconds: delay,
+          },
+        });
+      }
+      console.log('Scheduled', affirmations.length - currentAffirmation - 1, 'notification backups');
+    } catch (error) {
+      console.log('Notification scheduling error:', error);
+    }
+  };
+
+  const stopSession = async () => {
     sessionRef.current.isActive = false;
     setIsSessionActive(false);
     setIsPlaying(false);
-    Speech.stop();
+    
+    // Stop and unload audio
+    if (soundRef.current) {
+      try {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      } catch (error) {
+        console.log('Error stopping audio:', error);
+      }
+    }
+    
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    // Cancel backup notifications
+    Notifications.cancelAllScheduledNotificationsAsync();
     deactivateKeepAwake();
   };
 
@@ -113,6 +190,12 @@ export default function App() {
       sessionRef.current.currentIndex = currentAffirmation;
       setIsSessionActive(true);
       activateKeepAwakeAsync();
+      
+      // Schedule notification backup in case app gets killed
+      scheduleNotificationBackup();
+      
+      // Start session vibration - single long vibration
+      Vibration.vibrate(800);
       playCurrentAffirmation();
     }
   };
@@ -143,6 +226,12 @@ export default function App() {
   useEffect(() => {
     return () => {
       stopSession();
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
     };
   }, []);
 
@@ -212,7 +301,7 @@ export default function App() {
           {currentAffirmation + 1} z {affirmations.length}
         </Text>
         <Text style={styles.affirmationText}>
-          {affirmations[currentAffirmation]}
+          {affirmations[currentAffirmation].text}
         </Text>
       </View>
 
